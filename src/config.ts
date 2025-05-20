@@ -3,13 +3,15 @@ interface Config {
   ENV: 'development' | 'production';
 }
 
+const frontendURL = 'ssc-attendance-frontend.vercel.app';
+
 // Get the current hostname and protocol
 const getBaseUrl = () => {
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
 
   // Production
-  if (hostname === 'ssc-attendance-sigma.vercel.app') {
+  if (hostname === frontendURL) {
     return 'https://ssc-attendance-backend.onrender.com/api';
   }
 
@@ -19,7 +21,7 @@ const getBaseUrl = () => {
 
 const config: Config = {
   API_BASE_URL: getBaseUrl(),
-  ENV: window.location.hostname === 'ssc-attendance-sigma.vercel.app' ? 'production' : 'development',
+  ENV: window.location.hostname === frontendURL ? 'production' : 'development',
 };
 
 export default config; 
