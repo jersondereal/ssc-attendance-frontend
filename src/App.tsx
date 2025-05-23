@@ -402,6 +402,67 @@ function AppContent() {
     }
   };
 
+  // Add RFID submission handler
+  const handleRfidSubmit = async (rfid: string) => {
+    console.log(rfid);
+
+    if (!selectedEvent) {
+      showToast("Please select an event first", "error");
+      return;
+    }
+
+    try {
+      // Update attendance in database using RFID
+      const response = await axios.put(
+        `${config.API_BASE_URL}/attendance/rfid/${rfid}/${selectedEvent.id}`,
+        { status: "present" }
+      );
+
+      console.log(response);
+
+      // Get the updated student data from response
+      const studentData = response.data;
+
+      // Update local attendance data
+      const newAttendanceRecord: AttendanceRecord = {
+        studentId: studentData.student_id,
+        name: studentData.student.name,
+        course: studentData.student.course.toUpperCase(),
+        year: studentData.student.year,
+        section: studentData.student.section.toUpperCase(),
+        status: "present",
+      };
+
+      setAttendanceData((prev) => {
+        const existingIndex = prev.findIndex(
+          (a) => a.studentId === studentData.student_id
+        );
+        if (existingIndex >= 0) {
+          // Update existing record
+          const updated = [...prev];
+          updated[existingIndex] = newAttendanceRecord;
+          return updated;
+        } else {
+          // Add new record
+          return [...prev, newAttendanceRecord];
+        }
+      });
+
+      showToast(`${studentData.student.name} marked as present`, "success");
+      // setIsRfidModalOpen(false);
+    } catch (error) {
+      console.error("Error updating attendance:", error);
+      if (axios.isAxiosError(error)) {
+        showToast(
+          error.response?.data?.message || "Failed to update attendance",
+          "error"
+        );
+      } else {
+        showToast("Failed to update attendance", "error");
+      }
+    }
+  };
+
   const attendanceColumns = [
     { key: "studentId", label: "ID", width: "0" },
     { key: "name", label: "NAME", width: "0" },
@@ -684,19 +745,25 @@ function AppContent() {
             input?.focus();
           }}
         >
-          <div className="flex flex-row items-center justify-center rounded-full w-fit mx-auto border-[2px] border-gray-500 overflow-hidden mt-8">
-            <img
-              src="/rfid-scan.svg"
-              alt="RFID Scanner"
-              className="h-28 w-28 translate-x-[-0.5rem] translate-y-[0.5rem] mx-auto"
-            />
+          <div className="rounded-full w-fit mx-auto overflow-hidden mt-8">
+            <img src="/rfid-scan.svg" alt="RFID Scanner" className="h-24" />
           </div>
           <h2 className="font-medium select-none mt-12">Ready to Scan</h2>
           <p className="text-sm font-light text-gray-600 mt-4 select-none">
             Please tap your RFID card on the RFID reader to record attendance
             for this event.
           </p>
-          <input type="text" className="sr-only" autoFocus />
+          <input
+            type="text"
+            className="sr-only"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleRfidSubmit(e.currentTarget.value);
+                e.currentTarget.value = ""; // Clear input after submission
+              }
+            }}
+          />
           <Button
             label="Cancel"
             className="min-w-full mt-12 py-2 !text-sm"
