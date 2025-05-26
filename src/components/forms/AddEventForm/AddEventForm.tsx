@@ -5,9 +5,9 @@ import { Textbox } from "../../common/Textbox/Textbox";
 interface AddEventFormProps {
   onSubmit: (data: {
     title: string;
-    description: string;
     event_date: string;
     location: string;
+    fine: number;
   }) => void;
   onCancel: () => void;
 }
@@ -15,10 +15,12 @@ interface AddEventFormProps {
 export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
     event_date: new Date().toLocaleDateString("en-CA"),
     location: "",
+    fine: "",
   });
+
+  const [fineError, setFineError] = useState("");
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -28,11 +30,27 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
       ...prev,
       [name]: value,
     }));
+
+    // Clear fine error when user types
+    if (name === "fine") {
+      setFineError("");
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Validate fine
+    const fineValue = parseFloat(formData.fine);
+    if (isNaN(fineValue) || fineValue < 0) {
+      setFineError("Please enter a valid positive number");
+      return;
+    }
+
+    onSubmit({
+      ...formData,
+      fine: fineValue,
+    });
   };
 
   return (
@@ -55,20 +73,6 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
 
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <textarea
-            name="description"
-            placeholder="Enter event description"
-            className="w-full px-3 py-2 border border-border-dark rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-zinc-200"
-            value={formData.description}
-            onChange={handleChange}
-            rows={3}
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
             Event Date
           </label>
           <input
@@ -77,7 +81,6 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
             className="w-full px-3 py-2 border border-border-dark rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-zinc-200"
             value={formData.event_date}
             onChange={handleChange}
-            required
           />
         </div>
 
@@ -92,6 +95,22 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
             value={formData.location}
             onChange={handleChange}
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Fine Amount
+          </label>
+          <Textbox
+            name="fine"
+            placeholder="Enter fine amount"
+            className="w-full py-2"
+            value={formData.fine}
+            onChange={handleChange}
+          />
+          {fineError && (
+            <p className="text-red-500 text-xs mt-1">{fineError}</p>
+          )}
         </div>
       </div>
 

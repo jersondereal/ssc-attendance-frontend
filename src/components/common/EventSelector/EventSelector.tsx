@@ -11,7 +11,7 @@ export interface Event {
   name: string;
   date: string;
   location: string;
-  description?: string;
+  fine: number;
 }
 
 interface EventSelectorProps {
@@ -22,9 +22,9 @@ interface EventSelectorProps {
   events: Event[];
   onAddEvent?: (eventData: {
     title: string;
-    description: string;
     event_date: string;
     location: string;
+    fine: number;
   }) => void;
   onEditEvent?: (event: Event) => void;
   onDeleteEvent?: (eventId: string) => void;
@@ -83,9 +83,9 @@ export const EventSelector = ({
 
   const handleAddEvent = (data: {
     title: string;
-    description: string;
     event_date: string;
     location: string;
+    fine: number;
   }) => {
     onAddEvent?.(data);
     setIsAddEventModalOpen(false);
@@ -114,17 +114,17 @@ export const EventSelector = ({
 
   const handleEditSubmit = (data: {
     title: string;
-    description: string;
     event_date: string;
     location: string;
+    fine: number;
   }) => {
     if (eventToEdit) {
       onEditEvent?.({
         ...eventToEdit,
         name: data.title,
-        description: data.description,
         date: data.event_date,
         location: data.location,
+        fine: data.fine,
       });
       setIsEditModalOpen(false);
       setEventToEdit(null);

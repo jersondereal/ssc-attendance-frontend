@@ -22,6 +22,7 @@ import { UserMenu } from "./components/common/UserMenu/UserMenu";
 import { AddStudentForm } from "./components/forms/AddStudentForm/AddStudentForm";
 import { EditStudentForm } from "./components/forms/EditStudentForm/EditStudentForm";
 import { Metrics } from "./components/ui/Metrics/Metrics";
+import { StudentFines } from "./components/ui/StudentFines/StudentFines";
 import config from "./config";
 import { ToastProvider, useToast } from "./contexts/ToastContext";
 
@@ -72,9 +73,9 @@ interface DBAttendance {
 interface DBEvent {
   id: number;
   title: string;
-  description: string;
   event_date: string;
   location: string;
+  fine: number;
   created_at: string;
   updated_at: string;
 }
@@ -91,6 +92,7 @@ function AppContent() {
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
+  const [isFinesModalOpen, setIsFinesModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(
     undefined
   );
@@ -100,6 +102,8 @@ function AppContent() {
   >(null);
   const [selectedStudentForMetrics, setSelectedStudentForMetrics] =
     useState<StudentRecord | null>(null);
+  const [selectedStudentForFines, setSelectedStudentForFines] =
+    useState<StudentRecord | null>(null);
   const [events, setEvents] = useState<DBEvent[]>([]);
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [students, setStudents] = useState<StudentRecord[]>([]);
@@ -108,6 +112,10 @@ function AppContent() {
     key: string;
     direction: "asc" | "desc";
   }>({ key: "name", direction: "asc" });
+  const [currentUser, setCurrentUser] = useState<{
+    username: string;
+    role: string;
+  } | null>(null);
 
   // Fetch students from database
   useEffect(() => {
@@ -226,6 +234,12 @@ function AppContent() {
           setIsMetricsModalOpen(true);
         }
         break;
+      case "fines":
+        if ("studentId" in row) {
+          setSelectedStudentForFines(row as StudentRecord);
+          setIsFinesModalOpen(true);
+        }
+        break;
     }
   };
 
@@ -317,9 +331,9 @@ function AppContent() {
 
   const handleAddEvent = async (eventData: {
     title: string;
-    description: string;
     event_date: string;
     location: string;
+    fine: number;
   }) => {
     try {
       const response = await axios.post(
@@ -353,9 +367,9 @@ function AppContent() {
         `${config.API_BASE_URL}/events/${event.id}`,
         {
           title: event.name,
-          description: event.description,
           event_date: event.date,
           location: event.location,
+          fine: event.fine,
         }
       );
       const updatedEvent = response.data;
@@ -602,6 +616,13 @@ function AppContent() {
     showToast(`${filterName} filter set to ${filterValue}`, "info");
   };
 
+  const handleUserChange = useCallback(
+    (user: { username: string; role: string } | null) => {
+      setCurrentUser(user);
+    },
+    []
+  );
+
   return (
     <div className="app bg-background-light h-[100vh] pb-5">
       <Analytics />
@@ -617,10 +638,12 @@ function AppContent() {
           <SearchBar onSearch={handleSearch} />
           {/* User Menu */}
           <div className="flex flex-row items-center gap-3 text-sm">
-            <span className="font-medium text-sm text-gray-600 hidden sm:block">
-              President
-            </span>
-            <UserMenu onLogout={handleLogout} />
+            {currentUser && (
+              <span className="font-medium text-sm text-gray-600 hidden sm:block">
+                {currentUser.username}
+              </span>
+            )}
+            <UserMenu onLogout={handleLogout} onUserChange={handleUserChange} />
           </div>
         </div>
 
@@ -668,7 +691,7 @@ function AppContent() {
                       name: event.title,
                       date: event.event_date,
                       location: event.location,
-                      description: event.description,
+                      fine: event.fine,
                     }))}
                     onAddEvent={handleAddEvent}
                     onEditEvent={handleEditEvent}
@@ -745,10 +768,14 @@ function AppContent() {
             input?.focus();
           }}
         >
-          <div className="rounded-full w-fit mx-auto overflow-hidden mt-8">
-            <img src="/rfid-scan.svg" alt="RFID Scanner" className="h-24" />
-          </div>
-          <h2 className="font-medium select-none mt-12">Ready to Scan</h2>
+          {/* <div className="rounded-full w-fit mx-auto overflow-hidden mt-8">
+            <img
+              src="/rfid-scan.svg"
+              alt="RFID Scanner"
+              className="h-24 text-zinc-400"
+            />
+          </div> */}
+          <h2 className="font-medium select-none mt-8">Ready to Scan</h2>
           <p className="text-sm font-light text-gray-600 mt-4 select-none">
             Please tap your RFID card on the RFID reader to record attendance
             for this event.
@@ -765,7 +792,7 @@ function AppContent() {
             }}
           />
           <Button
-            label="Cancel"
+            label="Done"
             className="min-w-full mt-12 py-2 !text-sm"
             variant="secondary"
             onClick={() => setIsRfidModalOpen(false)}
@@ -818,6 +845,25 @@ function AppContent() {
             onClose={() => {
               setIsMetricsModalOpen(false);
               setSelectedStudentForMetrics(null);
+            }}
+          />
+        )}
+      </Modal>
+
+      {/* Fines Modal */}
+      <Modal
+        isOpen={isFinesModalOpen}
+        onClose={() => {
+          setIsFinesModalOpen(false);
+          setSelectedStudentForFines(null);
+        }}
+      >
+        {selectedStudentForFines && (
+          <StudentFines
+            studentData={selectedStudentForFines}
+            onClose={() => {
+              setIsFinesModalOpen(false);
+              setSelectedStudentForFines(null);
             }}
           />
         )}

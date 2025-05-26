@@ -20,7 +20,7 @@ interface AttendanceRecord {
   status: string;
 }
 
-interface StudentRecord {
+export interface StudentRecord {
   studentId: string;
   name: string;
   course: string;
@@ -57,6 +57,8 @@ export const Table = ({
   const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const table = tableRef.current;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveMenu(null);
@@ -68,11 +70,11 @@ export const Table = ({
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    tableRef.current?.addEventListener("scroll", handleScroll);
+    table?.addEventListener("scroll", handleScroll);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      tableRef.current?.removeEventListener("scroll", handleScroll);
+      table?.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -280,6 +282,14 @@ export const Table = ({
                   className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
                 >
                   Metrics
+                </button>
+                <button
+                  onClick={() => {
+                    handleActionClick("fines", sortedData[activeMenu]);
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                >
+                  Fines
                 </button>
                 <button
                   onClick={() =>

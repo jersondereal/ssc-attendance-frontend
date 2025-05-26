@@ -3,10 +3,12 @@ import {
   eachDayOfInterval,
   endOfMonth,
   format,
+  getDay,
   isSameDay,
   isSameMonth,
   isToday,
   startOfMonth,
+  subDays,
 } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 
@@ -46,6 +48,15 @@ export const DatePicker = ({
     start: startOfMonth(currentMonth),
     end: endOfMonth(currentMonth),
   });
+
+  // Calculate padding days for the start of the month
+  const firstDayOfMonth = startOfMonth(currentMonth);
+  const startingDayIndex = getDay(firstDayOfMonth); // 0 = Sunday, 1 = Monday, etc.
+  const paddingDays = Array.from({ length: startingDayIndex }, (_, i) =>
+    subDays(firstDayOfMonth, startingDayIndex - i)
+  );
+
+  const allDays = [...paddingDays, ...days];
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
@@ -112,7 +123,7 @@ export const DatePicker = ({
               </div>
             ))}
 
-            {days.map((day) => (
+            {allDays.map((day) => (
               <button
                 key={day.toISOString()}
                 onClick={() => handleDateClick(day)}
