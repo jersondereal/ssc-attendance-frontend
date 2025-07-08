@@ -114,10 +114,26 @@ export const Table = ({
 
   const handleMenuClick = (rowIndex: number, button: HTMLButtonElement) => {
     const rect = button.getBoundingClientRect();
-    setMenuPosition({
-      top: rect.bottom + window.scrollY,
-      left: rect.right + window.scrollX - 120, // Adjust for menu width
-    });
+    const menuWidth = 120; // Width of the menu
+    const menuHeight = 120; // Approximate height of the menu
+    const windowHeight = window.innerHeight;
+    const windowWidth = window.innerWidth;
+
+    // Calculate initial position
+    let top = rect.bottom + window.scrollY;
+    let left = rect.right + window.scrollX - menuWidth;
+
+    // Check if menu would go off the bottom of the screen
+    if (rect.bottom + menuHeight > windowHeight) {
+      top = rect.top + window.scrollY - menuHeight; // Position above the button
+    }
+
+    // Check if menu would go off the right of the screen
+    if (rect.right + menuWidth > windowWidth) {
+      left = rect.left + window.scrollX - menuWidth; // Position to the left of the button
+    }
+
+    setMenuPosition({ top, left });
     setActiveMenu(activeMenu === rowIndex ? null : rowIndex);
   };
 
