@@ -501,12 +501,17 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
                 }`}
                 disabled={isLoginBlocked}
               >
-                {isLoginBlocked && blockedUntil
-                  ? <span>
-                      Too many failed attempts.<br /> 
-                      Try again in {Math.ceil((blockedUntil - Date.now()) / (60 * 1000))} minutes
-                    </span>
-                  : "Login"}
+                {isLoginBlocked && blockedUntil ? (
+                  <span>
+                    Too many failed attempts.
+                    <br />
+                    Try again in{" "}
+                    {Math.ceil((blockedUntil - Date.now()) / (60 * 1000))}{" "}
+                    minutes
+                  </span>
+                ) : (
+                  "Login"
+                )}
               </button>
             </div>
           </form>
@@ -666,9 +671,7 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Username{" "}
-                {selectedUser?.username === "president" &&
-                  "(cannot be changed for president)"}
+                Username
               </label>
               <input
                 type="text"
@@ -688,6 +691,8 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Password {selectedUser && "(leave blank to keep current)"}
+                {selectedUser?.username === "president" &&
+                  currentUser?.username !== "president" }
               </label>
               <input
                 type="password"
@@ -695,15 +700,22 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, password: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-border-dark rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-zinc-200"
+                className={`w-full px-3 py-2 border border-border-dark rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-zinc-200 ${
+                  selectedUser?.username === "president" &&
+                  currentUser?.username !== "president"
+                    ? "opacity-50 cursor-not-allowed bg-gray-50"
+                    : ""
+                }`}
                 {...(!selectedUser && { required: true })}
+                disabled={
+                  selectedUser?.username === "president" &&
+                  currentUser?.username !== "president"
+                }
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Role{" "}
-                {selectedUser?.username === "president" &&
-                  "(cannot be changed for president)"}
+                Role
               </label>
               <DropdownSelector
                 value={formData.role}
