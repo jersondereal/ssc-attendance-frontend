@@ -321,6 +321,8 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
     localStorage.setItem("ssc-login-attempts", JSON.stringify(newAttempts));
 
     // If 5 failed attempts, block for 15 minutes
+    // COMMENTED OUT FOR TESTING
+    /*
     if (newAttempts.count >= 5) {
       const blockedUntil = now + 15 * 60 * 1000; // 15 minutes
       const timeoutData = { blockedUntil };
@@ -328,6 +330,7 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
       setIsLoginBlocked(true);
       setBlockedUntil(blockedUntil);
     }
+    */
   };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -692,7 +695,7 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Password {selectedUser && "(leave blank to keep current)"}
                 {selectedUser?.username === "president" &&
-                  currentUser?.username !== "president" }
+                  currentUser?.username !== "president"}
               </label>
               <input
                 type="password"
