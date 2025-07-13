@@ -1,9 +1,9 @@
-import AddIcon from "@mui/icons-material/Add";
 import EventIcon from "@mui/icons-material/Event";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { Ellipsis } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AddEventForm } from "../../forms/AddEventForm/AddEventForm";
 import { EditEventForm } from "../../forms/EditEventForm/EditEventForm";
+import { Button } from "../Button/Button";
 import { Modal } from "../Modal/Modal";
 
 export interface Event {
@@ -28,6 +28,7 @@ interface EventSelectorProps {
   }) => void;
   onEditEvent?: (event: Event) => void;
   onDeleteEvent?: (eventId: string) => void;
+  currentUserRole?: string; // Add this prop
 }
 
 export const EventSelector = ({
@@ -39,6 +40,7 @@ export const EventSelector = ({
   onAddEvent,
   onEditEvent,
   onDeleteEvent,
+  currentUserRole, // Add this prop
 }: EventSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
@@ -46,6 +48,8 @@ export const EventSelector = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
+  const [deleteEventConfirmChecked, setDeleteEventConfirmChecked] =
+    useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(value);
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -152,11 +156,11 @@ export const EventSelector = ({
   return (
     <div className="relative" ref={eventSelectorRef}>
       <div
-        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1.5 gap-2 rounded-md focus-within:border-border-focus focus-within:ring-2 focus-within:ring-zinc-200 cursor-pointer text-xs`}
+        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-md hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-xs`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-textbox-placeholder">
-          <EventIcon sx={{ fontSize: "1rem" }} />
+          <EventIcon sx={{ fontSize: "0.9rem" }} />
         </span>
         <input
           type="text"
@@ -167,48 +171,73 @@ export const EventSelector = ({
         />
       </div>
 
+      {/* Event Selector Dropdown */}
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-10 w-64">
-          <div className="max-h-48 overflow-y-auto">
+        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-20 w-fit">
+          <div className="max-h-64 overflow-y-auto">
             {events.length === 0 ? (
               <div className="text-center py-4 text-gray-400 text-xs">
                 No events scheduled for this date
               </div>
             ) : (
-              events.map((event) => (
-                <div key={event.id} className="relative group">
-                  <button
-                    onClick={() => handleEventSelect(event)}
-                    className={`w-full text-left px-3 py-2 hover:bg-zinc-100 rounded-md text-xs ${
-                      selectedEvent?.id === event.id ? "bg-zinc-100" : ""
-                    }`}
-                  >
-                    <div className="font-medium">{event.name}</div>
-                    <div className="text-gray-500 text-xs">
-                      {event.location}
-                    </div>
-                  </button>
-                  <button
-                    onClick={(e) => handleMenuClick(event.id, e)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 rounded-md opacity-0 group-hover:opacity-100"
-                  >
-                    <MoreVertIcon sx={{ fontSize: "1rem" }} />
-                  </button>
-                </div>
-              ))
+              events
+                .sort(
+                  (a, b) =>
+                    new Date(b.date).getTime() - new Date(a.date).getTime()
+                )
+                .map((event) => (
+                  <div key={event.id} className="relative group w-56">
+                    <button
+                      onClick={() => handleEventSelect(event)}
+                      className={`flex flex-col w-full text-left p-3 pb-2 hover:bg-gray-100 hover:bg-opacity-60 rounded-md text-xs gap-2 ${
+                        selectedEvent?.id === event.id
+                          ? "border border-gray-300"
+                          : ""
+                      }`}
+                    >
+                      <div className="font-semibold ">{event.name}</div>
+                      <div className="flex flex-col gap-1">
+                        <div className="text-gray-500 text-xs flex flex-row items-center">
+                          {event.location}
+                        </div>
+                        <div className="text-gray-500 text-xs">
+                          {new Date(event.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </div>
+                        <div className="text-gray-500 text-xs">
+                          {event.fine}
+                        </div>
+                      </div>
+                    </button>
+                    {/* Hide ellipsis button for viewer */}
+                    {currentUserRole !== "Viewer" && (
+                      <button
+                        onClick={(e) => handleMenuClick(event.id, e)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 rounded-md opacity-0 group-hover:opacity-100"
+                      >
+                        <Ellipsis size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))
             )}
           </div>
-          <div className="border-t border-border-dark mt-2 pt-2">
-            <button
-              className="w-full flex items-center justify-center gap-1 px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 rounded-md"
-              onClick={() => {
-                setIsAddEventModalOpen(true);
-                setIsOpen(false);
-              }}
-            >
-              <AddIcon sx={{ fontSize: "1rem" }} />
-              Add Event
-            </button>
+          <div className=" pt-2">
+            {/* Hide Add Event button for viewer */}
+            {currentUserRole !== "Viewer" && (
+              <Button
+                className="w-full flex items-center justify-center gap-1 py-1.5 text-xs text-black hover:bg-gray-100 rounded-md font-medium"
+                label="Add Event"
+                variant="secondary"
+                onClick={() => {
+                  setIsAddEventModalOpen(true);
+                  setIsOpen(false);
+                }}
+              />
+            )}
           </div>
         </div>
       )}
@@ -217,7 +246,7 @@ export const EventSelector = ({
       {menuOpenFor && (
         <div
           ref={menuRef}
-          className="fixed bg-white border border-border-dark rounded-md shadow-lg z-20 w-32"
+          className="fixed bg-white border border-border-dark rounded-md shadow-lg z-20 w-28 p-1"
           style={{
             top: `${menuPosition.top}px`,
             left: `${menuPosition.left}px`,
@@ -227,13 +256,13 @@ export const EventSelector = ({
             onClick={(e) =>
               handleEditClick(events.find((e) => e.id === menuOpenFor)!, e)
             }
-            className="w-full text-left px-3 py-2 hover:bg-zinc-100 text-xs"
+            className="w-full rounded-md text-left px-3 py-1.5 hover:bg-zinc-100 text-xs"
           >
             Edit
           </button>
           <button
             onClick={(e) => handleDeleteClick(menuOpenFor, e)}
-            className="w-full text-left px-3 py-2 hover:bg-zinc-100 text-xs text-red-600"
+            className="w-full rounded-md text-left px-3 py-1.5 hover:bg-zinc-100 text-xs text-red-600"
           >
             Delete
           </button>
@@ -278,28 +307,51 @@ export const EventSelector = ({
           setEventToDelete(null);
         }}
       >
-        <div className="p-6">
-          <h2 className="font-medium mb-4">Delete Event?</h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Are you sure you want to delete "{eventToDelete?.name}"? This action
-            cannot be undone.
+        <div className="p-5 w-fit">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">
+            Confirm to delete the event
+          </h2>
+          <p className="text-xs text-gray-600 mb-6">
+            Are you sure you want to delete "{eventToDelete?.name}"? <br /> This
+            action cannot be undone.
           </p>
-          <div className="flex gap-3">
-            <button
-              onClick={handleConfirmDelete}
-              className="flex-1 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm"
+
+          <div className="flex items-start gap-2 mb-6 p-3 bg-red-50 border border-red-200 rounded-md">
+            <input
+              type="checkbox"
+              id="delete-event-confirm"
+              checked={deleteEventConfirmChecked}
+              onChange={(e) => setDeleteEventConfirmChecked(e.target.checked)}
+              className="mt-0.5 h-3 w-3 text-red-600 border-gray-300 rounded focus:ring-red-500"
+            />
+            <label
+              htmlFor="delete-event-confirm"
+              className="text-xs text-red-700"
             >
-              Delete
-            </button>
-            <button
+              I understand that this action will permanently delete the event "
+              {eventToDelete?.name}" from the database. This data cannot be
+              recovered once deleted. I confirm that I have verified the
+              selection and take full responsibility for this action.
+            </label>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button
               onClick={() => {
                 setIsDeleteModalOpen(false);
                 setEventToDelete(null);
+                setDeleteEventConfirmChecked(false);
               }}
-              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 text-sm"
-            >
-              Cancel
-            </button>
+              label="Cancel"
+              variant="secondary"
+            />
+            <Button
+              onClick={handleConfirmDelete}
+              className="bg-red-400 !text-white !border-red-500 hover:bg-red-500 !hover:border-red-500 !hover:text-white"
+              label="Delete"
+              variant="danger"
+              disabled={!deleteEventConfirmChecked}
+            />
           </div>
         </div>
       </Modal>

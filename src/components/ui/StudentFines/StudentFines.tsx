@@ -1,10 +1,11 @@
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
-import Checkbox from "@mui/material/Checkbox";
 import axios from "axios";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import config from "../../../config";
-import { Button } from "../../common/Button/Button";
+import Checkbox from "../../common/Checkbox/Checkbox";
+import { Modal } from "../../common/Modal/Modal";
 import type { StudentRecord } from "../../common/Table/Table";
 
 interface StudentFine {
@@ -26,11 +27,23 @@ interface FineApiResponse {
 interface StudentFinesProps {
   studentData: StudentRecord;
   onClose: () => void;
+  currentUserRole?: string;
 }
 
-export const StudentFines = ({ studentData, onClose }: StudentFinesProps) => {
+export const StudentFines = ({
+  studentData,
+  onClose,
+  currentUserRole,
+}: StudentFinesProps) => {
   const [fines, setFines] = useState<StudentFine[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [finesConfirmChecked, setFinesConfirmChecked] = useState(false);
+  const [showIndividualConfirmModal, setShowIndividualConfirmModal] =
+    useState(false);
+  const [individualConfirmChecked, setIndividualConfirmChecked] =
+    useState(false);
+  const [pendingFine, setPendingFine] = useState<StudentFine | null>(null);
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Pick<StudentFine, "eventTitle" | "amount">;
     direction: "asc" | "desc";
@@ -78,23 +91,87 @@ export const StudentFines = ({ studentData, onClose }: StudentFinesProps) => {
     });
   };
 
-  const handleCheckboxChange = async (fine: StudentFine) => {
+  const handleCheckboxChange = (fine: StudentFine) => {
+    // If already paid, prevent unchecking
+    if (fine.isPaid) {
+      return;
+    }
+
+    // Show confirmation modal for individual fine
+    setPendingFine(fine);
+    setShowIndividualConfirmModal(true);
+  };
+
+  const handleSelectAll = async () => {
+    const allChecked = fines.every((fine) => fine.isPaid);
+
+    // If all are already checked, prevent unchecking
+    if (allChecked) {
+      return;
+    }
+
+    // Show confirmation modal
+    setShowConfirmModal(true);
+  };
+
+  const confirmSelectAll = async () => {
+    try {
+      // Update all fines to paid status
+      const updatePromises = fines.map((fine) =>
+        axios.put(
+          `${config.API_BASE_URL}/fines/student/${studentData.studentId}/event/${fine.eventId}`,
+          { isPaid: true }
+        )
+      );
+
+      await Promise.all(updatePromises);
+
+      // Update local state
+      setFines((prev) => prev.map((fine) => ({ ...fine, isPaid: true })));
+    } catch (error) {
+      console.error("Error updating all fine statuses:", error);
+      // You might want to show a toast message here
+    } finally {
+      setShowConfirmModal(false);
+    }
+  };
+
+  const cancelSelectAll = () => {
+    setShowConfirmModal(false);
+    setFinesConfirmChecked(false);
+  };
+
+  const confirmIndividualFine = async () => {
+    if (!pendingFine) return;
+
     try {
       const response = await axios.put(
-        `${config.API_BASE_URL}/fines/student/${studentData.studentId}/event/${fine.eventId}`,
-        { isPaid: !fine.isPaid }
+        `${config.API_BASE_URL}/fines/student/${studentData.studentId}/event/${pendingFine.eventId}`,
+        { isPaid: true }
       );
 
       if (response.data) {
         // Update local state
         setFines((prev) =>
-          prev.map((f) => (f.id === fine.id ? { ...f, isPaid: !f.isPaid } : f))
+          prev.map((f) =>
+            f.id === pendingFine.id ? { ...f, isPaid: true } : f
+          )
         );
       }
     } catch (error) {
       console.error("Error updating fine status:", error);
       // You might want to show a toast message here
+    } finally {
+      setShowIndividualConfirmModal(false);
+      setIndividualConfirmChecked(false);
+      setPendingFine(null);
     }
+  };
+
+  const cancelIndividualFine = () => {
+    setShowIndividualConfirmModal(false);
+    setIndividualConfirmChecked(false);
+    setPendingFine(null);
   };
 
   const sortedFines = [...fines].sort((a, b) => {
@@ -123,125 +200,224 @@ export const StudentFines = ({ studentData, onClose }: StudentFinesProps) => {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-base font-semibold mb-6">Student Fines</h2>
+    <>
+      <div className="p-5 w-fit relative bg-gray-100 rounded-md">
+        <div className="absolute top-5 right-5">
+          <X className="w-4 h-4 cursor-pointer" onClick={onClose} />
+        </div>
 
-      {/* Student Information */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-600 mb-3">
-          Student Information
-        </h3>
-        <div className="grid grid-cols-2 gap-4 text-sm border border-border-dark p-4 rounded-md">
+        <h2 className="text-base w-fit mx-auto font-semibold mb-1">
+          {studentData.name}
+        </h2>
+        <div className="flex flex-row gap-4 w-fit mx-auto text-xs items-center h-fit text-gray-500 mb-6">
+          <span>{studentData.studentId}</span>
+          <span>{studentData.course.toUpperCase()}</span>
           <div>
-            <p className="text-gray-500 text-xs">Name</p>
-            <p className="font-medium">{studentData.name}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-xs">ID</p>
-            <p className="font-medium">{studentData.studentId}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-xs">Course</p>
-            <p className="font-medium">{studentData.course}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-xs">Year & Section</p>
-            <p className="font-medium">
-              {studentData.year}-{studentData.section}
-            </p>
+            <span>{studentData.year}</span>-
+            <span>{studentData.section.toUpperCase()}</span>
           </div>
         </div>
-      </div>
 
-      {/* Fines Table */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-600 mb-3">
-          Fines Overview
-        </h3>
-        <div className="bg-white rounded-md border border-border-dark">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-border-dark bg-background-dark">
-                <th className="w-2 px-2 py-3"></th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer"
-                  onClick={() => handleSort("eventTitle")}
-                >
-                  <div className="flex items-center gap-1">
-                    EVENT
-                    {sortConfig.key === "eventTitle" &&
-                      (sortConfig.direction === "asc" ? (
-                        <SouthIcon sx={{ fontSize: "1rem" }} />
-                      ) : (
-                        <NorthIcon sx={{ fontSize: "1rem" }} />
-                      ))}
-                  </div>
-                </th>
-                <th
-                  className="px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer"
-                  onClick={() => handleSort("amount")}
-                >
-                  <div className="flex items-center gap-1">
-                    FINE
-                    {sortConfig.key === "amount" &&
-                      (sortConfig.direction === "asc" ? (
-                        <SouthIcon sx={{ fontSize: "1rem" }} />
-                      ) : (
-                        <NorthIcon sx={{ fontSize: "1rem" }} />
-                      ))}
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedFines.length === 0 ? (
+        {/* Fines Overview */}
+        <div className="mb-4 grid grid-cols-2 gap-4">
+          <div className="p-4 rounded-lg flex flex-col gap-4 h-fit bg-white">
+            <p className="text-gray-600 text-xs">Total Fines</p>
+            <p className="text-base font-semibold">{fines.length}</p>
+          </div>
+          <div className="p-4 rounded-lg flex flex-col gap-4 h-fit bg-white">
+            <p className="text-gray-600 text-xs">Unpaid Amount</p>
+            <p className="text-base font-semibold">₱{totalUnpaidFines}</p>
+          </div>
+        </div>
+
+        {/* Fines Table */}
+        <div className="bg-white p-4 rounded-lg">
+          <h3 className="text-sm text-gray-700 mb-4">Fines Details</h3>
+          <div className="bg-gray-50 border border-gray-200 rounded-md overflow-hidden max-h-96 overflow-y-auto">
+            <table className="w-full border-collapse">
+              <thead>
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="text-center py-4 text-gray-500 text-sm"
-                  >
-                    No fines found
-                  </td>
-                </tr>
-              ) : (
-                sortedFines.map((fine) => (
-                  <tr
-                    key={fine.id}
-                    className="border-b border-border-dark hover:bg-gray-100 last:border-b-0"
-                  >
-                    <td className="px-1 py-1">
+                  <th className="w-2 pl-2 py-3 border-b border-gray-200">
+                    {currentUserRole !== "Viewer" && (
                       <Checkbox
-                        checked={fine.isPaid}
-                        onChange={() => handleCheckboxChange(fine)}
-                        size="small"
+                        checked={
+                          fines.length > 0 && fines.every((fine) => fine.isPaid)
+                        }
+                        onChange={handleSelectAll}
                       />
-                    </td>
-                    <td className="px-4 py-2 text-xs text-gray-700">
-                      {fine.eventTitle}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-gray-700">
-                      ₱{formatAmount(fine.amount)}
+                    )}
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer border-b border-gray-200"
+                    onClick={() => handleSort("eventTitle")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Event
+                      {sortConfig.key === "eventTitle" &&
+                        (sortConfig.direction === "asc" ? (
+                          <SouthIcon sx={{ fontSize: "0.8rem" }} />
+                        ) : (
+                          <NorthIcon sx={{ fontSize: "0.8rem" }} />
+                        ))}
+                    </div>
+                  </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer border-b border-gray-200"
+                    onClick={() => handleSort("amount")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Fine
+                      {sortConfig.key === "amount" &&
+                        (sortConfig.direction === "asc" ? (
+                          <SouthIcon sx={{ fontSize: "0.8rem" }} />
+                        ) : (
+                          <NorthIcon sx={{ fontSize: "0.8rem" }} />
+                        ))}
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedFines.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="text-center py-4 text-gray-500 text-sm"
+                    >
+                      No fines found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  sortedFines.map((fine) => (
+                    <tr
+                      key={fine.id}
+                      className="border-b border-gray-200 hover:bg-gray-100 last:border-b-0 transition-colors"
+                    >
+                      <td className="pl-2 py-1">
+                        {currentUserRole !== "Viewer" && (
+                          <Checkbox
+                            checked={fine.isPaid}
+                            onChange={() => handleCheckboxChange(fine)}
+                          />
+                        )}
+                      </td>
+                      <td
+                        className={`px-4 py-2 text-xs ${
+                          fine.isPaid
+                            ? "text-gray-400 line-through"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {fine.eventTitle}
+                      </td>
+                      <td
+                        className={`px-4 py-2 text-xs ${
+                          fine.isPaid
+                            ? "text-gray-400 line-through"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        ₱{formatAmount(fine.amount)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Total Amount */}
-      <div className="mt-4 flex justify-end items-center gap-2 text-sm">
-        <span className="text-gray-600">Total Unpaid Fines:</span>
-        <span className="font-medium">₱{totalUnpaidFines}</span>
-      </div>
+      {/* Confirmation Modal */}
+      <Modal isOpen={showConfirmModal} onClose={cancelSelectAll}>
+        <div className="p-5 w-fit">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">
+            Confirm bulk fines update
+          </h2>
+          <p className="text-xs text-gray-600 mb-4">
+            Are you sure you want to mark all fines as paid? This action cannot
+            be undone.
+          </p>
 
-      <Button
-        label="Close"
-        className="w-full mt-6 !py-2.5 font-medium"
-        variant="secondary"
-        onClick={onClose}
-      />
-    </div>
+          <div className="flex items-start gap-2 mb-6 p-3 bg-green-50 border border-green-200 rounded-md">
+            <input
+              type="checkbox"
+              id="fines-confirm"
+              checked={finesConfirmChecked}
+              onChange={(e) => setFinesConfirmChecked(e.target.checked)}
+              className="mt-0.5 h-3 w-3 text-green-600 border-gray-300 rounded focus:ring-green-500"
+            />
+            <label htmlFor="fines-confirm" className="text-xs text-green-700">
+              I understand that this action will mark all fines as paid. This
+              action cannot be undone. I confirm that I have verified the
+              selection and take responsibility for this action.
+            </label>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={cancelSelectAll}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmSelectAll}
+              disabled={!finesConfirmChecked}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-500 border border-green-500 rounded-md hover:bg-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Mark All as Paid
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Individual Fine Confirmation Modal */}
+      <Modal isOpen={showIndividualConfirmModal} onClose={cancelIndividualFine}>
+        <div className="p-5 w-fit">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">
+            Confirm fine payment
+          </h2>
+          <p className="text-xs text-gray-600 mb-4">
+            Are you sure you want to mark the fine for "
+            {pendingFine?.eventTitle}" as paid? This action cannot be undone.
+          </p>
+
+          <div className="flex items-start gap-2 mb-6 p-3 bg-green-50 border border-green-200 rounded-md">
+            <input
+              type="checkbox"
+              id="individual-fine-confirm"
+              checked={individualConfirmChecked}
+              onChange={(e) => setIndividualConfirmChecked(e.target.checked)}
+              className="mt-0.5 h-3 w-3 text-green-600 border-gray-300 rounded focus:ring-green-500"
+            />
+            <label
+              htmlFor="individual-fine-confirm"
+              className="text-xs text-green-700"
+            >
+              I understand that this action will mark this fine as paid. This
+              action cannot be undone. I confirm that I have verified the
+              selection and take responsibility for this action.
+            </label>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={cancelIndividualFine}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmIndividualFine}
+              disabled={!individualConfirmChecked}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-500 border border-green-500 rounded-md hover:bg-green-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Mark as Paid
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 };

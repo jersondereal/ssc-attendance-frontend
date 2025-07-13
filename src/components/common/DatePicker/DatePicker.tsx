@@ -67,11 +67,11 @@ export const DatePicker = ({
   return (
     <div className="relative" ref={datePickerRef}>
       <div
-        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1.5 gap-2 rounded-md focus-within:border-border-focus focus-within:ring-2 focus-within:ring-zinc-200 cursor-pointer text-xs`}
+        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-md hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-xs`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-textbox-placeholder">
-          <CalendarMonthIcon sx={{ fontSize: "1rem" }} />
+          <CalendarMonthIcon sx={{ fontSize: "0.9rem" }} />
         </span>
         <input
           type="text"

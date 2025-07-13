@@ -4,9 +4,15 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  modalClassName?: string;
 }
 
-export const Modal = ({ isOpen, onClose, children }: ModalProps) => {
+export const Modal = ({
+  isOpen,
+  onClose,
+  children,
+  modalClassName,
+}: ModalProps) => {
   if (!isOpen) return null;
 
   return (
@@ -18,7 +24,11 @@ export const Modal = ({ isOpen, onClose, children }: ModalProps) => {
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-md shadow-xl w-full mx-4 max-w-sm">
+      <div
+        className={`relative bg-white rounded-md shadow-xl w-full max-w-sm ${
+          modalClassName || ""
+        }`}
+      >
         {children}
       </div>
     </div>

@@ -1,13 +1,11 @@
-import HowToRegIcon from "@mui/icons-material/HowToReg";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import SaveAltIcon from "@mui/icons-material/SaveAlt";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import { Analytics } from "@vercel/analytics/react";
 import axios from "axios";
-import { useCallback, useEffect, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import "./App.css";
 import { Button } from "./components/common/Button/Button";
-import { DatePicker } from "./components/common/DatePicker/DatePicker";
 import { DropdownSelector } from "./components/common/DropdownSelector/DropdownSelector";
 import {
   EventSelector,
@@ -17,7 +15,8 @@ import { Modal } from "./components/common/Modal/Modal";
 import { SearchBar } from "./components/common/SearchBar/SearchBar";
 import type { TableRecord } from "./components/common/Table/Table";
 import { Table } from "./components/common/Table/Table";
-import { TableSelector } from "./components/common/TableSelector/TableSelector";
+
+import NavigationMenu from "./components/common/NavigationMenu/NavigationMenu";
 import { UserMenu } from "./components/common/UserMenu/UserMenu";
 import { AddStudentForm } from "./components/forms/AddStudentForm/AddStudentForm";
 import { EditStudentForm } from "./components/forms/EditStudentForm/EditStudentForm";
@@ -93,10 +92,17 @@ function AppContent() {
   const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
   const [isFinesModalOpen, setIsFinesModalOpen] = useState(false);
+  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] =
+    useState(false);
+  const [deleteConfirmChecked, setDeleteConfirmChecked] = useState(false);
+  const [isBulkAttendanceModalOpen, setIsBulkAttendanceModalOpen] =
+    useState(false);
+  const [bulkAttendanceStatus, setBulkAttendanceStatus] = useState<string>("");
+  const [bulkAttendanceConfirmChecked, setBulkAttendanceConfirmChecked] =
+    useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(
     undefined
   );
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [editingStudent, setEditingStudent] = useState<
     AttendanceRecord | StudentRecord | null
   >(null);
@@ -117,6 +123,26 @@ function AppContent() {
     role: string;
   } | null>(null);
 
+  useEffect(() => {
+    console.log("Current user:", currentUser);
+  }, [currentUser]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageInputValue, setPageInputValue] = useState("1");
+  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [isRowsModalOpen, setIsRowsModalOpen] = useState(false);
+  const [rowsDropdownPosition, setRowsDropdownPosition] = useState({
+    top: 0,
+    left: 0,
+  });
+  const rowsDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Selected rows state
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [totalAttendance, setTotalAttendance] = useState(0);
+
   // Fetch students from database
   useEffect(() => {
     axios
@@ -131,24 +157,24 @@ function AppContent() {
           rfid: student.rfid,
         }));
         setStudents(mappedStudents);
+        setTotalStudents(res.data.length);
       })
       .catch((err) => {
         console.error(err);
       });
   }, []);
 
-  // Fetch events from database
+  // Fetch all events from database
   useEffect(() => {
-    const formattedDate = selectedDate.toLocaleDateString("en-CA"); // Format as YYYY-MM-DD
     axios
-      .get(`${config.API_BASE_URL}/events/date/${formattedDate}`)
+      .get(`${config.API_BASE_URL}/events`)
       .then((res) => {
         setEvents(res.data);
       })
       .catch((err) => {
         console.error(err);
       });
-  }, [selectedDate]);
+  }, []);
 
   // Fetch attendance data from database
   useEffect(() => {
@@ -166,12 +192,14 @@ function AppContent() {
           }));
 
           setAttendanceData(mappedAttendance);
+          setTotalAttendance(res.data.length);
         })
         .catch((err) => {
           console.error(err);
         });
     } else {
       setAttendanceData([]);
+      setTotalAttendance(0);
     }
   }, [selectedEvent]);
 
@@ -213,19 +241,6 @@ function AppContent() {
         if ("studentId" in row) {
           setEditingStudent(row as AttendanceRecord | StudentRecord);
           setIsEditStudentModalOpen(true);
-        }
-        break;
-      case "delete":
-        if ("studentId" in row) {
-          if (selectedTable === "attendance") {
-            setAttendanceData((prev) =>
-              prev.filter((student) => student.studentId !== row.studentId)
-            );
-          } else {
-            setStudents((prev) =>
-              prev.filter((student) => student.studentId !== row.studentId)
-            );
-          }
         }
         break;
       case "metrics":
@@ -280,6 +295,9 @@ function AppContent() {
         },
       ]);
 
+      // Update total students count
+      setTotalStudents((prev) => prev + 1);
+
       showToast(`Student ${newStudent.name} added successfully`, "success");
       setIsAddStudentModalOpen(false);
     } catch (error: unknown) {
@@ -324,11 +342,6 @@ function AppContent() {
     showToast(`Viewing attendance for ${event.name}`, "info");
   };
 
-  const handleDateChange = (date: Date) => {
-    setSelectedDate(date);
-    setSelectedEvent(undefined); // Reset selected event when date changes
-  };
-
   const handleAddEvent = async (eventData: {
     title: string;
     event_date: string;
@@ -342,16 +355,9 @@ function AppContent() {
       );
       const newEvent = response.data;
 
-      // Format both dates to YYYY-MM-DD for comparison
-      const formattedSelectedDate = selectedDate.toLocaleDateString("en-CA");
-      const formattedEventDate = new Date(
-        newEvent.event_date
-      ).toLocaleDateString("en-CA");
-
-      if (formattedEventDate === formattedSelectedDate) {
-        console.log("Adding event to list");
-        setEvents((prevEvents) => [...prevEvents, newEvent]);
-      }
+      // Add new event to the list
+      console.log("Adding event to list");
+      setEvents((prevEvents) => [...prevEvents, newEvent]);
 
       // Show success toast
       showToast(`Event "${newEvent.title}" created successfully`);
@@ -374,19 +380,12 @@ function AppContent() {
       );
       const updatedEvent = response.data;
 
-      // Update the event in the events list if it matches the selected date
-      const formattedSelectedDate = selectedDate.toLocaleDateString("en-CA");
-      const formattedEventDate = new Date(
-        updatedEvent.event_date
-      ).toLocaleDateString("en-CA");
-
-      if (formattedEventDate === formattedSelectedDate) {
-        setEvents((prevEvents) =>
-          prevEvents.map((e) =>
-            e.id.toString() === updatedEvent.id.toString() ? updatedEvent : e
-          )
-        );
-      }
+      // Update the event in the events list
+      setEvents((prevEvents) =>
+        prevEvents.map((e) =>
+          e.id.toString() === updatedEvent.id.toString() ? updatedEvent : e
+        )
+      );
 
       showToast(`Event "${updatedEvent.title}" updated successfully`);
     } catch (error) {
@@ -476,23 +475,22 @@ function AppContent() {
       }
     }
   };
-
   const attendanceColumns = [
-    { key: "studentId", label: "ID", width: "0" },
-    { key: "name", label: "NAME", width: "0" },
-    { key: "course", label: "COURSE", width: "0" },
-    { key: "year", label: "YEAR", width: "0" },
-    { key: "section", label: "SECTION", width: "0" },
-    { key: "status", label: "STATUS", width: "0" },
+    { key: "studentId", label: "Id", width: "0" },
+    { key: "name", label: "Name", width: "100" },
+    { key: "course", label: "Course", width: "0" },
+    { key: "year", label: "Year", width: "0" },
+    { key: "section", label: "Section", width: "0" },
+    { key: "status", label: "Status", width: "0" },
   ];
 
   const studentColumns = [
-    { key: "studentId", label: "ID", width: "0" },
-    { key: "rfid", label: "RFID", width: "0" },
-    { key: "name", label: "NAME", width: "0" },
-    { key: "course", label: "COURSE", width: "0" },
-    { key: "year", label: "YEAR", width: "0" },
-    { key: "section", label: "SECTION", width: "0" },
+    { key: "studentId", label: "Id", width: "0" },
+    { key: "rfid", label: "Rfid", width: "0" },
+    { key: "name", label: "Name", width: "100" },
+    { key: "course", label: "Course", width: "0" },
+    { key: "year", label: "Year", width: "0" },
+    { key: "section", label: "Section", width: "0" },
   ];
 
   const courseOptions = [
@@ -601,6 +599,79 @@ function AppContent() {
     });
   }, [selectedTable, attendanceData, students, selectedFilters, searchQuery]);
 
+  // Sort the filtered data first
+  const filteredData = getFilteredData();
+  const sortedData = [...filteredData].sort((a, b) => {
+    const aValue = a[sortConfig.key as keyof TableRecord];
+    const bValue = b[sortConfig.key as keyof TableRecord];
+
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // Pagination logic
+  const totalItems = sortedData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = sortedData.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    const newPage = Math.max(currentPage - 1, 1);
+    setCurrentPage(newPage);
+    setPageInputValue(newPage.toString());
+  };
+
+  const handleNextPage = () => {
+    const newPage = Math.min(currentPage + 1, totalPages);
+    setCurrentPage(newPage);
+    setPageInputValue(newPage.toString());
+  };
+
+  const handleRowsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+    setIsRowsModalOpen(false);
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      const value = parseInt(e.currentTarget.value);
+      if (value && value >= 1 && value <= totalPages) {
+        setCurrentPage(value);
+        setPageInputValue(value.toString());
+      } else {
+        setCurrentPage(1);
+        setPageInputValue("1");
+      }
+      e.currentTarget.blur();
+    }
+  };
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === "" || /^\d*$/.test(value)) {
+      setPageInputValue(value);
+    }
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageInputValue("1");
+  }, [selectedFilters, searchQuery, selectedTable]);
+
+  // Clear selected rows when table changes
+  useEffect(() => {
+    setSelectedRows([]);
+  }, [selectedTable]);
+
+  // Sync input value with current page
+  useEffect(() => {
+    setPageInputValue(currentPage.toString());
+  }, [currentPage]);
+
   const handleFilterChange = (
     filterType: "course" | "year" | "section",
     value: string
@@ -623,140 +694,385 @@ function AppContent() {
     []
   );
 
+  const handleDeleteSelected = () => {
+    setIsDeleteConfirmModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    const selectedData = selectedRows.map((index) => currentData[index]);
+    const studentIds = selectedData.map((student) => student.studentId);
+
+    try {
+      const response = await axios.delete(
+        `${config.API_BASE_URL}/students/bulk`,
+        {
+          data: { studentIds },
+        }
+      );
+
+      // Remove deleted students from local state
+      if (selectedTable === "students") {
+        setStudents((prev) =>
+          prev.filter((student) => !studentIds.includes(student.studentId))
+        );
+      }
+
+      setSelectedRows([]);
+      setIsDeleteConfirmModalOpen(false);
+      setDeleteConfirmChecked(false);
+      showToast(response.data.message, "success");
+    } catch (error) {
+      console.error("Error deleting students:", error);
+      if (axios.isAxiosError(error)) {
+        showToast(
+          error.response?.data?.message || "Failed to delete selected students",
+          "error"
+        );
+      } else {
+        showToast("Failed to delete selected students", "error");
+      }
+    }
+  };
+
+  const handleConfirmBulkAttendance = async () => {
+    const selectedData = selectedRows.map((index) => currentData[index]);
+    const studentIds = selectedData.map((student) => student.studentId);
+
+    if (!selectedEvent) {
+      showToast("Please select an event first", "error");
+      return;
+    }
+
+    try {
+      // Update attendance for all selected students
+      const updatePromises = studentIds.map((studentId) =>
+        axios.put(
+          `${config.API_BASE_URL}/attendance/${studentId}/${selectedEvent.id}`,
+          { status: bulkAttendanceStatus }
+        )
+      );
+
+      await Promise.all(updatePromises);
+
+      // Update local attendance data
+      setAttendanceData((prev) =>
+        prev.map((item) =>
+          studentIds.includes(item.studentId)
+            ? { ...item, status: bulkAttendanceStatus }
+            : item
+        )
+      );
+
+      setSelectedRows([]);
+      setIsBulkAttendanceModalOpen(false);
+      setBulkAttendanceConfirmChecked(false);
+      showToast(
+        `Marked ${selectedData.length} student(s) as ${bulkAttendanceStatus}`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Error updating bulk attendance:", error);
+      showToast("Failed to update attendance for selected students", "error");
+    }
+  };
+
+  // Handle click outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        rowsDropdownRef.current &&
+        !rowsDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsRowsModalOpen(false);
+      }
+    };
+
+    if (isRowsModalOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isRowsModalOpen]);
+
+  const handleRowsClick = (event: React.MouseEvent) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setRowsDropdownPosition({
+      top: rect.top + window.scrollY - 175, // Position above the button (moved up for more buttons)
+      left: rect.left + window.scrollX,
+    });
+    setIsRowsModalOpen(!isRowsModalOpen);
+  };
+
   return (
-    <div className="app bg-background-light h-[100vh] pb-5">
+    <div className="app bg-white h-[100vh] pb-5">
       <Analytics />
       {/* Header */}
-      <div className="w-full h-fit flex flex-col p-5 border-b border-border-dark bg-white gap-5 mb-6 z-20">
+      <div className="w-full h-fit flex flex-col py-0 px-4 border-b border-border-dark bg-white gap-3 mb-5 z-20">
         {/* Top part */}
         <div className="flex flex-row items-center w-full">
-          {/* Logo and Table selector */}
-          <div className="flex flex-row items-center mr-4 gap-2">
-            <h1 className="text-sscTheme font-bold text-sm">SSC</h1>
-            <TableSelector value={selectedTable} onChange={setSelectedTable} />
+          {/* Logo and Navigation */}
+          <div className="flex flex-row items-center mr-auto">
+            <img
+              src="/logo.png"
+              alt="SSC Logo"
+              className="h-8 w-auto mr-6"
+              style={{ maxHeight: "2rem" }}
+            />
+            <NavigationMenu
+              activeItem={selectedTable}
+              onItemClick={setSelectedTable}
+            />
           </div>
-          <SearchBar onSearch={handleSearch} />
           {/* User Menu */}
-          <div className="flex flex-row items-center gap-3 text-sm">
+          <div className="flex flex-row items-center gap-3">
             {currentUser && (
-              <span className="font-medium text-sm text-gray-600 hidden sm:block">
-                {currentUser.username}
+              <span className="font-medium text-xs text-gray-600 hidden sm:block">
+                @{currentUser.username}
               </span>
             )}
             <UserMenu onLogout={handleLogout} onUserChange={handleUserChange} />
           </div>
         </div>
+      </div>
 
-        {/* Menu bar */}
-        <div className="flex lg:flex-row flex-col gap-3 w-full lg:w-[60rem]">
-          {/* Date and Event Group */}
-          <div className="flex flex-row gap-3">
-            <Button
-              onClick={handleDownload}
-              icon={<SaveAltIcon sx={{ fontSize: "1rem" }} />}
-              variant="primary"
-              title="Export Table Data"
-              className="hidden sm:block"
-            />
-            {selectedTable === "attendance" ? (
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="flex flex-row gap-3">
+      {!currentUser ? (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-gray-600 mb-2">
+              Welcome to SSC Attendance
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Please login to access the system
+            </p>
+          </div>
+        </div>
+      ) : selectedTable === "events" ? (
+        <div className="w-full max-w-[60rem] mx-auto flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold text-gray-600 mb-2">
+              Under Construction
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Events page is coming soon...
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full h-full px-5">
+          {/* Menu bar container  */}
+          <div className="flex flex-row w-full max-w-[60rem] mx-auto mb-3 z-100 items-end ">
+            {selectedRows.length > 0 ? (
+              <div className="flex flex-row items-center gap-2 ">
+                <Button
+                  onClick={handleDownload}
+                  // icon={<SaveAltIcon sx={{ fontSize: "0.9rem" }} />}
+                  variant="primary"
+                  title="Export Table Data"
+                  label="Export"
+                />
+                {selectedTable === "students" && (
                   <Button
-                    onClick={handleDownload}
-                    icon={<SaveAltIcon sx={{ fontSize: "1rem" }} />}
-                    variant="primary"
-                    title="Export Table Data"
-                    className="sm:hidden"
+                    icon={
+                      <DeleteOutlineOutlinedIcon sx={{ fontSize: "0.9rem" }} />
+                    }
+                    label={`Delete ${selectedRows.length} row${
+                      selectedRows.length > 1 ? "s" : ""
+                    }`}
+                    variant="danger"
+                    onClick={handleDeleteSelected}
                   />
-                  <Button
-                    icon={<HowToRegIcon sx={{ fontSize: "1rem" }} />}
-                    label="RFID Check-In"
-                    variant="primary"
-                    onClick={() => setIsRfidModalOpen(true)}
+                )}
+
+                {selectedTable === "attendance" && (
+                  <>
+                    <Button
+                      label="Present"
+                      variant="primary"
+                      onClick={() => {
+                        setBulkAttendanceStatus("present");
+                        setIsBulkAttendanceModalOpen(true);
+                      }}
+                    />
+                    <Button
+                      label="Absent"
+                      variant="primary"
+                      onClick={() => {
+                        setBulkAttendanceStatus("absent");
+                        setIsBulkAttendanceModalOpen(true);
+                      }}
+                    />
+                    <Button
+                      label="Excused"
+                      variant="primary"
+                      onClick={() => {
+                        setBulkAttendanceStatus("excused");
+                        setIsBulkAttendanceModalOpen(true);
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="flex md:flex-row flex-col mr-0 sm:mr-3 gap-y-2">
+                {/* Date and Event Group */}
+                <div className={`flex flex-row`}>
+                  {selectedTable === "attendance" ? (
+                    <div className="flex flex-row gap-3 items-center">
+                      {currentUser?.role !== "Viewer" && (
+                        <Button
+                          // icon={<HowToRegIcon sx={{ fontSize: "0.9rem" }} />}
+                          label="RFID Check-In"
+                          variant="primary"
+                          onClick={() => setIsRfidModalOpen(true)}
+                        />
+                      )}
+                      <EventSelector
+                        className="w-32 md:w-40 mr-3"
+                        value={selectedEvent}
+                        onChange={handleEventChange}
+                        placeholder="Select event"
+                        events={events.map((event) => ({
+                          id: event.id.toString(),
+                          name: event.title,
+                          date: event.event_date,
+                          location: event.location,
+                          fine: event.fine,
+                        }))}
+                        onAddEvent={handleAddEvent}
+                        onEditEvent={handleEditEvent}
+                        onDeleteEvent={handleDeleteEvent}
+                        currentUserRole={currentUser?.role}
+                      />
+                    </div>
+                  ) : (
+                    currentUser?.role !== "Viewer" && (
+                      <Button
+                        className="mr-3"
+                        onClick={handleAddStudent}
+                        label="Add Student"
+                        variant="primary"
+                        title="Add New Student"
+                      />
+                    )
+                  )}
+                  <SearchBar
+                    className="block md:hidden ml-0"
+                    onSearch={handleSearch}
                   />
                 </div>
-                <div className="flex flex-row gap-3">
-                  <DatePicker
-                    placeholder="Date"
-                    value={selectedDate}
-                    onChange={handleDateChange}
+                {/* Filters Section */}
+                <div className="flex flex-row items-center gap-3 w-full text-xs">
+                  <DropdownSelector
+                    placeholder="Course"
+                    options={courseOptions}
+                    value={selectedFilters.course}
+                    onChange={(value) => handleFilterChange("course", value)}
+                    className={`max-w-32`}
                   />
-                  <EventSelector
-                    className="w-40"
-                    value={selectedEvent}
-                    onChange={handleEventChange}
-                    placeholder="Select event"
-                    events={events.map((event) => ({
-                      id: event.id.toString(),
-                      name: event.title,
-                      date: event.event_date,
-                      location: event.location,
-                      fine: event.fine,
-                    }))}
-                    onAddEvent={handleAddEvent}
-                    onEditEvent={handleEditEvent}
-                    onDeleteEvent={handleDeleteEvent}
+                  <DropdownSelector
+                    placeholder="Year"
+                    options={yearOptions}
+                    value={selectedFilters.year}
+                    onChange={(value) => handleFilterChange("year", value)}
+                    className={`max-w-32`}
+                  />
+                  <DropdownSelector
+                    placeholder="Section"
+                    options={sectionOptions}
+                    value={selectedFilters.section}
+                    onChange={(value) => handleFilterChange("section", value)}
+                    className={`max-w-32`}
                   />
                 </div>
               </div>
-            ) : (
-              <Button
-                onClick={handleAddStudent}
-                icon={<PersonAddIcon sx={{ fontSize: "1rem" }} />}
-                label="Add Student"
-                variant="primary"
-                title="Add New Student"
-              />
             )}
+            <SearchBar
+              className="hidden md:block ml-auto"
+              onSearch={handleSearch}
+            />
           </div>
-          <div className="hidden lg:block border-r h-8 border-border-light mx-1 text-xs"></div>
-          {/* Filters Section */}
-          <div className="flex flex-row items-center gap-3 w-full text-xs">
-            <DropdownSelector
-              placeholder="Course"
-              options={courseOptions}
-              value={selectedFilters.course}
-              onChange={(value) => handleFilterChange("course", value)}
-              className={`max-w-32`}
+
+          {/* Attendance / Students tables */}
+          {selectedTable === "attendance" ? (
+            <Table
+              columns={attendanceColumns}
+              data={currentData}
+              onActionClick={handleTableAction}
+              sortConfig={sortConfig}
+              onSortChange={setSortConfig}
+              selectedRows={selectedRows}
+              onSelectedRowsChange={setSelectedRows}
+              currentUserRole={currentUser?.role}
+              tableType="attendance"
             />
-            <DropdownSelector
-              placeholder="Year"
-              options={yearOptions}
-              value={selectedFilters.year}
-              onChange={(value) => handleFilterChange("year", value)}
-              className={`max-w-32`}
+          ) : (
+            <Table
+              columns={studentColumns}
+              data={currentData}
+              onActionClick={handleTableAction}
+              sortConfig={sortConfig}
+              onSortChange={setSortConfig}
+              selectedRows={selectedRows}
+              onSelectedRowsChange={setSelectedRows}
+              currentUserRole={currentUser?.role}
+              tableType="students"
             />
-            <DropdownSelector
-              placeholder="Section"
-              options={sectionOptions}
-              value={selectedFilters.section}
-              onChange={(value) => handleFilterChange("section", value)}
-              className={`max-w-32`}
-            />
+          )}
+
+          {/* Pagination */}
+          <div className="flex flex-row max-w-[60rem] mx-auto items-center justify-end text-xs text-zinc-500 mt-3">
+            <div className="flex flex-row mr-4 items-center gap-4">
+              <div>
+                {selectedTable === "attendance"
+                  ? totalAttendance
+                  : totalStudents}{" "}
+                records
+              </div>
+              <div
+                className="bg-white border border-border-dark text-black py-1.5 px-2 rounded-md cursor-pointer hover:bg-gray-50"
+                onClick={handleRowsClick}
+              >
+                {itemsPerPage} rows
+              </div>
+            </div>
+
+            <div className="flex flex-row gap-2 items-center justify-center">
+              <button
+                onClick={handlePreviousPage}
+                className={`bg-white border border-border-dark rounded-md p-1 grid place-items-center hover:bg-gray-100 hover:border-gray-400 ${
+                  currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                <ArrowLeft size={16} className="text-gray-600" />
+              </button>
+              <div className="flex flex-row gap-1 items-center">
+                <span>Page</span>
+                <input
+                  type="text"
+                  className="w-10 text-center text-xs bg-white border border-border-dark outline-none focus:border-gray-500 rounded-md py-1"
+                  value={pageInputValue || ""}
+                  onChange={handlePageInputChange}
+                  onKeyDown={handlePageInputKeyDown}
+                />
+                <span>of</span>
+                <span>{totalPages}</span>
+              </div>
+              <button
+                onClick={handleNextPage}
+                className={`bg-white border border-border-dark rounded-md p-1 grid place-items-center hover:bg-gray-100 hover:border-gray-400 ${
+                  currentPage === totalPages
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+              >
+                <ArrowRight size={16} className="text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="w-full h-full px-5">
-        {/* Attendance / Students tables */}
-        {selectedTable === "attendance" ? (
-          <Table
-            columns={attendanceColumns}
-            data={getFilteredData()}
-            onActionClick={handleTableAction}
-            sortConfig={sortConfig}
-            onSortChange={setSortConfig}
-          />
-        ) : (
-          <Table
-            columns={studentColumns}
-            data={getFilteredData()}
-            onActionClick={handleTableAction}
-            sortConfig={sortConfig}
-            onSortChange={setSortConfig}
-          />
-        )}
-      </div>
+      )}
 
       {/* RFID Check-in Modal */}
       <Modal isOpen={isRfidModalOpen} onClose={() => setIsRfidModalOpen(false)}>
@@ -833,6 +1149,7 @@ function AppContent() {
 
       {/* Metrics Modal */}
       <Modal
+        modalClassName="!w-fit !max-w-fit"
         isOpen={isMetricsModalOpen}
         onClose={() => {
           setIsMetricsModalOpen(false);
@@ -852,6 +1169,7 @@ function AppContent() {
 
       {/* Fines Modal */}
       <Modal
+        modalClassName="!w-fit !max-w-fit"
         isOpen={isFinesModalOpen}
         onClose={() => {
           setIsFinesModalOpen(false);
@@ -865,9 +1183,174 @@ function AppContent() {
               setIsFinesModalOpen(false);
               setSelectedStudentForFines(null);
             }}
+            currentUserRole={currentUser?.role}
           />
         )}
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteConfirmModalOpen}
+        onClose={() => setIsDeleteConfirmModalOpen(false)}
+      >
+        <div className="p-5 w-fit">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">
+            Confirm to delete the selected row
+            {selectedRows.length > 1 ? "s" : ""}
+          </h2>
+          <p className="text-xs text-gray-600 mb-4">
+            Are you sure you want to delete {selectedRows.length} selected row
+            {selectedRows.length > 1 ? "s" : ""}? <br /> This action cannot be
+            undone.
+          </p>
+
+          <div className="flex items-start gap-2 mb-6 p-3 bg-red-50 border border-red-200 rounded-md">
+            <input
+              type="checkbox"
+              id="delete-confirm"
+              checked={deleteConfirmChecked}
+              onChange={(e) => setDeleteConfirmChecked(e.target.checked)}
+              className="mt-0.5 h-3 w-3 text-red-600 border-gray-300 rounded focus:ring-red-500"
+            />
+            <label htmlFor="delete-confirm" className="text-xs text-red-700">
+              I understand that this action will permanently delete{" "}
+              {selectedRows.length} selected row
+              {selectedRows.length > 1 ? "s" : ""} from the database. This data
+              cannot be recovered once deleted. I confirm that I have verified
+              the selection and take full responsibility for this action.
+            </label>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button
+              onClick={() => {
+                setIsDeleteConfirmModalOpen(false);
+                setDeleteConfirmChecked(false);
+              }}
+              label="Cancel"
+              variant="secondary"
+            />
+            <Button
+              onClick={handleConfirmDelete}
+              className="bg-red-400 !text-white !border-red-500 hover:bg-red-500 !hover:border-red-500 !hover:text-white"
+              label="Delete"
+              variant="danger"
+              disabled={!deleteConfirmChecked}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Attendance Confirmation Modal */}
+      <Modal
+        isOpen={isBulkAttendanceModalOpen}
+        onClose={() => {
+          setIsBulkAttendanceModalOpen(false);
+          setBulkAttendanceConfirmChecked(false);
+        }}
+      >
+        <div className="p-5 w-fit">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">
+            Confirm bulk attendance update
+          </h2>
+          <p className="text-xs text-gray-600 mb-4">
+            Are you sure you want to mark {selectedRows.length} selected student
+            {selectedRows.length > 1 ? "s" : ""} as{" "}
+            <span className="font-semibold capitalize">
+              {bulkAttendanceStatus}
+            </span>
+            ?
+          </p>
+
+          <div className="flex items-start gap-2 mb-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <input
+              type="checkbox"
+              id="bulk-attendance-confirm"
+              checked={bulkAttendanceConfirmChecked}
+              onChange={(e) =>
+                setBulkAttendanceConfirmChecked(e.target.checked)
+              }
+              className="mt-0.5 h-3 w-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label
+              htmlFor="bulk-attendance-confirm"
+              className="text-xs text-blue-700"
+            >
+              I understand that this action will update the attendance status
+              for {selectedRows.length} selected student
+              {selectedRows.length > 1 ? "s" : ""} to{" "}
+              <span className="font-semibold capitalize">
+                {bulkAttendanceStatus}
+              </span>
+              . I confirm that I have verified the selection and take
+              responsibility for this action.
+            </label>
+          </div>
+
+          <div className="flex gap-2 justify-end">
+            <Button
+              onClick={() => {
+                setIsBulkAttendanceModalOpen(false);
+                setBulkAttendanceConfirmChecked(false);
+              }}
+              label="Cancel"
+              variant="secondary"
+            />
+            <Button
+              onClick={handleConfirmBulkAttendance}
+              className="!bg-blue-500 !text-white !border-blue-500 hover:!bg-blue-600 hover:!border-blue-600 hover:!text-white"
+              label={`Mark as ${bulkAttendanceStatus}`}
+              variant="primary"
+              disabled={!bulkAttendanceConfirmChecked}
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Rows Per Page Dropdown */}
+      {isRowsModalOpen && (
+        <div
+          ref={rowsDropdownRef}
+          className="fixed bg-white border border-border-dark rounded-md shadow-lg z-[9999] p-1"
+          style={{
+            top: `${rowsDropdownPosition.top}px`,
+            left: `${rowsDropdownPosition.left}px`,
+          }}
+        >
+          <div className="flex flex-col">
+            <button
+              onClick={() => handleRowsPerPageChange(100)}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
+            >
+              100 rows
+            </button>
+            <button
+              onClick={() => handleRowsPerPageChange(500)}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
+            >
+              500 rows
+            </button>
+            <button
+              onClick={() => handleRowsPerPageChange(1000)}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
+            >
+              1000 rows
+            </button>
+            <button
+              onClick={() => handleRowsPerPageChange(5000)}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
+            >
+              5000 rows
+            </button>
+            <button
+              onClick={() => handleRowsPerPageChange(10000)}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
+            >
+              10000 rows
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

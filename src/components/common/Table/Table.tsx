@@ -1,8 +1,9 @@
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
+import { Ellipsis } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Checkbox from "../Checkbox/Checkbox";
 
 interface Column {
   key: string;
@@ -40,6 +41,10 @@ interface TableProps {
     direction: "asc" | "desc";
   };
   onSortChange: (config: { key: string; direction: "asc" | "desc" }) => void;
+  selectedRows: number[];
+  onSelectedRowsChange: (selectedRows: number[]) => void;
+  currentUserRole?: string;
+  tableType?: "attendance" | "students";
 }
 
 export const Table = ({
@@ -49,6 +54,10 @@ export const Table = ({
   onActionClick,
   sortConfig,
   onSortChange,
+  selectedRows,
+  onSelectedRowsChange,
+  currentUserRole,
+  tableType,
 }: TableProps) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -137,53 +146,54 @@ export const Table = ({
     setActiveMenu(activeMenu === rowIndex ? null : rowIndex);
   };
 
-  const sortedData = [...data].sort((a, b) => {
-    const aValue = a[sortConfig.key as keyof TableRecord];
-    const bValue = b[sortConfig.key as keyof TableRecord];
-
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
-
   return (
     <div
       ref={tableRef}
-      className={`w-full max-w-[60rem] max-h-[calc(100vh-16rem)] sm:max-h-[calc(100vh-13rem)] lg:h-[calc(100vh-10.5rem)] lg:max-h-[calc(100vh-10.5rem)] overflow-x-auto overflow-y-auto rounded-md border-border-dark bg-white mx-auto shadow-sm border ${className}`}
+      className={`w-full max-w-[60rem] h-full max-h-[calc(100vh-17rem)] sm:max-h-[calc(100vh-14rem)] md:max-h-[calc(100vh-11.5rem)] lg:max-h-[calc(100vh-11.5rem)] overflow-x-auto overflow-y-auto rounded-md border-gray-300 bg-white mx-auto shadow-sm border ${className}`}
     >
       <table className="w-full min-w-[800px] border-collapse">
         <thead className="sticky top-0 z-10">
-          <tr className="border-b border-border-dark bg-background-dark">
+          <tr className="border-b border-gray-300 bg-gray-100 relative">
+            <th className="w-10 bg-gray-100 px-1.5">
+              {currentUserRole !== "Viewer" && (
+                <Checkbox
+                  checked={selectedRows.length === data.length}
+                  onChange={(checked) => {
+                    onSelectedRowsChange(
+                      checked ? data.map((_, index) => index) : []
+                    );
+                  }}
+                />
+              )}
+            </th>
             {columns.map((column) => (
               <th
                 key={column.key}
-                className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer whitespace-nowrap ${
-                  column.key === "status"
-                    ? "sticky right-10 bg-background-dark"
-                    : ""
+                className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer whitespace-nowrap  ${
+                  column.key === "status" ? "sticky right-10 bg-gray-100" : ""
                 }`}
-                // style={{ width: column.width ? `${column.width}rem` : "auto" }}
+                style={{ width: column.width ? `${column.width}rem` : "auto" }}
                 onClick={() => handleSort(column.key)}
               >
                 <div className="flex items-center gap-1">
                   {column.label}
                   {sortConfig.key === column.key &&
                     (sortConfig.direction === "asc" ? (
-                      <SouthIcon sx={{ fontSize: "1rem" }} />
+                      <SouthIcon sx={{ fontSize: "0.8rem" }} />
                     ) : (
-                      <NorthIcon sx={{ fontSize: "1rem" }} />
+                      <NorthIcon sx={{ fontSize: "0.8rem" }} />
                     ))}
                 </div>
               </th>
             ))}
-            <th className="w-10 sticky right-0 bg-background-dark"></th>
+            <th className="w-10 sticky right-0 bg-gray-100 top-0"></th>
           </tr>
         </thead>
         <tbody>
-          {sortedData.length === 0 ? (
+          {data.length === 0 ? (
             <tr>
               <td
-                colSpan={columns.length + 1}
+                colSpan={columns.length + 2}
                 className="h-32 text-center text-gray-400 text-sm"
               >
                 <div className="max-w-[100vw]">No data available</div>
@@ -191,23 +201,37 @@ export const Table = ({
             </tr>
           ) : (
             <>
-              {sortedData.map((row, rowIndex) => (
+              {data.map((row, rowIndex) => (
                 <tr
                   key={rowIndex}
-                  className="border-b border-border-dark hover:bg-gray-100 group"
+                  className="border-b border-border-light hover:bg-gray-50 group"
                 >
+                  <td className="bg-white group-hover:bg-gray-50 px-1.5">
+                    {currentUserRole !== "Viewer" && (
+                      <Checkbox
+                        checked={selectedRows.includes(rowIndex)}
+                        onChange={(checked) => {
+                          if (checked) {
+                            onSelectedRowsChange([...selectedRows, rowIndex]);
+                          } else {
+                            onSelectedRowsChange(
+                              selectedRows.filter((index) => index !== rowIndex)
+                            );
+                          }
+                        }}
+                      />
+                    )}
+                  </td>
                   {columns.map((column) => (
                     <td
                       key={`${rowIndex}-${column.key}`}
-                      className={`px-4 text-gray-700 text-xs whitespace-nowrap ${
-                        column.key === "status"
-                          ? "sticky right-10 bg-white group-hover:bg-gray-100"
-                          : ""
+                      className={`px-4 !py-3 text-black text-xs whitespace-nowrap bg-white group-hover:bg-gray-50${
+                        column.key === "status" ? " sticky right-10" : ""
                       }`}
                     >
                       {column.key === "status" && isAttendanceRecord(row) ? (
                         <span
-                          className={`px-2 py-1 rounded-md font-medium ${getStatusColor(
+                          className={`px-2 py-1 rounded-md font-medium relative ${getStatusColor(
                             row.status
                           )}`}
                         >
@@ -218,22 +242,24 @@ export const Table = ({
                       )}
                     </td>
                   ))}
-                  <td className="px-3 py-1 sticky right-0 bg-white group-hover:bg-gray-100">
+                  <td className="px-3 py-1 sticky right-0 bg-white group-hover:bg-gray-50">
                     <div className="relative">
-                      <button
-                        ref={(el) => {
-                          buttonRefs.current[rowIndex] = el;
-                        }}
-                        onClick={(e) =>
-                          handleMenuClick(rowIndex, e.currentTarget)
-                        }
-                        className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-                      >
-                        <MoreVertIcon
-                          fontSize="small"
-                          className="text-gray-600"
-                        />
-                      </button>
+                      {!(
+                        tableType === "attendance" &&
+                        currentUserRole === "Viewer"
+                      ) && (
+                        <button
+                          ref={(el) => {
+                            buttonRefs.current[rowIndex] = el;
+                          }}
+                          onClick={(e) =>
+                            handleMenuClick(rowIndex, e.currentTarget)
+                          }
+                          className="p-1 hover:bg-gray-50 rounded-md transition-colors"
+                        >
+                          <Ellipsis size={16} className="text-gray-600" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -253,12 +279,12 @@ export const Table = ({
               left: `${menuPosition.left}px`,
             }}
           >
-            {isAttendanceRecord(sortedData[activeMenu]) ? (
+            {isAttendanceRecord(data[activeMenu]) ? (
               <>
                 <button
                   onClick={() => {
                     handleActionClick("status", {
-                      ...sortedData[activeMenu],
+                      ...data[activeMenu],
                       status: "Present",
                     });
                   }}
@@ -269,7 +295,7 @@ export const Table = ({
                 <button
                   onClick={() => {
                     handleActionClick("status", {
-                      ...sortedData[activeMenu],
+                      ...data[activeMenu],
                       status: "Absent",
                     });
                   }}
@@ -280,7 +306,7 @@ export const Table = ({
                 <button
                   onClick={() => {
                     handleActionClick("status", {
-                      ...sortedData[activeMenu],
+                      ...data[activeMenu],
                       status: "Excused",
                     });
                   }}
@@ -293,7 +319,7 @@ export const Table = ({
               <>
                 <button
                   onClick={() => {
-                    handleActionClick("metrics", sortedData[activeMenu]);
+                    handleActionClick("metrics", data[activeMenu]);
                   }}
                   className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
                 >
@@ -301,28 +327,20 @@ export const Table = ({
                 </button>
                 <button
                   onClick={() => {
-                    handleActionClick("fines", sortedData[activeMenu]);
+                    handleActionClick("fines", data[activeMenu]);
                   }}
                   className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
                 >
                   Fines
                 </button>
-                <button
-                  onClick={() =>
-                    handleActionClick("edit", sortedData[activeMenu])
-                  }
-                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() =>
-                    handleActionClick("delete", sortedData[activeMenu])
-                  }
-                  className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50"
-                >
-                  Delete
-                </button>
+                {currentUserRole !== "Viewer" && (
+                  <button
+                    onClick={() => handleActionClick("edit", data[activeMenu])}
+                    className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                  >
+                    Edit
+                  </button>
+                )}
               </>
             )}
           </div>,

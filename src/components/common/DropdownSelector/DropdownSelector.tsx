@@ -1,9 +1,11 @@
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface Option {
   value: string;
   label: string;
+  description?: string;
 }
 
 interface DropdownSelectorProps {
@@ -14,6 +16,7 @@ interface DropdownSelectorProps {
   options: Option[];
   icon?: React.ReactNode;
   name?: string;
+  disabled?: boolean;
 }
 
 export const DropdownSelector = ({
@@ -24,6 +27,7 @@ export const DropdownSelector = ({
   options,
   icon,
   name,
+  disabled = false,
 }: DropdownSelectorProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [internalValue, setInternalValue] = useState<string | undefined>(value);
@@ -59,32 +63,42 @@ export const DropdownSelector = ({
     <div className="relative text-xs h-fit" ref={dropdownRef}>
       {name && <input type="hidden" name={name} value={internalValue || ""} />}
       <div
-        className={`w-full flex flex-row h-fit items-center border border-border-dark px-3 py-1 gap-2 rounded-md focus-within:border-border-focus focus-within:ring-2 focus-within:ring-zinc-200 cursor-pointer text-xs ${className}`}
-        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full flex flex-row h-fit items-center border border-border-dark px-3 py-1 gap-2 rounded-md text-xs ${className} ${
+          disabled
+            ? "opacity-50 cursor-not-allowed bg-gray-50"
+            : "hover:border-gray-400 hover:bg-gray-100 cursor-pointer"
+        }`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         {icon && <span className="text-textbox-placeholder">{icon}</span>}
         <input
           type="text"
-          className="w-full outline-none text-xs cursor-pointer bg-transparent"
+          className={`w-full outline-none text-xs bg-transparent ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           placeholder={placeholder}
           value={selectedOption?.label || ""}
           readOnly
         />
-        <ArrowDropDownIcon fontSize="small" />
+        <ExpandMoreIcon sx={{ fontSize: "0.9rem", opacity: "0.3" }} />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md shadow-lg py-2 z-10 w-full text-xs">
-          <div className="max-h-48 overflow-y-auto">
+        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md shadow-lg z-[9999] w-full text-xs">
+          <div className="max-h-48 overflow-y-auto p-1">
             {options.map((option) => (
               <button
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
-                className={`w-full text-left px-3 py-2 hover:bg-zinc-100 text-xs ${
-                  internalValue === option.value ? "bg-zinc-100" : ""
-                }`}
+                className={`w-full rounded-md text-left px-2 py-1.5 hover:bg-gray-100 transition-colors text-xs flex flex-row items-center justify-between`}
               >
-                {option.label}
+                <div className="flex-1 mr-2">
+                  <div className="font-medium">{option.label}</div>
+                  {option.description && (
+                    <div className="text-gray-400 text-[11px] mt-1 leading-3 font-light">
+                      {option.description}
+                    </div>
+                  )}
+                </div>
+                {internalValue === option.value && <Check size={14} />}
               </button>
             ))}
           </div>

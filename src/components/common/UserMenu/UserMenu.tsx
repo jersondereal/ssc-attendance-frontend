@@ -3,8 +3,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import HelpIcon from "@mui/icons-material/Help";
 import KeyIcon from "@mui/icons-material/Key";
-import PersonIcon from "@mui/icons-material/Person";
 import axios, { AxiosError } from "axios";
+import { UserRound } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import config from "../../../config";
 import { DropdownSelector } from "../DropdownSelector/DropdownSelector";
@@ -14,7 +14,7 @@ import { Toast } from "../Toast/Toast";
 interface User {
   id: string;
   username: string;
-  role: "president" | "vice_president" | "admin";
+  role: "administrator" | "moderator" | "viewer";
 }
 
 interface UserFormData {
@@ -28,6 +28,12 @@ interface LoginFormData {
   password: string;
 }
 
+interface LoginAttempts {
+  count: number;
+  lastAttempt: number;
+  blockedUntil?: number;
+}
+
 interface UserMenuProps {
   onLogout?: () => void;
   onUserChange?: (user: { username: string; role: string } | null) => void;
@@ -35,16 +41,30 @@ interface UserMenuProps {
 
 // Add this constant for role options
 const roleOptions = [
-  { value: "admin", label: "Admin" },
-  { value: "vice_president", label: "Vice President" },
-  { value: "president", label: "President" },
+  {
+    value: "administrator",
+    label: "Administrator",
+    description:
+      "Full access to all features including user management, student management, and attendance tracking",
+  },
+  {
+    value: "moderator",
+    label: "Moderator",
+    description:
+      "Can manage students and attendance, but cannot manage user accounts",
+  },
+  {
+    value: "viewer",
+    label: "Viewer",
+    description: "Read-only access to view attendance and student data only",
+  },
 ];
 
 // Add role priority mapping
 const rolePriority: Record<User["role"], number> = {
-  president: 1,
-  vice_president: 2,
-  admin: 3,
+  administrator: 1,
+  moderator: 2,
+  viewer: 3,
 };
 
 export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
@@ -64,24 +84,31 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
     password: "",
-    role: "admin",
+    role: "administrator",
   });
   const [loginFormData, setLoginFormData] = useState<LoginFormData>({
     username: "",
     password: "",
   });
+  const [loginAttempts, setLoginAttempts] = useState<LoginAttempts>({
+    count: 0,
+    lastAttempt: 0,
+  });
+  const [isLoginBlocked, setIsLoginBlocked] = useState(false);
+  const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const loginFormRef = useRef<HTMLFormElement>(null);
 
   const getRoleLabel = useCallback((role: User["role"] | undefined) => {
     if (!role) return "";
 
     switch (role) {
-      case "president":
-        return "SSC President";
-      case "vice_president":
-        return "SSC Vice President";
-      case "admin":
-        return "Admin";
+      case "administrator":
+        return "Administrator";
+      case "moderator":
+        return "Moderator";
+      case "viewer":
+        return "Viewer";
       default:
         return role;
     }
@@ -113,6 +140,48 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
 
     checkAuth();
   }, []); // Run only on mount
+
+  // Check login timeout on mount
+  useEffect(() => {
+    const checkLoginTimeout = () => {
+      const timeoutData = localStorage.getItem("ssc-login-timeout");
+      if (timeoutData) {
+        try {
+          const { blockedUntil } = JSON.parse(timeoutData);
+          const now = Date.now();
+
+          if (now < blockedUntil) {
+            setIsLoginBlocked(true);
+            setBlockedUntil(blockedUntil);
+          } else {
+            // Timeout expired, clear it
+            localStorage.removeItem("ssc-login-timeout");
+            setIsLoginBlocked(false);
+            setBlockedUntil(null);
+          }
+        } catch (error) {
+          console.error("Error parsing login timeout data:", error);
+          localStorage.removeItem("ssc-login-timeout");
+        }
+      }
+    };
+
+    checkLoginTimeout();
+  }, []);
+
+  // Load login attempts from localStorage
+  useEffect(() => {
+    const storedAttempts = localStorage.getItem("ssc-login-attempts");
+    if (storedAttempts) {
+      try {
+        const attempts = JSON.parse(storedAttempts);
+        setLoginAttempts(attempts);
+      } catch (error) {
+        console.error("Error parsing login attempts:", error);
+        localStorage.removeItem("ssc-login-attempts");
+      }
+    }
+  }, []);
 
   // Fetch admin accounts
   useEffect(() => {
@@ -146,7 +215,7 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
     setFormData({
       username: "",
       password: "",
-      role: "admin",
+      role: "administrator",
     });
     setIsUserFormModalOpen(true);
     setIsAdminModalOpen(false);
@@ -241,8 +310,47 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
     }
   }, [currentUser, getRoleLabel, onUserChange]);
 
+  const handleLoginAttempt = (success: boolean) => {
+    const now = Date.now();
+    const newAttempts = {
+      count: success ? 0 : loginAttempts.count + 1,
+      lastAttempt: now,
+    };
+
+    setLoginAttempts(newAttempts);
+    localStorage.setItem("ssc-login-attempts", JSON.stringify(newAttempts));
+
+    // If 5 failed attempts, block for 15 minutes
+    if (newAttempts.count >= 5) {
+      const blockedUntil = now + 15 * 60 * 1000; // 15 minutes
+      const timeoutData = { blockedUntil };
+      localStorage.setItem("ssc-login-timeout", JSON.stringify(timeoutData));
+      setIsLoginBlocked(true);
+      setBlockedUntil(blockedUntil);
+    }
+  };
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if login is blocked
+    if (isLoginBlocked && blockedUntil) {
+      const now = Date.now();
+      if (now < blockedUntil) {
+        const remainingMinutes = Math.ceil((blockedUntil - now) / (60 * 1000));
+        setToast({
+          message: `Too many failed attempts. Please try again in ${remainingMinutes} minutes.`,
+          variant: "error",
+        });
+        return;
+      } else {
+        // Timeout expired
+        localStorage.removeItem("ssc-login-timeout");
+        setIsLoginBlocked(false);
+        setBlockedUntil(null);
+      }
+    }
+
     try {
       const response = await axios.post(
         `${config.API_BASE_URL}/users/login`,
@@ -261,6 +369,9 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
       setCurrentUser(user);
       setIsAuthenticated(true);
 
+      // Reset login attempts on successful login
+      handleLoginAttempt(true);
+
       // Show success toast
       setToast({ message: "Login successful!", variant: "success" });
 
@@ -275,6 +386,10 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
       });
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
+
+      // Record failed attempt
+      handleLoginAttempt(false);
+
       setToast({
         message:
           axiosError.response?.data?.message ||
@@ -314,6 +429,11 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
       {/* Login Modal */}
       <Modal isOpen={isLoginModalOpen} onClose={() => {}}>
         <div className="p-6">
+          <img
+            src="/logo.png"
+            alt="SSC Logo"
+            className="w-24 mx-auto mb-3 rounded-full shadow"
+          />
           <div className="flex items-center gap-3 mb-6 justify-center">
             <div className="text-center">
               <h2 className="text-lg font-semibold">Welcome Back</h2>
@@ -321,7 +441,11 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
             </div>
           </div>
 
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <form
+            ref={loginFormRef}
+            onSubmit={handleLoginSubmit}
+            className="space-y-4"
+          >
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
                 Username
@@ -335,9 +459,14 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
                     username: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-border-dark rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200"
+                className={`w-full px-3 py-2 border border-border-dark rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200 ${
+                  isLoginBlocked
+                    ? "opacity-50 cursor-not-allowed bg-gray-50"
+                    : ""
+                }`}
                 required
                 autoFocus
+                disabled={isLoginBlocked}
               />
             </div>
             <div>
@@ -353,25 +482,51 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
                     password: e.target.value,
                   }))
                 }
-                className="w-full px-3 py-2 border border-border-dark rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200"
+                className={`w-full px-3 py-2 border border-border-dark rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200 ${
+                  isLoginBlocked
+                    ? "opacity-50 cursor-not-allowed bg-gray-50"
+                    : ""
+                }`}
                 required
+                disabled={isLoginBlocked}
               />
             </div>
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full px-4 py-2 bg-zinc-700 text-white rounded-md hover:bg-zinc-600 transition-colors text-sm font-medium"
+                className={`w-full px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isLoginBlocked
+                    ? "bg-gray-400 text-gray-600 cursor-not-allowed"
+                    : "bg-zinc-700 text-white hover:bg-zinc-600"
+                }`}
+                disabled={isLoginBlocked}
               >
-                Login
+                {isLoginBlocked && blockedUntil
+                  ? <span>
+                      Too many failed attempts.<br /> 
+                      Try again in {Math.ceil((blockedUntil - Date.now()) / (60 * 1000))} minutes
+                    </span>
+                  : "Login"}
               </button>
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              Don't have an account? <br /> Please contact your SSC President or
-              Vice President.
-            </p>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => {
+                setLoginFormData({
+                  username: "student",
+                  password: "password",
+                });
+                setTimeout(() => {
+                  loginFormRef.current?.requestSubmit();
+                }, 0);
+              }}
+              className="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+            >
+              Login as Student
+            </button>
           </div>
         </div>
       </Modal>
@@ -380,36 +535,36 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
       {isAuthenticated && (
         <>
           <div
-            className="grid place-items-center border border-border-dark rounded-md p-[0.225rem] cursor-pointer hover:bg-gray-50 text-gray-600 hover:text-gray-700 transition-colors hover:border-gray-600 focus:ring-2 focus:ring-zinc-200"
+            className="grid place-items-center border border-gray-800 rounded-full relative h-8 w-8 cursor-pointer hover:bg-gray-800 text-gray-300 hover:text-gray-100 transition-colors hover:border-gray-700 focus:ring-2 focus:ring-zinc-200 bg-gray-700"
             onClick={() => setIsOpen(!isOpen)}
           >
-            <PersonIcon sx={{ fontSize: "1.3rem" }} />
+            <UserRound size={16} className="absolute text-gray-300" />
           </div>
 
           {isOpen && (
-            <div className="absolute right-0 top-full bg-white border border-border-dark rounded-md shadow-lg z-10 min-w-[16rem] mt-2">
+            <div className="absolute px-1 right-0 top-full bg-white border border-border-dark rounded-md shadow-lg z-10 min-w-[10rem] mt-2">
               {/* Show current user info */}
               <div className="items-center gap-3 px-4 text-gray-700 font-medium text-xs border-b border-border-dark py-3 sm:hidden flex">
-                <span>{currentUser?.username}</span>
+                <span>@{currentUser?.username}</span>
               </div>
 
               {/* Admin Accounts */}
               <button
                 className={`w-full flex items-center gap-3 px-4 py-2 text-xs font-normal rounded-md mt-1 ${
-                  currentUser?.role === "admin"
+                  currentUser?.role !== "administrator"
                     ? "text-gray-400 cursor-not-allowed bg-gray-50"
                     : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                 }`}
                 onClick={() => {
-                  if (currentUser?.role !== "admin") {
+                  if (currentUser?.role === "administrator") {
                     setIsAdminModalOpen(true);
                     setIsOpen(false);
                   }
                 }}
-                disabled={currentUser?.role === "admin"}
+                disabled={currentUser?.role !== "administrator"}
                 title={
-                  currentUser?.role === "admin"
-                    ? "Only Presidents and Vice Presidents can manage accounts"
+                  currentUser?.role !== "administrator"
+                    ? "Only Administrators can manage accounts"
                     : "Manage user accounts"
                 }
               >
@@ -430,7 +585,7 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
               </button>
 
               {/* Divider */}
-              <div className="border-t border-border-dark mt-1" />
+              <div className="border-t border-gray-300 mt-1" />
 
               {/* Logout */}
               <button
@@ -449,8 +604,8 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
         isOpen={isAdminModalOpen && !isUserFormModalOpen && !isDeleteModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
       >
-        <div className="p-6 rounded-md">
-          <div className="flex justify-between items-center mb-6">
+        <div className="p-5 rounded-md">
+          <div className="flex justify-between items-center mb-5">
             <h2 className="text-base font-semibold">Accounts Management</h2>
             <button
               onClick={handleAddUser}
@@ -462,11 +617,17 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
           </div>
           <div className="flex flex-col bg-white rounded-md gap-1.5">
             {adminAccounts
-              .sort((a, b) => rolePriority[a.role] - rolePriority[b.role])
+              .sort((a, b) => {
+                // Always put "president" at the top
+                if (a.username === "president") return -1;
+                if (b.username === "president") return 1;
+                // Then sort by role priority
+                return rolePriority[a.role] - rolePriority[b.role];
+              })
               .map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between py-2 px-3 group rounded-md border border-border-dark"
+                  className="flex items-center justify-between py-2 px-3 group rounded-md border border-gray-200"
                 >
                   <div className="flex flex-col gap-1">
                     <div className="text-sm font-medium">{user.username}</div>
@@ -481,12 +642,14 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
                     >
                       <EditIcon sx={{ fontSize: "1rem" }} />
                     </button>
-                    <button
-                      onClick={() => handleDeleteUser(user)}
-                      className="p-1.5 hover:bg-red-100 rounded-md text-gray-500 hover:text-red-600"
-                    >
-                      <DeleteIcon sx={{ fontSize: "1rem" }} />
-                    </button>
+                    {user.username !== "president" && (
+                      <button
+                        onClick={() => handleDeleteUser(user)}
+                        className="p-1.5 hover:bg-red-100 rounded-md text-gray-500 hover:text-red-600"
+                      >
+                        <DeleteIcon sx={{ fontSize: "1rem" }} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -503,7 +666,9 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Username
+                Username{" "}
+                {selectedUser?.username === "president" &&
+                  "(cannot be changed for president)"}
               </label>
               <input
                 type="text"
@@ -511,8 +676,13 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, username: e.target.value }))
                 }
-                className="w-full px-3 py-2 border border-border-dark rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-zinc-200"
+                className={`w-full px-3 py-2 border border-border-dark rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-zinc-200 ${
+                  selectedUser?.username === "president"
+                    ? "opacity-50 cursor-not-allowed bg-gray-50"
+                    : ""
+                }`}
                 required
+                disabled={selectedUser?.username === "president"}
               />
             </div>
             <div>
@@ -531,7 +701,9 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">
-                Role
+                Role{" "}
+                {selectedUser?.username === "president" &&
+                  "(cannot be changed for president)"}
               </label>
               <DropdownSelector
                 value={formData.role}
@@ -543,7 +715,12 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
                 }
                 options={roleOptions}
                 placeholder="Select role"
-                className="py-1.5"
+                className={`py-1.5 ${
+                  selectedUser?.username === "president"
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
+                disabled={selectedUser?.username === "president"}
               />
             </div>
           </div>
