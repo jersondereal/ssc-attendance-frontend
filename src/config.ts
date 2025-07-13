@@ -3,7 +3,7 @@ interface Config {
   ENV: 'development' | 'production';
 }
 
-const frontendURL = 'ssc-attendance-frontend.vercel.app';
+const frontendURL = 'essu-ssc.vercel.app';
 
 // Get the current hostname and protocol
 const getBaseUrl = () => {
