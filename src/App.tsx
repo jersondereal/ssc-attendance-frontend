@@ -124,8 +124,8 @@ function AppContent() {
   } | null>(null);
 
   useEffect(() => {
-    console.log("Current user:", currentUser);
-  }, [currentUser]);
+    console.log(selectedEvent);
+  }, [selectedEvent]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);

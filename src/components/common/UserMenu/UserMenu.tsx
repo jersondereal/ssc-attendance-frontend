@@ -4,7 +4,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import HelpIcon from "@mui/icons-material/Help";
 import KeyIcon from "@mui/icons-material/Key";
 import axios, { AxiosError } from "axios";
-import { UserRound } from "lucide-react";
+import { LoaderCircle, UserRound } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import config from "../../../config";
 import { DropdownSelector } from "../DropdownSelector/DropdownSelector";
@@ -96,6 +96,7 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
   });
   const [isLoginBlocked, setIsLoginBlocked] = useState(false);
   const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const loginFormRef = useRef<HTMLFormElement>(null);
 
@@ -354,6 +355,8 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
       }
     }
 
+    setIsLoggingIn(true);
+
     try {
       const response = await axios.post(
         `${config.API_BASE_URL}/users/login`,
@@ -399,6 +402,8 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
           "Login failed. Please check your credentials.",
         variant: "error",
       });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -497,24 +502,29 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
             <div className="pt-2">
               <button
                 type="submit"
-                className={`w-full px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`w-full px-4 py-2 text-sm font-medium rounded-md transition-colors grid place-items-center ${
                   isLoginBlocked
                     ? "bg-gray-400 text-gray-600 cursor-not-allowed"
                     : "bg-zinc-700 text-white hover:bg-zinc-600"
                 }`}
-                disabled={isLoginBlocked}
+                disabled={isLoginBlocked || isLoggingIn}
               >
-                {isLoginBlocked && blockedUntil ? (
-                  <span>
-                    Too many failed attempts.
-                    <br />
-                    Try again in{" "}
-                    {Math.ceil((blockedUntil - Date.now()) / (60 * 1000))}{" "}
-                    minutes
-                  </span>
-                ) : (
-                  "Login"
-                )}
+                <div className="flex items-center gap-2">
+                  {isLoggingIn && (
+                    <LoaderCircle className="w-4 h-4 animate-spin" />
+                  )}
+                  {isLoginBlocked && blockedUntil ? (
+                    <span>
+                      Too many failed attempts.
+                      <br />
+                      Try again in{" "}
+                      {Math.ceil((blockedUntil - Date.now()) / (60 * 1000))}{" "}
+                      minutes
+                    </span>
+                  ) : (
+                    "Login"
+                  )}
+                </div>
               </button>
             </div>
           </form>

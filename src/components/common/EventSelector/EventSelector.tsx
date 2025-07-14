@@ -59,6 +59,10 @@ export const EventSelector = ({
   // Sync internal state with value prop
   useEffect(() => {
     setSelectedEvent(value);
+    // Auto-open dropdown when no event is selected
+    if (!value) {
+      setIsOpen(true);
+    }
   }, [value]);
 
   // Close dropdown when clicking outside
