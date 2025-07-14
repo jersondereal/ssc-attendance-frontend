@@ -130,7 +130,7 @@ function AppContent() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInputValue, setPageInputValue] = useState("1");
-  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [isRowsModalOpen, setIsRowsModalOpen] = useState(false);
   const [rowsDropdownPosition, setRowsDropdownPosition] = useState({
     top: 0,
@@ -756,11 +756,11 @@ function AppContent() {
 
   const handleConfirmDelete = async () => {
     // Check if all records are selected
-    const isAllSelected = selectedRows.length === totalStudents;
+    const isAllSelected = selectedRows.length === filteredData.length;
 
-    // Get the selected data - use students array if all selected, otherwise use currentData
+    // Get the selected data - use filteredData if all selected, otherwise use currentData
     const selectedData = isAllSelected
-      ? students
+      ? filteredData
       : selectedRows.map((index) => currentData[index]);
 
     const studentIds = selectedData.map((student) => student.studentId);
@@ -799,11 +799,11 @@ function AppContent() {
 
   const handleConfirmBulkAttendance = async () => {
     // Check if all records are selected
-    const isAllSelected = selectedRows.length === totalAttendance;
+    const isAllSelected = selectedRows.length === filteredData.length;
 
-    // Get the selected data - use attendanceData if all selected, otherwise use currentData
+    // Get the selected data - use filteredData if all selected, otherwise use currentData
     const selectedData = isAllSelected
-      ? attendanceData
+      ? filteredData
       : selectedRows.map((index) => currentData[index]);
 
     const studentIds = selectedData.map((student) => student.studentId);
@@ -992,23 +992,23 @@ function AppContent() {
                 {selectedTable === "attendance" && (
                   <Button
                     label={
-                      selectedRows.length === totalAttendance
-                        ? `All ${totalAttendance} rows in this attendance are selected.`
-                        : `Select all ${totalAttendance} rows`
+                      selectedRows.length === filteredData.length
+                        ? `All ${filteredData.length} rows in this attendance are selected.`
+                        : `Select all ${filteredData.length} rows`
                     }
                     variant="secondary"
                     className={
-                      selectedRows.length === totalAttendance
+                      selectedRows.length === filteredData.length
                         ? "!text-blue-600"
                         : ""
                     }
                     onClick={() => {
-                      if (selectedRows.length === totalAttendance) {
+                      if (selectedRows.length === filteredData.length) {
                         // Deselect all if all are currently selected
                         setSelectedRows([]);
                       } else {
-                        // Select all records in attendanceData, not just current page
-                        const allIndices = attendanceData.map(
+                        // Select all filtered records, not just current page
+                        const allIndices = filteredData.map(
                           (_, index) => index
                         );
                         setSelectedRows(allIndices);
@@ -1019,23 +1019,25 @@ function AppContent() {
                 {selectedTable === "students" && (
                   <Button
                     label={
-                      selectedRows.length === totalStudents
-                        ? `All ${totalStudents} rows in this table are selected.`
-                        : `Select all ${totalStudents} rows`
+                      selectedRows.length === filteredData.length
+                        ? `All ${filteredData.length} rows in this table are selected.`
+                        : `Select all ${filteredData.length} rows`
                     }
                     variant="secondary"
                     className={
-                      selectedRows.length === totalStudents
+                      selectedRows.length === filteredData.length
                         ? "!text-blue-600"
                         : ""
                     }
                     onClick={() => {
-                      if (selectedRows.length === totalStudents) {
+                      if (selectedRows.length === filteredData.length) {
                         // Deselect all if all are currently selected
                         setSelectedRows([]);
                       } else {
-                        // Select all records in students array, not just current page
-                        const allIndices = students.map((_, index) => index);
+                        // Select all filtered records, not just current page
+                        const allIndices = filteredData.map(
+                          (_, index) => index
+                        );
                         setSelectedRows(allIndices);
                       }
                     }}
