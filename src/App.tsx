@@ -1003,11 +1003,16 @@ function AppContent() {
                         : ""
                     }
                     onClick={() => {
-                      // Select all records in attendanceData, not just current page
-                      const allIndices = attendanceData.map(
-                        (_, index) => index
-                      );
-                      setSelectedRows(allIndices);
+                      if (selectedRows.length === totalAttendance) {
+                        // Deselect all if all are currently selected
+                        setSelectedRows([]);
+                      } else {
+                        // Select all records in attendanceData, not just current page
+                        const allIndices = attendanceData.map(
+                          (_, index) => index
+                        );
+                        setSelectedRows(allIndices);
+                      }
                     }}
                   />
                 )}
@@ -1025,9 +1030,14 @@ function AppContent() {
                         : ""
                     }
                     onClick={() => {
-                      // Select all records in students array, not just current page
-                      const allIndices = students.map((_, index) => index);
-                      setSelectedRows(allIndices);
+                      if (selectedRows.length === totalStudents) {
+                        // Deselect all if all are currently selected
+                        setSelectedRows([]);
+                      } else {
+                        // Select all records in students array, not just current page
+                        const allIndices = students.map((_, index) => index);
+                        setSelectedRows(allIndices);
+                      }
                     }}
                   />
                 )}
