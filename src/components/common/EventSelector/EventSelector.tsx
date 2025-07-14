@@ -181,7 +181,7 @@ export const EventSelector = ({
           <div className="max-h-64 overflow-y-auto">
             {events.length === 0 ? (
               <div className="text-center py-4 text-gray-400 text-xs">
-                No events scheduled for this date
+                No events found
               </div>
             ) : (
               events
