@@ -934,96 +934,102 @@ function AppContent() {
           {/* Menu bar container  */}
           <div className="flex flex-row w-full max-w-[60rem] mx-auto mb-3 z-100 items-end ">
             {selectedRows.length > 0 ? (
-              <div className="flex flex-row items-center gap-2 ">
-                <Button
-                  onClick={handleDownload}
-                  // icon={<SaveAltIcon sx={{ fontSize: "0.9rem" }} />}
-                  variant="primary"
-                  title="Export Table Data"
-                  label="Export"
-                />
-                {selectedTable === "students" && (
-                  <>
-                    <Button
-                      icon={
-                        <DeleteOutlineOutlinedIcon
-                          sx={{ fontSize: "0.9rem" }}
-                        />
-                      }
-                      label={`Delete ${selectedRows.length} row${
-                        selectedRows.length > 1 ? "s" : ""
-                      }`}
-                      variant="danger"
-                      onClick={handleDeleteSelected}
-                    />
-                    <Button
-                      label={
-                        selectedRows.length === totalStudents
-                          ? `All ${totalStudents} rows in this students are selected.`
-                          : `Select all ${totalStudents} records`
-                      }
-                      variant="secondary"
-                      className={
-                        selectedRows.length === totalStudents
-                          ? "!text-blue-600"
-                          : ""
-                      }
-                      onClick={() => {
-                        // Select all records in students array, not just current page
-                        const allIndices = students.map((_, index) => index);
-                        setSelectedRows(allIndices);
-                      }}
-                    />
-                  </>
-                )}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 ">
+                <div className="flex flex-row gap-2">
+                  <Button
+                    onClick={handleDownload}
+                    // icon={<SaveAltIcon sx={{ fontSize: "0.9rem" }} />}
+                    variant="primary"
+                    title="Export Table Data"
+                    label="Export"
+                  />
+                  {selectedTable === "students" && (
+                    <>
+                      <Button
+                        icon={
+                          <DeleteOutlineOutlinedIcon
+                            sx={{ fontSize: "0.9rem" }}
+                          />
+                        }
+                        label={`Delete ${selectedRows.length} row${
+                          selectedRows.length > 1 ? "s" : ""
+                        }`}
+                        variant="danger"
+                        onClick={handleDeleteSelected}
+                      />
+                    </>
+                  )}
 
+                  {selectedTable === "attendance" && (
+                    <>
+                      <Button
+                        label="Present"
+                        variant="primary"
+                        onClick={() => {
+                          setBulkAttendanceStatus("Present");
+                          setIsBulkAttendanceModalOpen(true);
+                        }}
+                      />
+                      <Button
+                        label="Absent"
+                        variant="primary"
+                        onClick={() => {
+                          setBulkAttendanceStatus("Absent");
+                          setIsBulkAttendanceModalOpen(true);
+                        }}
+                      />
+                      <Button
+                        label="Excused"
+                        variant="primary"
+                        onClick={() => {
+                          setBulkAttendanceStatus("Excused");
+                          setIsBulkAttendanceModalOpen(true);
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
                 {selectedTable === "attendance" && (
-                  <>
-                    <Button
-                      label="Present"
-                      variant="primary"
-                      onClick={() => {
-                        setBulkAttendanceStatus("Present");
-                        setIsBulkAttendanceModalOpen(true);
-                      }}
-                    />
-                    <Button
-                      label="Absent"
-                      variant="primary"
-                      onClick={() => {
-                        setBulkAttendanceStatus("Absent");
-                        setIsBulkAttendanceModalOpen(true);
-                      }}
-                    />
-                    <Button
-                      label="Excused"
-                      variant="primary"
-                      onClick={() => {
-                        setBulkAttendanceStatus("Excused");
-                        setIsBulkAttendanceModalOpen(true);
-                      }}
-                    />
-                    <Button
-                      label={
-                        selectedRows.length === totalAttendance
-                          ? `All ${totalAttendance} rows in this attendance are selected.`
-                          : `Select all ${totalAttendance} records`
-                      }
-                      variant="secondary"
-                      className={
-                        selectedRows.length === totalAttendance
-                          ? "!text-blue-600"
-                          : ""
-                      }
-                      onClick={() => {
-                        // Select all records in attendanceData, not just current page
-                        const allIndices = attendanceData.map(
-                          (_, index) => index
-                        );
-                        setSelectedRows(allIndices);
-                      }}
-                    />
-                  </>
+                  <Button
+                    label={
+                      selectedRows.length === totalAttendance
+                        ? `All ${totalAttendance} rows in this attendance are selected.`
+                        : `Select all ${totalAttendance} records`
+                    }
+                    variant="secondary"
+                    className={
+                      selectedRows.length === totalAttendance
+                        ? "!text-blue-600"
+                        : ""
+                    }
+                    onClick={() => {
+                      // Select all records in attendanceData, not just current page
+                      const allIndices = attendanceData.map(
+                        (_, index) => index
+                      );
+                      setSelectedRows(allIndices);
+                    }}
+                  />
+                )}
+                {selectedTable === "students" && (
+                  <Button
+                    label={
+                      selectedRows.length === totalStudents
+                        ? `All ${totalStudents} rows in this table are selected.`
+                        : `Select all ${totalStudents} records`
+                    }
+                    variant="secondary"
+                    className={
+                      selectedRows.length === totalStudents
+                        ? "!text-blue-600"
+                        : ""
+                    }
+                    onClick={() => {
+                      // Select all records in students array, not just current page
+                      const allIndices = students.map((_, index) => index);
+                      setSelectedRows(allIndices);
+                    }}
+                  />
                 )}
               </div>
             ) : (
