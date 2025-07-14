@@ -273,7 +273,7 @@ export const Table = ({
         createPortal(
           <div
             ref={menuRef}
-            className="fixed bg-white border border-border-dark rounded-md shadow-lg py-1 z-50 max-w-[6rem]"
+            className="fixed bg-white border border-border-dark rounded-md shadow-lg p-1 z-50 max-w-[6rem]"
             style={{
               top: `${menuPosition.top}px`,
               left: `${menuPosition.left}px`,
@@ -288,7 +288,7 @@ export const Table = ({
                       status: "Present",
                     });
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
                 >
                   Present
                 </button>
@@ -299,7 +299,7 @@ export const Table = ({
                       status: "Absent",
                     });
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
                 >
                   Absent
                 </button>
@@ -310,7 +310,7 @@ export const Table = ({
                       status: "Excused",
                     });
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
                 >
                   Excused
                 </button>
@@ -321,7 +321,7 @@ export const Table = ({
                   onClick={() => {
                     handleActionClick("metrics", data[activeMenu]);
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
                 >
                   Metrics
                 </button>
@@ -329,14 +329,14 @@ export const Table = ({
                   onClick={() => {
                     handleActionClick("fines", data[activeMenu]);
                   }}
-                  className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
                 >
                   Fines
                 </button>
                 {currentUserRole !== "Viewer" && (
                   <button
                     onClick={() => handleActionClick("edit", data[activeMenu])}
-                    className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100"
+                    className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
                   >
                     Edit
                   </button>
