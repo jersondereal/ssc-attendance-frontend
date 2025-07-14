@@ -154,6 +154,7 @@ export const EventSelector = ({
       onDeleteEvent?.(eventToDelete.id);
       setIsDeleteModalOpen(false);
       setEventToDelete(null);
+      setDeleteEventConfirmChecked(false);
     }
   };
 
