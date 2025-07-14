@@ -313,28 +313,73 @@ function AppContent() {
     }
   };
 
-  const handleEditStudentSubmit = (data: {
+  const handleEditStudentSubmit = async (data: {
     studentId: string;
     name: string;
     course: string;
     year: string;
     section: string;
+    rfid?: string;
   }) => {
-    if (selectedTable === "attendance") {
-      setAttendanceData((prevData) =>
-        prevData.map((item) =>
-          item.studentId === data.studentId ? { ...item, ...data } : item
-        )
+    try {
+      const response = await axios.put(
+        `${config.API_BASE_URL}/students/${data.studentId}`,
+        {
+          name: data.name,
+          course: data.course.toLowerCase(),
+          year: data.year,
+          section: data.section.toLowerCase(),
+          rfid: data.rfid?.trim() || null, // Trim whitespace and use null if not provided
+        }
       );
-    } else {
-      setStudents((prevData) =>
-        prevData.map((item) =>
-          item.studentId === data.studentId ? { ...item, ...data } : item
-        )
+
+      const updatedStudent = response.data;
+
+      // Update local state with the updated student data
+      const updatedStudentData = {
+        studentId: updatedStudent.student_id,
+        name: updatedStudent.name,
+        course: updatedStudent.course.toUpperCase(),
+        year: updatedStudent.year,
+        section: updatedStudent.section.toUpperCase(),
+        rfid: updatedStudent.rfid,
+      };
+
+      if (selectedTable === "attendance") {
+        setAttendanceData((prevData) =>
+          prevData.map((item) =>
+            item.studentId === data.studentId
+              ? { ...item, ...updatedStudentData }
+              : item
+          )
+        );
+      } else {
+        setStudents((prevData) =>
+          prevData.map((item) =>
+            item.studentId === data.studentId
+              ? { ...item, ...updatedStudentData }
+              : item
+          )
+        );
+      }
+
+      showToast(
+        `Student ${updatedStudent.name} updated successfully`,
+        "success"
       );
+      setIsEditStudentModalOpen(false);
+      setEditingStudent(null);
+    } catch (error: unknown) {
+      console.error("Error updating student:", error);
+      if (axios.isAxiosError(error)) {
+        showToast(
+          error.response?.data?.message || "Failed to update student",
+          "error"
+        );
+      } else {
+        showToast("Failed to update student", "error");
+      }
     }
-    setIsEditStudentModalOpen(false);
-    setEditingStudent(null);
   };
 
   const handleEventChange = (event: Event) => {
