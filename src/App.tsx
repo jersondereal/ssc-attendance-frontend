@@ -130,7 +130,7 @@ function AppContent() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInputValue, setPageInputValue] = useState("1");
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [isRowsModalOpen, setIsRowsModalOpen] = useState(false);
   const [rowsDropdownPosition, setRowsDropdownPosition] = useState({
     top: 0,
