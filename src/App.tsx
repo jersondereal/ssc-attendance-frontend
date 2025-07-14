@@ -887,7 +887,7 @@ function AppContent() {
             <img
               src="/logo.png"
               alt="SSC Logo"
-              className="h-8 w-auto mr-6"
+              className="h-8 w-auto mr-6 hidden xs:block"
               style={{ maxHeight: "2rem" }}
             />
             <NavigationMenu

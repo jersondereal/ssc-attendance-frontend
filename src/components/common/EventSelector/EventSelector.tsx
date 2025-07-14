@@ -160,7 +160,7 @@ export const EventSelector = ({
   return (
     <div className="relative" ref={eventSelectorRef}>
       <div
-        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-md hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-xs`}
+        className={`${className}  w-[100px]  xs:w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-md hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-xs`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-textbox-placeholder">
