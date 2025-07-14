@@ -994,7 +994,7 @@ function AppContent() {
                     label={
                       selectedRows.length === totalAttendance
                         ? `All ${totalAttendance} rows in this attendance are selected.`
-                        : `Select all ${totalAttendance} records`
+                        : `Select all ${totalAttendance} rows`
                     }
                     variant="secondary"
                     className={
@@ -1021,7 +1021,7 @@ function AppContent() {
                     label={
                       selectedRows.length === totalStudents
                         ? `All ${totalStudents} rows in this table are selected.`
-                        : `Select all ${totalStudents} records`
+                        : `Select all ${totalStudents} rows`
                     }
                     variant="secondary"
                     className={
