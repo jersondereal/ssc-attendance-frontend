@@ -130,7 +130,7 @@ function AppContent() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInputValue, setPageInputValue] = useState("1");
-  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [isRowsModalOpen, setIsRowsModalOpen] = useState(false);
   const [rowsDropdownPosition, setRowsDropdownPosition] = useState({
     top: 0,
@@ -664,14 +664,27 @@ function AppContent() {
 
   const handlePreviousPage = () => {
     const newPage = Math.max(currentPage - 1, 1);
-    setCurrentPage(newPage);
-    setPageInputValue(newPage.toString());
+    handlePageChange(newPage);
   };
 
   const handleNextPage = () => {
     const newPage = Math.min(currentPage + 1, totalPages);
+    handlePageChange(newPage);
+  };
+
+  const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
     setPageInputValue(newPage.toString());
+
+    // Clear selected rows when changing pages, except when all rows are selected
+    const isAllSelected =
+      selectedTable === "attendance"
+        ? selectedRows.length === totalAttendance
+        : selectedRows.length === totalStudents;
+
+    if (!isAllSelected) {
+      setSelectedRows([]);
+    }
   };
 
   const handleRowsPerPageChange = (newItemsPerPage: number) => {
@@ -684,11 +697,9 @@ function AppContent() {
     if (e.key === "Enter") {
       const value = parseInt(e.currentTarget.value);
       if (value && value >= 1 && value <= totalPages) {
-        setCurrentPage(value);
-        setPageInputValue(value.toString());
+        handlePageChange(value);
       } else {
-        setCurrentPage(1);
-        setPageInputValue("1");
+        handlePageChange(1);
       }
       e.currentTarget.blur();
     }
@@ -744,7 +755,14 @@ function AppContent() {
   };
 
   const handleConfirmDelete = async () => {
-    const selectedData = selectedRows.map((index) => currentData[index]);
+    // Check if all records are selected
+    const isAllSelected = selectedRows.length === totalStudents;
+
+    // Get the selected data - use students array if all selected, otherwise use currentData
+    const selectedData = isAllSelected
+      ? students
+      : selectedRows.map((index) => currentData[index]);
+
     const studentIds = selectedData.map((student) => student.studentId);
 
     try {
@@ -780,7 +798,14 @@ function AppContent() {
   };
 
   const handleConfirmBulkAttendance = async () => {
-    const selectedData = selectedRows.map((index) => currentData[index]);
+    // Check if all records are selected
+    const isAllSelected = selectedRows.length === totalAttendance;
+
+    // Get the selected data - use attendanceData if all selected, otherwise use currentData
+    const selectedData = isAllSelected
+      ? attendanceData
+      : selectedRows.map((index) => currentData[index]);
+
     const studentIds = selectedData.map((student) => student.studentId);
 
     if (!selectedEvent) {
@@ -918,16 +943,38 @@ function AppContent() {
                   label="Export"
                 />
                 {selectedTable === "students" && (
-                  <Button
-                    icon={
-                      <DeleteOutlineOutlinedIcon sx={{ fontSize: "0.9rem" }} />
-                    }
-                    label={`Delete ${selectedRows.length} row${
-                      selectedRows.length > 1 ? "s" : ""
-                    }`}
-                    variant="danger"
-                    onClick={handleDeleteSelected}
-                  />
+                  <>
+                    <Button
+                      icon={
+                        <DeleteOutlineOutlinedIcon
+                          sx={{ fontSize: "0.9rem" }}
+                        />
+                      }
+                      label={`Delete ${selectedRows.length} row${
+                        selectedRows.length > 1 ? "s" : ""
+                      }`}
+                      variant="danger"
+                      onClick={handleDeleteSelected}
+                    />
+                    <Button
+                      label={
+                        selectedRows.length === totalStudents
+                          ? `All ${totalStudents} rows in this students are selected.`
+                          : `Select all ${totalStudents} records`
+                      }
+                      variant="secondary"
+                      className={
+                        selectedRows.length === totalStudents
+                          ? "!text-blue-600"
+                          : ""
+                      }
+                      onClick={() => {
+                        // Select all records in students array, not just current page
+                        const allIndices = students.map((_, index) => index);
+                        setSelectedRows(allIndices);
+                      }}
+                    />
+                  </>
                 )}
 
                 {selectedTable === "attendance" && (
@@ -936,7 +983,7 @@ function AppContent() {
                       label="Present"
                       variant="primary"
                       onClick={() => {
-                        setBulkAttendanceStatus("present");
+                        setBulkAttendanceStatus("Present");
                         setIsBulkAttendanceModalOpen(true);
                       }}
                     />
@@ -944,7 +991,7 @@ function AppContent() {
                       label="Absent"
                       variant="primary"
                       onClick={() => {
-                        setBulkAttendanceStatus("absent");
+                        setBulkAttendanceStatus("Absent");
                         setIsBulkAttendanceModalOpen(true);
                       }}
                     />
@@ -952,8 +999,28 @@ function AppContent() {
                       label="Excused"
                       variant="primary"
                       onClick={() => {
-                        setBulkAttendanceStatus("excused");
+                        setBulkAttendanceStatus("Excused");
                         setIsBulkAttendanceModalOpen(true);
+                      }}
+                    />
+                    <Button
+                      label={
+                        selectedRows.length === totalAttendance
+                          ? `All ${totalAttendance} rows in this attendance are selected.`
+                          : `Select all ${totalAttendance} records`
+                      }
+                      variant="secondary"
+                      className={
+                        selectedRows.length === totalAttendance
+                          ? "!text-blue-600"
+                          : ""
+                      }
+                      onClick={() => {
+                        // Select all records in attendanceData, not just current page
+                        const allIndices = attendanceData.map(
+                          (_, index) => index
+                        );
+                        setSelectedRows(allIndices);
                       }}
                     />
                   </>
@@ -1051,6 +1118,7 @@ function AppContent() {
               onSelectedRowsChange={setSelectedRows}
               currentUserRole={currentUser?.role}
               tableType="attendance"
+              totalRecords={totalAttendance}
             />
           ) : (
             <Table
@@ -1063,6 +1131,7 @@ function AppContent() {
               onSelectedRowsChange={setSelectedRows}
               currentUserRole={currentUser?.role}
               tableType="students"
+              totalRecords={totalStudents}
             />
           )}
 
@@ -1364,6 +1433,12 @@ function AppContent() {
         >
           <div className="flex flex-col">
             <button
+              onClick={() => handleRowsPerPageChange(20)}
+              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
+            >
+              20 rows
+            </button>
+            <button
               onClick={() => handleRowsPerPageChange(100)}
               className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
             >
@@ -1386,12 +1461,6 @@ function AppContent() {
               className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
             >
               5000 rows
-            </button>
-            <button
-              onClick={() => handleRowsPerPageChange(10000)}
-              className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded-md text-xs"
-            >
-              10000 rows
             </button>
           </div>
         </div>

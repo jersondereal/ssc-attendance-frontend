@@ -45,6 +45,7 @@ interface TableProps {
   onSelectedRowsChange: (selectedRows: number[]) => void;
   currentUserRole?: string;
   tableType?: "attendance" | "students";
+  totalRecords?: number;
 }
 
 export const Table = ({
@@ -58,6 +59,7 @@ export const Table = ({
   onSelectedRowsChange,
   currentUserRole,
   tableType,
+  totalRecords,
 }: TableProps) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
@@ -157,7 +159,12 @@ export const Table = ({
             <th className="w-10 bg-gray-100 px-1.5">
               {currentUserRole !== "Viewer" && (
                 <Checkbox
-                  checked={selectedRows.length === data.length}
+                  checked={
+                    selectedRows.length === data.length ||
+                    (totalRecords
+                      ? selectedRows.length === totalRecords
+                      : false)
+                  }
                   onChange={(checked) => {
                     onSelectedRowsChange(
                       checked ? data.map((_, index) => index) : []

@@ -177,7 +177,7 @@ export const EventSelector = ({
 
       {/* Event Selector Dropdown */}
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-20 w-fit">
+        <div className="absolute top-full right-3 mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-20 w-fit">
           <div className="max-h-64 overflow-y-auto">
             {events.length === 0 ? (
               <div className="text-center py-4 text-gray-400 text-xs">
@@ -212,7 +212,7 @@ export const EventSelector = ({
                           })}
                         </div>
                         <div className="text-gray-500 text-xs">
-                          {event.fine}
+                          ₱{event.fine}
                         </div>
                       </div>
                     </button>
