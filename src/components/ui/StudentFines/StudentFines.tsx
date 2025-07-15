@@ -51,7 +51,7 @@ export const StudentFines = ({
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Pick<StudentFine, "eventTitle" | "amount" | "eventDate">;
     direction: "asc" | "desc";
-  }>({ key: "eventTitle", direction: "asc" });
+  }>({ key: "eventDate", direction: "desc" });
 
   // Fetch fines data
   useEffect(() => {
