@@ -12,6 +12,7 @@ interface StudentFine {
   id: number;
   eventId: number;
   eventTitle: string;
+  eventDate: string;
   amount: number;
   isPaid: boolean;
 }
@@ -20,8 +21,11 @@ interface FineApiResponse {
   id: number;
   event_id: number;
   event_title: string;
-  amount: number;
+  event_date: string;
+  amount: string;
   is_paid: boolean;
+  status: string;
+  student_id: string;
 }
 
 interface StudentFinesProps {
@@ -45,7 +49,7 @@ export const StudentFines = ({
     useState(false);
   const [pendingFine, setPendingFine] = useState<StudentFine | null>(null);
   const [sortConfig, setSortConfig] = useState<{
-    key: keyof Pick<StudentFine, "eventTitle" | "amount">;
+    key: keyof Pick<StudentFine, "eventTitle" | "amount" | "eventDate">;
     direction: "asc" | "desc";
   }>({ key: "eventTitle", direction: "asc" });
 
@@ -58,14 +62,45 @@ export const StudentFines = ({
           `${config.API_BASE_URL}/fines/student/${studentData.studentId}`
         );
 
-        // Transform the data to match our interface
-        const transformedFines = response.data.map((fine: FineApiResponse) => ({
-          id: fine.id,
-          eventId: fine.event_id,
-          eventTitle: fine.event_title,
-          amount: fine.amount,
-          isPaid: fine.is_paid,
-        }));
+        // Transform the data to match our interface and filter out future events
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+        console.log("Date filtering - Today:", today.toISOString());
+
+        console.log("Raw API response:", response.data);
+
+        const transformedFines = response.data
+          .map((fine: FineApiResponse) => {
+            console.log("Processing fine:", fine);
+            return {
+              id: fine.id,
+              eventId: fine.event_id,
+              eventTitle: fine.event_title,
+              eventDate: fine.event_date,
+              amount: parseFloat(fine.amount),
+              isPaid: fine.is_paid,
+            };
+          })
+          .filter((fine) => {
+            const eventDate = new Date(fine.eventDate);
+
+            // Check if the date is valid
+            if (isNaN(eventDate.getTime())) {
+              console.log(
+                `Date filtering - Invalid date for event "${fine.eventTitle}": ${fine.eventDate}`
+              );
+              return false; // Exclude fines with invalid dates
+            }
+
+            eventDate.setHours(0, 0, 0, 0); // Set to start of day for accurate comparison
+            const isPastOrToday = eventDate <= today;
+            console.log(
+              `Date filtering - Event: "${fine.eventTitle}" (${
+                fine.eventDate
+              }) -> EventDate: ${eventDate.toISOString()} -> IsPastOrToday: ${isPastOrToday}`
+            );
+            return isPastOrToday; // Only include events today or in the past
+          });
 
         setFines(transformedFines);
       } catch (error) {
@@ -80,7 +115,7 @@ export const StudentFines = ({
   }, [studentData.studentId]);
 
   const handleSort = (
-    key: keyof Pick<StudentFine, "eventTitle" | "amount">
+    key: keyof Pick<StudentFine, "eventTitle" | "amount" | "eventDate">
   ) => {
     setSortConfig({
       key,
@@ -175,8 +210,14 @@ export const StudentFines = ({
   };
 
   const sortedFines = [...fines].sort((a, b) => {
-    const aValue = a[sortConfig.key];
-    const bValue = b[sortConfig.key];
+    let aValue = a[sortConfig.key];
+    let bValue = b[sortConfig.key];
+
+    // Handle date sorting
+    if (sortConfig.key === "eventDate") {
+      aValue = new Date(aValue).getTime();
+      bValue = new Date(bValue).getTime();
+    }
 
     if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
     if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
@@ -275,13 +316,27 @@ export const StudentFines = ({
                         ))}
                     </div>
                   </th>
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer border-b border-gray-200"
+                    onClick={() => handleSort("eventDate")}
+                  >
+                    <div className="flex items-center gap-1">
+                      Date
+                      {sortConfig.key === "eventDate" &&
+                        (sortConfig.direction === "asc" ? (
+                          <SouthIcon sx={{ fontSize: "0.8rem" }} />
+                        ) : (
+                          <NorthIcon sx={{ fontSize: "0.8rem" }} />
+                        ))}
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {sortedFines.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={4}
                       className="text-center py-4 text-gray-500 text-sm"
                     >
                       No fines found
@@ -302,7 +357,7 @@ export const StudentFines = ({
                         )}
                       </td>
                       <td
-                        className={`px-4 py-2 text-xs ${
+                        className={`px-4 py-2 text-xs max-w-40 ${
                           fine.isPaid
                             ? "text-gray-400 line-through"
                             : "text-gray-700"
@@ -318,6 +373,19 @@ export const StudentFines = ({
                         }`}
                       >
                         ₱{formatAmount(fine.amount)}
+                      </td>
+                      <td
+                        className={`px-4 py-2 text-xs ${
+                          fine.isPaid
+                            ? "text-gray-400 line-through"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {new Date(fine.eventDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </td>
                     </tr>
                   ))

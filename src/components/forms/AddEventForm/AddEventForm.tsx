@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../common/Button/Button";
+import Checkbox from "../../common/Checkbox/Checkbox";
 import { Textbox } from "../../common/Textbox/Textbox";
 
 interface AddEventFormProps {
@@ -8,6 +9,26 @@ interface AddEventFormProps {
     event_date: string;
     location: string;
     fine: number;
+    courses: {
+      all: boolean;
+      bsit: boolean;
+      bshm: boolean;
+      bscrim: boolean;
+    };
+    sections: {
+      all: boolean;
+      a: boolean;
+      b: boolean;
+      c: boolean;
+      d: boolean;
+    };
+    schoolYears: {
+      all: boolean;
+      1: boolean;
+      2: boolean;
+      3: boolean;
+      4: boolean;
+    };
   }) => void;
   onCancel: () => void;
 }
@@ -21,6 +42,27 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
   });
 
   const [fineError, setFineError] = useState("");
+
+  const [courses, setCourses] = useState({
+    all: false,
+    bsit: false,
+    bshm: false,
+    bscrim: false,
+  });
+  const [sections, setSections] = useState({
+    all: false,
+    a: false,
+    b: false,
+    c: false,
+    d: false,
+  });
+  const [schoolYears, setSchoolYears] = useState({
+    all: false,
+    1: false,
+    2: false,
+    3: false,
+    4: false,
+  });
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -37,6 +79,64 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
     }
   };
 
+  const handleCourseChange = (key: keyof typeof courses, checked: boolean) => {
+    if (key === "all") {
+      setCourses({
+        all: checked,
+        bsit: checked,
+        bshm: checked,
+        bscrim: checked,
+      });
+    } else {
+      const newCourses = { ...courses, [key]: checked };
+      newCourses.all = newCourses.bsit && newCourses.bshm && newCourses.bscrim;
+      setCourses(newCourses);
+    }
+  };
+
+  const handleSectionChange = (
+    key: keyof typeof sections,
+    checked: boolean
+  ) => {
+    if (key === "all") {
+      setSections({
+        all: checked,
+        a: checked,
+        b: checked,
+        c: checked,
+        d: checked,
+      });
+    } else {
+      const newSections = { ...sections, [key]: checked };
+      newSections.all =
+        newSections.a && newSections.b && newSections.c && newSections.d;
+      setSections(newSections);
+    }
+  };
+
+  const handleSchoolYearChange = (
+    key: keyof typeof schoolYears,
+    checked: boolean
+  ) => {
+    if (key === "all") {
+      setSchoolYears({
+        all: checked,
+        1: checked,
+        2: checked,
+        3: checked,
+        4: checked,
+      });
+    } else {
+      const newSchoolYears = { ...schoolYears, [key]: checked };
+      newSchoolYears.all =
+        newSchoolYears[1] &&
+        newSchoolYears[2] &&
+        newSchoolYears[3] &&
+        newSchoolYears[4];
+      setSchoolYears(newSchoolYears);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -50,6 +150,9 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
     onSubmit({
       ...formData,
       fine: fineValue,
+      courses,
+      sections,
+      schoolYears,
     });
   };
 
@@ -111,6 +214,115 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
           {fineError && (
             <p className="text-red-500 text-xs mt-1">{fineError}</p>
           )}
+        </div>
+
+        {/* attendees course */}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Attendees Course
+          </label>
+          <div className="flex flex-row gap-5 w-full h-fit border border-border-dark rounded-md p-2">
+            <Checkbox
+              id="all-courses"
+              label="All"
+              checked={courses.all}
+              onChange={(checked) => handleCourseChange("all", checked)}
+            />
+            <Checkbox
+              id="bsit"
+              label="BSIT"
+              checked={courses.bsit}
+              onChange={(checked) => handleCourseChange("bsit", checked)}
+            />
+            <Checkbox
+              id="bshm"
+              label="BSHM"
+              checked={courses.bshm}
+              onChange={(checked) => handleCourseChange("bshm", checked)}
+            />
+            <Checkbox
+              id="bscrim"
+              label="BSCrim"
+              checked={courses.bscrim}
+              onChange={(checked) => handleCourseChange("bscrim", checked)}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Attendees Section
+          </label>
+          <div className="flex flex-row gap-5 w-full h-fit border border-border-dark rounded-md p-2">
+            <Checkbox
+              id="all-sections"
+              label="All"
+              checked={sections.all}
+              onChange={(checked) => handleSectionChange("all", checked)}
+            />
+            <Checkbox
+              id="section-a"
+              label="A"
+              checked={sections.a}
+              onChange={(checked) => handleSectionChange("a", checked)}
+            />
+            <Checkbox
+              id="section-b"
+              label="B"
+              checked={sections.b}
+              onChange={(checked) => handleSectionChange("b", checked)}
+            />
+            <Checkbox
+              id="section-c"
+              label="C"
+              checked={sections.c}
+              onChange={(checked) => handleSectionChange("c", checked)}
+            />
+            <Checkbox
+              id="section-d"
+              label="D"
+              checked={sections.d}
+              onChange={(checked) => handleSectionChange("d", checked)}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Attendees School Year
+          </label>
+          <div className="flex flex-row gap-5 w-full h-fit border border-border-dark rounded-md p-2">
+            <Checkbox
+              id="all-school-years"
+              label="All"
+              checked={schoolYears.all}
+              onChange={(checked) => handleSchoolYearChange("all", checked)}
+            />
+            <Checkbox
+              id="school-year-1"
+              label="1"
+              checked={schoolYears[1]}
+              onChange={(checked) => handleSchoolYearChange(1, checked)}
+            />
+            <Checkbox
+              id="school-year-2"
+              label="2"
+              checked={schoolYears[2]}
+              onChange={(checked) => handleSchoolYearChange(2, checked)}
+            />
+            <Checkbox
+              id="school-year-3"
+              label="3"
+              checked={schoolYears[3]}
+              onChange={(checked) => handleSchoolYearChange(3, checked)}
+            />
+            <Checkbox
+              id="school-year-4"
+              label="4"
+              checked={schoolYears[4]}
+              onChange={(checked) => handleSchoolYearChange(4, checked)}
+            />
+          </div>
         </div>
       </div>
 

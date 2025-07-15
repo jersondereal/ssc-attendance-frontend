@@ -12,6 +12,26 @@ export interface Event {
   date: string;
   location: string;
   fine: number;
+  courses?: {
+    all: boolean;
+    bsit: boolean;
+    bshm: boolean;
+    bscrim: boolean;
+  };
+  sections?: {
+    all: boolean;
+    a: boolean;
+    b: boolean;
+    c: boolean;
+    d: boolean;
+  };
+  schoolYears?: {
+    all: boolean;
+    1: boolean;
+    2: boolean;
+    3: boolean;
+    4: boolean;
+  };
 }
 
 interface EventSelectorProps {
@@ -158,6 +178,106 @@ export const EventSelector = ({
     }
   };
 
+  // Helper function to render badges
+  const renderBadges = (event: Event, hoverEffect: boolean = false) => {
+    const badges = [];
+
+    // Course badges
+    if (event.courses) {
+      if (event.courses.all) {
+        badges.push(
+          <span
+            key="courses-all"
+            className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
+              hoverEffect ? "hover:bg-gray-200" : ""
+            }`}
+          >
+            All Courses
+          </span>
+        );
+      } else {
+        Object.entries(event.courses).forEach(([course, selected]) => {
+          if (course !== "all" && selected) {
+            badges.push(
+              <span
+                key={`course-${course}`}
+                className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
+                  hoverEffect ? "hover:bg-gray-200" : ""
+                }`}
+              >
+                {course.toUpperCase()}
+              </span>
+            );
+          }
+        });
+      }
+    }
+
+    // Section badges
+    if (event.sections) {
+      if (event.sections.all) {
+        badges.push(
+          <span
+            key="sections-all"
+            className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
+              hoverEffect ? "hover:bg-gray-200" : ""
+            }`}
+          >
+            All Sections
+          </span>
+        );
+      } else {
+        Object.entries(event.sections).forEach(([section, selected]) => {
+          if (section !== "all" && selected) {
+            badges.push(
+              <span
+                key={`section-${section}`}
+                className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
+                  hoverEffect ? "hover:bg-gray-200" : ""
+                }`}
+              >
+                {section.toUpperCase()}
+              </span>
+            );
+          }
+        });
+      }
+    }
+
+    // School year badges
+    if (event.schoolYears) {
+      if (event.schoolYears.all) {
+        badges.push(
+          <span
+            key="years-all"
+            className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
+              hoverEffect ? "hover:bg-gray-200" : ""
+            }`}
+          >
+            All Years
+          </span>
+        );
+      } else {
+        Object.entries(event.schoolYears).forEach(([year, selected]) => {
+          if (year !== "all" && selected) {
+            badges.push(
+              <span
+                key={`year-${year}`}
+                className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
+                  hoverEffect ? "hover:bg-gray-200" : ""
+                }`}
+              >
+                Year {year}
+              </span>
+            );
+          }
+        });
+      }
+    }
+
+    return badges;
+  };
+
   return (
     <div className="relative" ref={eventSelectorRef}>
       <div
@@ -178,8 +298,8 @@ export const EventSelector = ({
 
       {/* Event Selector Dropdown */}
       {isOpen && (
-        <div className="absolute top-full right-3 mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-20 w-fit">
-          <div className="max-h-64 overflow-y-auto">
+        <div className="absolute top-full right-3 mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-20 w-56 xs:w-72 lg:w-80">
+          <div className="max-h-64 w-full overflow-y-auto">
             {events.length === 0 ? (
               <div className="text-center py-4 text-gray-400 text-xs">
                 No events found
@@ -191,10 +311,13 @@ export const EventSelector = ({
                     new Date(b.date).getTime() - new Date(a.date).getTime()
                 )
                 .map((event) => (
-                  <div key={event.id} className="relative group w-56">
+                  <div
+                    key={event.id}
+                    className="relative group w-[calc(100%-10px)]"
+                  >
                     <button
                       onClick={() => handleEventSelect(event)}
-                      className={`flex flex-col w-full text-left p-3 pb-2 hover:bg-gray-100 hover:bg-opacity-60 rounded-md text-xs gap-2 ${
+                      className={`flex flex-col w-full text-left p-3 pb-2 hover:bg-gray-100 hover:bg-opacity-60 transition-all rounded-md text-xs gap-2 ${
                         selectedEvent?.id === event.id
                           ? "border border-gray-300"
                           : ""
@@ -214,6 +337,10 @@ export const EventSelector = ({
                         </div>
                         <div className="text-gray-500 text-xs">
                           ₱{event.fine}
+                        </div>
+                        {/* Badges */}
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {renderBadges(event, false)}
                         </div>
                       </div>
                     </button>

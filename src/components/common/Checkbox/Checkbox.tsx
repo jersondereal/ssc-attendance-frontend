@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import { Check } from "lucide-react";
 
 interface CheckboxProps {
   checked: boolean;
@@ -12,6 +12,7 @@ interface CheckboxProps {
 const Checkbox = ({
   checked,
   onChange,
+  label,
   disabled = false,
   className = "",
   id,
@@ -57,10 +58,13 @@ const Checkbox = ({
         aria-checked={checked}
         aria-disabled={disabled}
       >
-        {checked && (
-          <Check size={11} color='white' strokeWidth={4} />
-        )}
+        {checked && <Check size={11} color="white" strokeWidth={4} />}
       </div>
+      {label && (
+        <label htmlFor={id} className="text-xs select-none cursor-pointer">
+          {label}
+        </label>
+      )}
     </div>
   );
 };

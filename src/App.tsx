@@ -75,6 +75,26 @@ interface DBEvent {
   event_date: string;
   location: string;
   fine: number;
+  courses?: {
+    all: boolean;
+    bsit: boolean;
+    bshm: boolean;
+    bscrim: boolean;
+  };
+  sections?: {
+    all: boolean;
+    a: boolean;
+    b: boolean;
+    c: boolean;
+    d: boolean;
+  };
+  school_years?: {
+    all: boolean;
+    1: boolean;
+    2: boolean;
+    3: boolean;
+    4: boolean;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -392,6 +412,26 @@ function AppContent() {
     event_date: string;
     location: string;
     fine: number;
+    courses?: {
+      all: boolean;
+      bsit: boolean;
+      bshm: boolean;
+      bscrim: boolean;
+    };
+    sections?: {
+      all: boolean;
+      a: boolean;
+      b: boolean;
+      c: boolean;
+      d: boolean;
+    };
+    schoolYears?: {
+      all: boolean;
+      1: boolean;
+      2: boolean;
+      3: boolean;
+      4: boolean;
+    };
   }) => {
     try {
       const response = await axios.post(
@@ -412,7 +452,30 @@ function AppContent() {
     }
   };
 
-  const handleEditEvent = async (event: Event) => {
+  const handleEditEvent = async (
+    event: Event & {
+      courses?: {
+        all: boolean;
+        bsit: boolean;
+        bshm: boolean;
+        bscrim: boolean;
+      };
+      sections?: {
+        all: boolean;
+        a: boolean;
+        b: boolean;
+        c: boolean;
+        d: boolean;
+      };
+      schoolYears?: {
+        all: boolean;
+        1: boolean;
+        2: boolean;
+        3: boolean;
+        4: boolean;
+      };
+    }
+  ) => {
     try {
       const response = await axios.put(
         `${config.API_BASE_URL}/events/${event.id}`,
@@ -421,6 +484,9 @@ function AppContent() {
           event_date: event.date,
           location: event.location,
           fine: event.fine,
+          courses: event.courses,
+          sections: event.sections,
+          schoolYears: event.schoolYears,
         }
       );
       const updatedEvent = response.data;
@@ -1069,6 +1135,9 @@ function AppContent() {
                           date: event.event_date,
                           location: event.location,
                           fine: event.fine,
+                          courses: event.courses,
+                          sections: event.sections,
+                          schoolYears: event.school_years,
                         }))}
                         onAddEvent={handleAddEvent}
                         onEditEvent={handleEditEvent}
