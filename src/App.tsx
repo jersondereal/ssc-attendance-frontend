@@ -163,6 +163,18 @@ function AppContent() {
   const [totalStudents, setTotalStudents] = useState(0);
   const [totalAttendance, setTotalAttendance] = useState(0);
 
+  // get IP address of user using ipify
+  useEffect(() => {
+    axios
+      .get("https://api.ipify.org")
+      .then((res) => {
+        console.log(res.data);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
+
   // Fetch students from database
   useEffect(() => {
     axios
