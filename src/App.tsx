@@ -163,15 +163,28 @@ function AppContent() {
   const [totalStudents, setTotalStudents] = useState(0);
   const [totalAttendance, setTotalAttendance] = useState(0);
 
-  // get IP address of user using ipify
+  // get IP address and location of user
   useEffect(() => {
     axios
-      .get("https://api.ipify.org")
+      .get(
+        `https://api.ipgeolocation.io/v2/ipgeo?apiKey=535486062e0045ac85d929f699d16ecd`,
+        {
+          method: "GET",
+        }
+      )
       .then((res) => {
-        console.log(res.data);
+        console.log("User IP:", res.data.ip);
+        console.log("User Location:", {
+          latitude: res.data.latitude,
+          longitude: res.data.longitude,
+          city: res.data.city,
+          country: res.data.country_name,
+          state: res.data.state_prov,
+          district: res.data.district,
+        });
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Error fetching location:", err);
       });
   }, []);
 
