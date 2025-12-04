@@ -151,7 +151,7 @@ export const Table = ({
   return (
     <div
       ref={tableRef}
-      className={`w-full max-w-[60rem] h-full max-h-[calc(100vh-17rem)] sm:max-h-[calc(100vh-14rem)] md:max-h-[calc(100vh-11.5rem)] lg:max-h-[calc(100vh-11.5rem)] overflow-x-auto overflow-y-auto rounded-md border-gray-300 bg-white mx-auto shadow-sm border ${className}`}
+      className={`w-full max-w-[60rem] h-full max-h-[calc(100vh-17rem)] sm:max-h-[calc(100vh-16rem)] md:max-h-[calc(100vh-14rem)] lg:max-h-[calc(100vh-14rem)] overflow-x-auto overflow-y-auto rounded-md border-gray-300 bg-white mx-auto shadow-sm border ${className}`}
     >
       <table className="w-full min-w-[800px] border-collapse">
         <thead className="sticky top-0 z-10">

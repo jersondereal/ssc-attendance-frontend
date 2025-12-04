@@ -16,6 +16,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
     { id: "attendance", label: "Attendance" },
     { id: "students", label: "Students" },
     { id: "events", label: "Events" },
+    { id: "settings", label: "Settings" },
   ];
 
   useEffect(() => {

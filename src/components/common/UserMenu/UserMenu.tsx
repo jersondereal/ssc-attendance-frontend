@@ -543,7 +543,7 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
               }}
               className="w-full px-4 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
             >
-              Login as Student
+              <div>Login as Student</div>
             </button>
           </div>
         </div>
@@ -553,16 +553,16 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
       {isAuthenticated && (
         <>
           <div
-            className="grid place-items-center border border-gray-800 rounded-full relative h-8 w-8 cursor-pointer hover:bg-gray-800 text-gray-300 hover:text-gray-100 transition-colors hover:border-gray-700 focus:ring-2 focus:ring-zinc-200 bg-gray-700"
+            className="grid place-items-center border border-gray-800 rounded-full relative p-2 cursor-pointer hover:bg-gray-800 text-gray-300 hover:text-gray-100 transition-colors hover:border-gray-700 focus:ring-2 focus:ring-zinc-200 bg-gray-700"
             onClick={() => setIsOpen(!isOpen)}
           >
-            <UserRound size={16} className="absolute text-gray-300" />
+            <UserRound className="text-gray-300 w-4 h-4" />
           </div>
 
           {isOpen && (
             <div className="absolute px-1 right-0 top-full bg-white border border-border-dark rounded-md shadow-lg z-10 min-w-[10rem] mt-2">
               {/* Show current user info */}
-              <div className="items-center gap-3 px-4 text-gray-700 font-medium text-xs border-b border-border-dark py-3 sm:hidden flex">
+              <div className="items-center gap-3 px-4 text-gray-700 font-medium text-xs border-b border-border-dark py-3">
                 <span>@{currentUser?.username}</span>
               </div>
 

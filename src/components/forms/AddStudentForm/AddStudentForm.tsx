@@ -50,7 +50,7 @@ export const AddStudentForm = ({ onSubmit, onCancel }: AddStudentFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="p-6">
-      <h2 className="text-base font-semibold mb-6">Add New Student</h2>
+      <h2 className="text-base font-semibold mb-6">Register New Student</h2>
 
       <div className="space-y-4">
         <div>
@@ -83,7 +83,7 @@ export const AddStudentForm = ({ onSubmit, onCancel }: AddStudentFormProps) => {
             name="course"
             options={courseOptions}
             placeholder="Select course"
-            className="!w-full py-1.5"
+            className="!w-full py-2"
           />
         </div>
 
@@ -95,7 +95,7 @@ export const AddStudentForm = ({ onSubmit, onCancel }: AddStudentFormProps) => {
             name="year"
             options={yearOptions}
             placeholder="Select year"
-            className="!w-full py-1.5"
+            className="!w-full py-2"
           />
         </div>
 
@@ -107,7 +107,7 @@ export const AddStudentForm = ({ onSubmit, onCancel }: AddStudentFormProps) => {
             name="section"
             options={sectionOptions}
             placeholder="Select section"
-            className="!w-full py-1.5"
+            className="!w-full py-2"
           />
         </div>
 
@@ -133,7 +133,7 @@ export const AddStudentForm = ({ onSubmit, onCancel }: AddStudentFormProps) => {
         />
         <Button
           type="submit"
-          label="Add Student"
+          label="Submit"
           variant="primary"
           className="flex-1 py-2 bg-zinc-700 text-white hover:bg-zinc-600"
         />

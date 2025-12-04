@@ -298,7 +298,7 @@ export const EventSelector = ({
 
       {/* Event Selector Dropdown */}
       {isOpen && (
-        <div className="absolute top-full right-3 mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-20 w-56 xs:w-72 lg:w-80">
+        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md  shadow-lg z-20 w-56 xs:w-72 lg:w-80">
           <div className="max-h-64 w-full overflow-y-auto">
             {events.length === 0 ? (
               <div className="text-center py-4 text-gray-400 text-xs">
@@ -310,54 +310,56 @@ export const EventSelector = ({
                   (a, b) =>
                     new Date(b.date).getTime() - new Date(a.date).getTime()
                 )
-                .map((event) => (
-                  <div
-                    key={event.id}
-                    className="relative group w-[calc(100%-10px)]"
-                  >
-                    <button
-                      onClick={() => handleEventSelect(event)}
-                      className={`flex flex-col w-full text-left p-3 pb-2 hover:bg-gray-100 hover:bg-opacity-60 transition-all rounded-md text-xs gap-2 ${
-                        selectedEvent?.id === event.id
-                          ? "border border-gray-300"
-                          : ""
-                      }`}
-                    >
-                      <div className="font-semibold ">{event.name}</div>
-                      <div className="flex flex-col gap-1">
-                        <div className="text-gray-500 text-xs flex flex-row items-center">
-                          {event.location}
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          {new Date(event.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          ₱{event.fine}
-                        </div>
-                        {/* Badges */}
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {renderBadges(event, false)}
-                        </div>
-                      </div>
-                    </button>
-                    {/* Hide ellipsis button for viewer */}
-                    {currentUserRole !== "Viewer" && (
+                .map((event, idx, arr) => (
+                  <div key={event.id}>
+                    <div className="relative group w-[calc(100%-10px)]">
                       <button
-                        onClick={(e) => handleMenuClick(event.id, e)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 rounded-md opacity-0 group-hover:opacity-100"
+                        onClick={() => handleEventSelect(event)}
+                        className={`flex flex-col m-2 w-full text-left p-3 pb-2 hover:bg-gray-100 hover:bg-opacity-60 transition-all rounded-md text-xs gap-2 ${
+                          selectedEvent?.id === event.id
+                            ? "border border-gray-300"
+                            : ""
+                        }`}
                       >
-                        <Ellipsis size={16} />
+                        <div className="font-semibold ">{event.name}</div>
+                        <div className="flex flex-col gap-1">
+                          <div className="text-gray-500 text-xs flex flex-row items-center">
+                            {event.location}
+                          </div>
+                          <div className="text-gray-500 text-xs">
+                            {new Date(event.date).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                          <div className="text-gray-500 text-xs">
+                            ₱{event.fine}
+                          </div>
+                          {/* Badges */}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {renderBadges(event, false)}
+                          </div>
+                        </div>
                       </button>
+                      {/* Hide ellipsis button for viewer */}
+                      {currentUserRole !== "Viewer" && (
+                        <button
+                          onClick={(e) => handleMenuClick(event.id, e)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 rounded-md opacity-0 group-hover:opacity-100"
+                        >
+                          <Ellipsis size={16} />
+                        </button>
+                      )}
+                    </div>
+                    {idx < arr.length - 1 && (
+                      <hr className="border-t border-gray-300" />
                     )}
                   </div>
                 ))
             )}
           </div>
-          <div className=" pt-2">
+          <div className=" pt-2 m-2">
             {/* Hide Add Event button for viewer */}
             {currentUserRole !== "Viewer" && (
               <Button
