@@ -1,14 +1,15 @@
 import axios from "axios";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import config from "../../../config";
 import { Button } from "../../common/Button/Button";
-import { X } from 'lucide-react';
+import { MetricCard } from "../../shared/MetricCard/MetricCard";
 
 interface MetricsProps {
   studentData: {
     studentId: string;
     name: string;
-    course: string;
+    college: string;
     year: string;
     section: string;
   };
@@ -29,7 +30,8 @@ interface MetricsData {
   student: {
     student_id: string;
     name: string;
-    course: string;
+    college?: string;
+    course?: string;
     year: string;
     section: string;
   };
@@ -71,7 +73,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
   if (loading) {
     return (
       <div className="p-6">
-        <h2 className="text-base font-semibold mb-6">Student Metrics</h2>
+        <h2 className="text-sm font-semibold mb-6">Student Metrics</h2>
         <div className="flex items-center justify-center h-32">
           <p className="text-gray-500">Loading metrics...</p>
         </div>
@@ -82,7 +84,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
   if (error) {
     return (
       <div className="p-6">
-        <h2 className="text-base font-semibold mb-6">Student Metrics</h2>
+        <h2 className="text-sm font-semibold mb-6">Student Metrics</h2>
         <div className="flex items-center justify-center h-32">
           <p className="text-red-500">{error}</p>
         </div>
@@ -99,7 +101,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
   if (!metrics) {
     return (
       <div className="p-6">
-        <h2 className="text-base font-semibold mb-6">Student Metrics</h2>
+        <h2 className="text-sm font-semibold mb-6">Student Metrics</h2>
         <div className="flex items-center justify-center h-32">
           <p className="text-gray-500">No metrics available</p>
         </div>
@@ -114,17 +116,23 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
   }
 
   return (
-    <div className="p-5 w-fit relative bg-gray-100 rounded-md">
+    <div className="p-5 w-[90vw] md:w-fit relative bg-white rounded-[8px]">
       <div className="absolute top-5 right-5">
         <X className="w-4 h-4" onClick={onClose} />
       </div>
 
-      <h2 className="text-base w-fit mx-auto font-semibold mb-1">
+      <h2 className="text-sm w-fit mx-auto font-semibold mb-1">
         {metrics.student.name}
       </h2>
-      <div className="flex flex-row gap-4 w-fit mx-auto text-xs items-center h-fit text-gray-500 mb-6">
+      <div className="flex flex-row gap-4 w-full md:w-fit mx-auto text-sm items-center h-fit text-gray-500 mb-6 justify-center">
         <span>{metrics.student.student_id}</span>
-        <span>{metrics.student.course.toUpperCase()}</span>
+        <span>
+          {(
+            metrics.student.college ??
+            metrics.student.course ??
+            ""
+          ).toUpperCase()}
+        </span>
         <div>
           <span>{metrics.student.year}</span>-
           <span>{metrics.student.section.toUpperCase()}</span>
@@ -132,46 +140,43 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
       </div>
 
       {/* Attendance Metrics */}
-      <div className="mb-4 grid grid-cols-3 sm:grid-cols-5 gap-4">
-        <div className="p-4 rounded-lg flex flex-col gap-4 h-fit bg-white">
-          <p className="text-gray-600 text-xs">Total Events</p>
-          <p className="text-base font-semibold">
-            {metrics.summary.totalEvents}
-          </p>
-        </div>
-        <div className="p-4 rounded-lg flex flex-col gap-4 h-fit bg-white">
-          <p className="text-gray-600 text-xs">Attendance</p>
-          <p className="text-base font-semibold">
-            {metrics.summary.attendanceRate}
-          </p>
-        </div>
-        <div className="p-4 rounded-lg flex flex-col gap-4 h-fit bg-white">
-          <p className="text-gray-600 text-xs">Present</p>
-          <p className="text-base font-semibold">{metrics.summary.present}</p>
-        </div>
-        <div className="p-4 rounded-lg flex flex-col gap-4 h-fit bg-white">
-          <p className="text-gray-600 text-xs">Absent</p>
-          <p className="text-base font-semibold">{metrics.summary.absent}</p>
-        </div>
-        <div className="p-4 rounded-lg flex flex-col gap-4 h-fit bg-white">
-          <p className="text-gray-600 text-xs">Excused</p>
-          <p className="text-base font-semibold">{metrics.summary.excused}</p>
-        </div>
+      <div className="mb-4 grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <MetricCard
+          label="Total Events"
+          value={metrics.summary.totalEvents.toString()}
+          className="md:min-w-0 !md:w-10 !md:max-w-10"
+        />
+        <MetricCard label="Attendance" value={metrics.summary.attendanceRate} />
+        <MetricCard
+          label="Present"
+          value={metrics.summary.present.toString()}
+          className="md:min-w-0 !md:w-10 !md:max-w-10"
+        />
+        <MetricCard
+          label="Absent"
+          value={metrics.summary.absent.toString()}
+          className="md:min-w-0 !md:w-10 !md:max-w-10"
+        />
+        <MetricCard
+          label="Excused"
+          value={metrics.summary.excused.toString()}
+          className="md:min-w-0 !md:w-10 !md:max-w-10"
+        />
       </div>
 
       {/* Recent Attendance Records */}
       {metrics.attendanceRecords.length > 0 && (
-        <div className="bg-white p-4 rounded-lg">
+        <div className="bg-white rounded-lg">
           <h3 className="text-sm text-gray-700 mb-4">
             Recent Attendance Records
           </h3>
-          <div className="max-h-60 bg-gray-50 border border-gray-200 overflow-y-auto rounded-md">
+          <div className="max-h-60 bg-gray-50 border border-border-dark overflow-y-auto rounded-[8px]">
             {metrics.attendanceRecords.slice(0, 5).map((record, index) => (
               <div
                 key={index}
                 className="p-3 last:border-b-0 hover:bg-gray-100 transition-colors"
               >
-                <div className="flex justify-between items-center text-xs">
+                <div className="flex justify-between items-center text-sm">
                   <div className="flex flex-col gap-1">
                     <p className="font-medium">{record.event_title}</p>
                     <p className="text-gray-500">
@@ -179,7 +184,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
                     </p>
                   </div>
                   <span
-                    className={`px-2 py-1 rounded-md text-xs ${
+                    className={`px-2 py-1 rounded-[8px] text-sm ${
                       record.status === "Present"
                         ? "text-green-600 bg-green-50"
                         : record.status === "Absent"

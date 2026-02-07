@@ -1,10 +1,11 @@
+// Imports
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import { Ellipsis } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import Checkbox from "../Checkbox/Checkbox";
 
+// Table column and row interfaces
 interface Column {
   key: string;
   label: string;
@@ -15,7 +16,7 @@ interface Column {
 interface AttendanceRecord {
   studentId: string;
   name: string;
-  course: string;
+  college: string;
   year: string;
   section: string;
   status: string;
@@ -24,13 +25,14 @@ interface AttendanceRecord {
 export interface StudentRecord {
   studentId: string;
   name: string;
-  course: string;
+  college: string;
   year: string;
   section: string;
 }
 
 export type TableRecord = AttendanceRecord | StudentRecord;
 
+// Table component props
 interface TableProps {
   columns: Column[];
   data: TableRecord[];
@@ -45,13 +47,12 @@ interface TableProps {
   onSelectedRowsChange: (selectedRows: number[]) => void;
   currentUserRole?: string;
   tableType?: "attendance" | "students";
-  totalRecords?: number;
 }
 
 export const Table = ({
   columns,
   data,
-  className = "",
+  className,
   onActionClick,
   sortConfig,
   onSortChange,
@@ -59,12 +60,9 @@ export const Table = ({
   onSelectedRowsChange,
   currentUserRole,
   tableType,
-  totalRecords,
 }: TableProps) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const tableRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,9 +74,7 @@ export const Table = ({
       }
     };
 
-    const handleScroll = () => {
-      setActiveMenu(null);
-    };
+    const handleScroll = () => setActiveMenu(null);
 
     document.addEventListener("mousedown", handleClickOutside);
     table?.addEventListener("scroll", handleScroll);
@@ -89,19 +85,6 @@ export const Table = ({
     };
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "present":
-        return "text-green-600";
-      case "absent":
-        return "text-gray-400";
-      case "excused":
-        return "text-orange-400";
-      default:
-        return "text-gray-700";
-    }
-  };
-
   const handleActionClick = (action: string, row: TableRecord) => {
     onActionClick?.(action, row);
     setActiveMenu(null);
@@ -109,8 +92,19 @@ export const Table = ({
 
   const isAttendanceRecord = (
     record: TableRecord
-  ): record is AttendanceRecord => {
-    return "status" in record;
+  ): record is AttendanceRecord => "status" in record;
+
+  const getStatusClass = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "present":
+        return "text-green-700 bg-green-50 border-green-200";
+      case "absent":
+        return "text-gray-600 bg-gray-100 border-gray-200";
+      case "excused":
+        return "text-orange-700 bg-orange-50 border-orange-200";
+      default:
+        return "text-gray-700 bg-gray-50 border-gray-200";
+    }
   };
 
   const handleSort = (key: string) => {
@@ -123,236 +117,247 @@ export const Table = ({
     });
   };
 
-  const handleMenuClick = (rowIndex: number, button: HTMLButtonElement) => {
-    const rect = button.getBoundingClientRect();
-    const menuWidth = 120; // Width of the menu
-    const menuHeight = 120; // Approximate height of the menu
-    const windowHeight = window.innerHeight;
-    const windowWidth = window.innerWidth;
-
-    // Calculate initial position
-    let top = rect.bottom + window.scrollY;
-    let left = rect.right + window.scrollX - menuWidth;
-
-    // Check if menu would go off the bottom of the screen
-    if (rect.bottom + menuHeight > windowHeight) {
-      top = rect.top + window.scrollY - menuHeight; // Position above the button
-    }
-
-    // Check if menu would go off the right of the screen
-    if (rect.right + menuWidth > windowWidth) {
-      left = rect.left + window.scrollX - menuWidth; // Position to the left of the button
-    }
-
-    setMenuPosition({ top, left });
+  const handleMenuClick = (rowIndex: number, e: React.MouseEvent) => {
+    e.stopPropagation();
     setActiveMenu(activeMenu === rowIndex ? null : rowIndex);
   };
+
+  const showCheckbox = currentUserRole !== "Viewer";
+  const showActions = !(
+    tableType === "attendance" && currentUserRole === "Viewer"
+  );
+
+  // Reorder status column after name
+  const getReorderedColumns = (cols: Column[]) => {
+    const nameIndex = cols.findIndex((c) => c.key === "name");
+    const statusIndex = cols.findIndex((c) => c.key === "status");
+
+    if (nameIndex === -1 || statusIndex === -1) return cols;
+
+    const statusCol = cols[statusIndex];
+    const rest = cols.filter((c) => c.key !== "status");
+
+    return [
+      ...rest.slice(0, nameIndex + 1),
+      statusCol,
+      ...rest.slice(nameIndex + 1),
+    ];
+  };
+
+  const orderedColumns = getReorderedColumns(columns);
 
   return (
     <div
       ref={tableRef}
-      className={`w-full max-w-[60rem] h-full max-h-[calc(100vh-17rem)] sm:max-h-[calc(100vh-16rem)] md:max-h-[calc(100vh-14rem)] lg:max-h-[calc(100vh-14rem)] overflow-x-auto overflow-y-auto rounded-md border-gray-300 bg-white mx-auto shadow-sm border ${className}`}
+      className={`w-full max-w-[70rem] min-h-0 flex-shrink h-[70vh] mx-auto overflow-auto rounded-lg border border-gray-200 pb-32 bg-white shadow-sm relative contain-layout ${
+        className ?? ""
+      }`}
     >
-      <table className="w-full min-w-[800px] border-collapse">
-        <thead className="sticky top-0 z-10">
-          <tr className="border-b border-gray-300 bg-gray-100 relative">
-            <th className="w-10 bg-gray-100 px-1.5">
-              {currentUserRole !== "Viewer" && (
+      <table className="w-full text-sm">
+        <thead>
+          <tr
+            className="bg-gray-50 border-b border-gray-200"
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              backgroundColor: "#F9FAFB", // Tailwind's bg-gray-50
+            }}
+          >
+            <th
+              scope="col"
+              className="w-10 px-3 py-2 text-left"
+              style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 20,
+                backgroundColor: "#F9FAFB", // Tailwind's bg-gray-50
+              }}
+            >
+              {showCheckbox && (
                 <Checkbox
                   checked={
-                    selectedRows.length === data.length ||
-                    (totalRecords
-                      ? selectedRows.length === totalRecords
-                      : false)
+                    data.length > 0 && selectedRows.length === data.length
                   }
-                  onChange={(checked) => {
-                    onSelectedRowsChange(
-                      checked ? data.map((_, index) => index) : []
-                    );
-                  }}
+                  onChange={(checked) =>
+                    onSelectedRowsChange(checked ? data.map((_, i) => i) : [])
+                  }
                 />
               )}
             </th>
-            {columns.map((column) => (
+            {orderedColumns.map((column) => (
               <th
                 key={column.key}
-                className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 cursor-pointer whitespace-nowrap  ${
-                  column.key === "status" ? "sticky right-10 bg-gray-100" : ""
-                }`}
-                style={{ width: column.width ? `${column.width}rem` : "auto" }}
-                onClick={() => handleSort(column.key)}
+                scope="col"
+                className="px-3 py-2 text-left font-semibold text-gray-700"
+                style={{
+                  ...(column.width ? { width: column.width } : {}),
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 10,
+                  backgroundColor: "#F9FAFB", // Tailwind's bg-gray-50
+                }}
               >
-                <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleSort(column.key)}
+                  className="inline-flex items-center gap-1"
+                >
                   {column.label}
                   {sortConfig.key === column.key &&
                     (sortConfig.direction === "asc" ? (
-                      <SouthIcon sx={{ fontSize: "0.8rem" }} />
+                      <SouthIcon sx={{ fontSize: 16 }} />
                     ) : (
-                      <NorthIcon sx={{ fontSize: "0.8rem" }} />
+                      <NorthIcon sx={{ fontSize: 16 }} />
                     ))}
-                </div>
+                </button>
               </th>
             ))}
-            <th className="w-10 sticky right-0 bg-gray-100 top-0"></th>
+            {showActions && (
+              <th
+                scope="col"
+                className="w-10 px-3 py-2"
+                aria-label="Actions"
+                style={{
+                  position: "sticky",
+                  top: 0,
+                  right: 0,
+                  zIndex: 20,
+                  backgroundColor: "#F9FAFB",
+                  boxShadow: "-2px 0 4px -2px rgba(0,0,0,0.08)",
+                }}
+              />
+            )}
           </tr>
         </thead>
         <tbody>
           {data.length === 0 ? (
             <tr>
               <td
-                colSpan={columns.length + 2}
-                className="h-32 text-center text-gray-400 text-sm"
+                colSpan={orderedColumns.length + (showActions ? 2 : 1)}
+                className="px-4 py-10 text-center text-gray-500"
               >
-                <div className="max-w-[100vw]">No data available</div>
+                No data available
               </td>
             </tr>
           ) : (
-            <>
-              {data.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className="border-b border-border-light hover:bg-gray-50 group"
-                >
-                  <td className="bg-white group-hover:bg-gray-50 px-1.5">
-                    {currentUserRole !== "Viewer" && (
-                      <Checkbox
-                        checked={selectedRows.includes(rowIndex)}
-                        onChange={(checked) => {
-                          if (checked) {
-                            onSelectedRowsChange([...selectedRows, rowIndex]);
-                          } else {
-                            onSelectedRowsChange(
-                              selectedRows.filter((index) => index !== rowIndex)
-                            );
-                          }
-                        }}
-                      />
+            data.map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                className="group border-b border-gray-100 hover:bg-gray-50 h-10"
+              >
+                <td className="w-10 px-3">
+                  {showCheckbox && (
+                    <Checkbox
+                      checked={selectedRows.includes(rowIndex)}
+                      onChange={(checked) =>
+                        onSelectedRowsChange(
+                          checked
+                            ? [...selectedRows, rowIndex]
+                            : selectedRows.filter((i) => i !== rowIndex)
+                        )
+                      }
+                    />
+                  )}
+                </td>
+                {orderedColumns.map((column) => (
+                  <td
+                    key={`${rowIndex}-${column.key}`}
+                    className="px-3 text-gray-800 truncate"
+                    style={column.width ? { width: column.width } : undefined}
+                  >
+                    {column.key === "status" && isAttendanceRecord(row) ? (
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusClass(
+                          row.status
+                        )}`}
+                      >
+                        {row.status}
+                      </span>
+                    ) : (
+                      row[column.key as keyof TableRecord]
                     )}
                   </td>
-                  {columns.map((column) => (
-                    <td
-                      key={`${rowIndex}-${column.key}`}
-                      className={`px-4 !py-3 text-black text-xs whitespace-nowrap bg-white group-hover:bg-gray-50${
-                        column.key === "status" ? " sticky right-10" : ""
-                      }`}
+                ))}
+                {showActions && (
+                  <td
+                    className="w-10 px-3 bg-white group-hover:bg-gray-50"
+                    style={{
+                      position: "sticky",
+                      right: 0,
+                      zIndex: activeMenu === rowIndex ? 30 : 1,
+                      boxShadow: "-2px 0 4px -2px rgba(0,0,0,0.08)",
+                    }}
+                  >
+                    <div
+                      ref={activeMenu === rowIndex ? menuRef : undefined}
+                      className="relative"
                     >
-                      {column.key === "status" && isAttendanceRecord(row) ? (
-                        <span
-                          className={`px-2 py-1 rounded-md font-medium relative ${getStatusColor(
-                            row.status
-                          )}`}
-                        >
-                          {row.status}
-                        </span>
-                      ) : (
-                        row[column.key as keyof TableRecord]
-                      )}
-                    </td>
-                  ))}
-                  <td className="px-3 py-1 sticky right-0 bg-white group-hover:bg-gray-50">
-                    <div className="relative">
-                      {!(
-                        tableType === "attendance" &&
-                        currentUserRole === "Viewer"
-                      ) && (
-                        <button
-                          ref={(el) => {
-                            buttonRefs.current[rowIndex] = el;
-                          }}
-                          onClick={(e) =>
-                            handleMenuClick(rowIndex, e.currentTarget)
-                          }
-                          className="p-1 hover:bg-gray-50 rounded-md transition-colors"
-                        >
-                          <Ellipsis size={16} className="text-gray-600" />
-                        </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleMenuClick(rowIndex, e)}
+                        className="rounded-md p-1.5 text-gray-600 hover:bg-gray-100"
+                        aria-label="Row actions"
+                      >
+                        <Ellipsis className="size-5" />
+                      </button>
+                      {activeMenu === rowIndex && (
+                        <div className="absolute right-0 z-[100] mt-1 w-28 rounded-md p-1 flex flex-col gap-1 border border-gray-200 bg-white shadow-lg">
+                          {isAttendanceRecord(row) ? (
+                            ["Present", "Absent", "Excused"].map((status) => (
+                              <button
+                                key={status}
+                                type="button"
+                                onClick={() =>
+                                  handleActionClick("status", {
+                                    ...row,
+                                    status,
+                                  })
+                                }
+                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
+                              >
+                                {status}
+                              </button>
+                            ))
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleActionClick("metrics", row)
+                                }
+                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
+                              >
+                                Metrics
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleActionClick("fines", row)}
+                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
+                              >
+                                Fines
+                              </button>
+                              {currentUserRole !== "Viewer" && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleActionClick("edit", row)}
+                                  className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
+                                >
+                                  Edit
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
                       )}
                     </div>
                   </td>
-                </tr>
-              ))}
-            </>
+                )}
+              </tr>
+            ))
           )}
         </tbody>
       </table>
-
-      {activeMenu !== null &&
-        createPortal(
-          <div
-            ref={menuRef}
-            className="fixed bg-white border border-border-dark rounded-md shadow-lg p-1 z-50 max-w-[6rem]"
-            style={{
-              top: `${menuPosition.top}px`,
-              left: `${menuPosition.left}px`,
-            }}
-          >
-            {isAttendanceRecord(data[activeMenu]) ? (
-              <>
-                <button
-                  onClick={() => {
-                    handleActionClick("status", {
-                      ...data[activeMenu],
-                      status: "Present",
-                    });
-                  }}
-                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  Present
-                </button>
-                <button
-                  onClick={() => {
-                    handleActionClick("status", {
-                      ...data[activeMenu],
-                      status: "Absent",
-                    });
-                  }}
-                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  Absent
-                </button>
-                <button
-                  onClick={() => {
-                    handleActionClick("status", {
-                      ...data[activeMenu],
-                      status: "Excused",
-                    });
-                  }}
-                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  Excused
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => {
-                    handleActionClick("metrics", data[activeMenu]);
-                  }}
-                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  Metrics
-                </button>
-                <button
-                  onClick={() => {
-                    handleActionClick("fines", data[activeMenu]);
-                  }}
-                  className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
-                >
-                  Fines
-                </button>
-                {currentUserRole !== "Viewer" && (
-                  <button
-                    onClick={() => handleActionClick("edit", data[activeMenu])}
-                    className="w-full text-left px-4 py-2 text-xs rounded-md text-gray-700 hover:bg-gray-100"
-                  >
-                    Edit
-                  </button>
-                )}
-              </>
-            )}
-          </div>,
-          document.body
-        )}
     </div>
   );
 };

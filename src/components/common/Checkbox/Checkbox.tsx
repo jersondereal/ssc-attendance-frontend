@@ -42,7 +42,7 @@ const Checkbox = ({
       />
       <div
         className={`
-          w-4 h-4 border rounded-[4px] cursor-pointer transition-all duration-200 grid place-items-center
+          w-4 h-4 shrink-0 border rounded-[4px] cursor-pointer transition-all duration-200 grid place-items-center
           ${
             disabled
               ? "bg-gray-100 border-gray-300 cursor-not-allowed"
@@ -61,7 +61,7 @@ const Checkbox = ({
         {checked && <Check size={11} color="white" strokeWidth={4} />}
       </div>
       {label && (
-        <label htmlFor={id} className="text-xs select-none cursor-pointer">
+        <label htmlFor={id} className="text-sm select-none cursor-pointer">
           {label}
         </label>
       )}

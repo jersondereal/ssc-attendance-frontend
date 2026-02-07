@@ -1,56 +1,20 @@
 import EventIcon from "@mui/icons-material/Event";
-import { Ellipsis } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AddEventForm } from "../../forms/AddEventForm/AddEventForm";
 import { EditEventForm } from "../../forms/EditEventForm/EditEventForm";
-import { Button } from "../Button/Button";
 import { Modal } from "../Modal/Modal";
+import { DeleteEventModal } from "./DeleteEventModal";
+import { EventDropdown } from "./EventDropdown";
+import type { AddEventData, Event, EventSelectorProps } from "./types";
 
-export interface Event {
-  id: string;
-  name: string;
-  date: string;
-  location: string;
-  fine: number;
-  courses?: {
-    all: boolean;
-    bsit: boolean;
-    bshm: boolean;
-    bscrim: boolean;
-  };
-  sections?: {
-    all: boolean;
-    a: boolean;
-    b: boolean;
-    c: boolean;
-    d: boolean;
-  };
-  schoolYears?: {
-    all: boolean;
-    1: boolean;
-    2: boolean;
-    3: boolean;
-    4: boolean;
-  };
-}
+export type { Event } from "./types";
 
-interface EventSelectorProps {
-  className?: string;
-  value?: Event;
-  onChange?: (event: Event) => void;
-  placeholder?: string;
-  events: Event[];
-  onAddEvent?: (eventData: {
-    title: string;
-    event_date: string;
-    location: string;
-    fine: number;
-  }) => void;
-  onEditEvent?: (event: Event) => void;
-  onDeleteEvent?: (eventId: string) => void;
-  currentUserRole?: string; // Add this prop
-}
+const LAST_SELECTED_EVENT_KEY = "lastSelectedEventId";
 
+/**
+ * If there is already data in the table, don't auto-open the event selector.
+ * Consumer must pass `hasTableData` (boolean) prop if they want this auto-open-to-behavior.
+ */
 export const EventSelector = ({
   className = "",
   value,
@@ -60,9 +24,14 @@ export const EventSelector = ({
   onAddEvent,
   onEditEvent,
   onDeleteEvent,
-  currentUserRole, // Add this prop
-}: EventSelectorProps) => {
+  currentUserRole,
+  canAddEvent = true,
+  canEditEvent = true,
+  canDeleteEvent = true,
+  hasTableData,
+}: EventSelectorProps & { hasTableData?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -70,69 +39,136 @@ export const EventSelector = ({
   const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
   const [deleteEventConfirmChecked, setDeleteEventConfirmChecked] =
     useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(value);
+  // Use undefined as default to allow resolution from localStorage if no value prop
+  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(() => {
+    if (value) return value;
+    // Attempt to restore from localStorage, but only if value is not passed
+    try {
+      const lastId = localStorage.getItem(LAST_SELECTED_EVENT_KEY);
+      if (lastId && Array.isArray(events)) {
+        const match = events.find(
+          (ev) => (ev.id && ev.id.toString()) === lastId
+        );
+        return match;
+      }
+    } catch (e) {
+      console.error(
+        "Error restoring last selected event from localStorage:",
+        e
+      );
+    }
+    return undefined;
+  });
   const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+
   const eventSelectorRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Sync internal state with value prop
+  // Effect for updating selectedEvent when value or hasTableData changes (and localStorage interaction)
   useEffect(() => {
-    setSelectedEvent(value);
-    // Auto-open dropdown when no event is selected
-    if (!value) {
-      setIsOpen(true);
+    if (value) {
+      setSelectedEvent(value);
+      // Persist to localStorage
+      try {
+        if (value.id) {
+          localStorage.setItem(LAST_SELECTED_EVENT_KEY, value.id.toString());
+        }
+      } catch (e) {
+        console.error(
+          "Error persisting last selected event to localStorage:",
+          e
+        );
+      }
+    } else {
+      // On mount or value cleared, try restore from localStorage
+      try {
+        const lastId = localStorage.getItem(LAST_SELECTED_EVENT_KEY);
+        if (lastId && events && events.length > 0) {
+          const found = events.find(
+            (ev) => (ev.id && ev.id.toString()) === lastId
+          );
+          setSelectedEvent(found);
+          // Optionally, fire onChange if found and no value prop so selection rehydrates outward
+          if (found && !value && typeof onChange === "function") {
+            onChange(found);
+          }
+        } else {
+          setSelectedEvent(undefined);
+        }
+      } catch (e) {
+        console.error(
+          "Error restoring last selected event from localStorage:",
+          e
+        );
+        setSelectedEvent(undefined);
+      }
     }
-  }, [value]);
+    // Only close the dropdown when there is table data; never auto-open when there isn't
+    if (hasTableData) {
+      setIsOpen(false);
+      setIsDropdownVisible(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, hasTableData, events]); // respond to events changing as well
 
-  // Close dropdown when clicking outside
+  const handleOpenDropdown = () => {
+    setIsDropdownVisible(true);
+    setTimeout(() => setIsOpen(true), 10);
+  };
+
+  const handleCloseDropdown = () => {
+    setIsOpen(false);
+    setTimeout(() => setIsDropdownVisible(false), 200);
+  };
+
+  const handleToggleDropdown = () => {
+    if (isOpen) handleCloseDropdown();
+    else handleOpenDropdown();
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         eventSelectorRef.current &&
         !eventSelectorRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
+        handleCloseDropdown();
       }
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpenFor(null);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleEventSelect = (event: Event) => {
     setSelectedEvent(event);
+    try {
+      if (event.id) {
+        localStorage.setItem(LAST_SELECTED_EVENT_KEY, event.id.toString());
+      }
+    } catch (e) {
+      console.error("Error persisting last selected event to localStorage:", e);
+    }
     onChange?.(event);
-    setIsOpen(false);
+    handleCloseDropdown();
   };
 
-  const handleAddEvent = (data: {
-    title: string;
-    event_date: string;
-    location: string;
-    fine: number;
-  }) => {
+  const handleAddEvent = (data: AddEventData) => {
     onAddEvent?.(data);
     setIsAddEventModalOpen(false);
   };
 
   const handleMenuClick = (eventId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const button = e.currentTarget as HTMLButtonElement;
-    const rect = button.getBoundingClientRect();
-    setMenuPosition({
-      top: rect.top + window.scrollY,
-      left: rect.right + window.scrollX + 8, // 8px offset from the button
-    });
     setMenuOpenFor(menuOpenFor === eventId ? null : eventId);
   };
 
   const handleEditClick = (event: Event, e: React.MouseEvent) => {
     e.stopPropagation();
-    const fullEvent = events.find((e) => e.id === event.id);
+    const fullEvent = events.find((ev) => ev.id === event.id);
     if (fullEvent) {
       setEventToEdit(fullEvent);
       setIsEditModalOpen(true);
@@ -140,12 +176,7 @@ export const EventSelector = ({
     setMenuOpenFor(null);
   };
 
-  const handleEditSubmit = (data: {
-    title: string;
-    event_date: string;
-    location: string;
-    fine: number;
-  }) => {
+  const handleEditSubmit = (data: AddEventData) => {
     if (eventToEdit) {
       onEditEvent?.({
         ...eventToEdit,
@@ -153,6 +184,9 @@ export const EventSelector = ({
         date: data.event_date,
         location: data.location,
         fine: data.fine,
+        colleges: data.colleges,
+        sections: data.sections,
+        schoolYears: data.schoolYears,
       });
       setIsEditModalOpen(false);
       setEventToEdit(null);
@@ -161,7 +195,7 @@ export const EventSelector = ({
 
   const handleDeleteClick = (eventId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const event = events.find((e) => e.id === eventId);
+    const event = events.find((ev) => ev.id === eventId);
     if (event) {
       setEventToDelete(event);
       setIsDeleteModalOpen(true);
@@ -175,237 +209,68 @@ export const EventSelector = ({
       setIsDeleteModalOpen(false);
       setEventToDelete(null);
       setDeleteEventConfirmChecked(false);
+      // Remove last selection from localStorage if deleting selected event
+      try {
+        if (selectedEvent?.id && eventToDelete.id === selectedEvent.id) {
+          localStorage.removeItem(LAST_SELECTED_EVENT_KEY);
+        }
+      } catch (e) {
+        console.error(
+          "Error removing last selected event from localStorage:",
+          e
+        );
+      }
     }
   };
 
-  // Helper function to render badges
-  const renderBadges = (event: Event, hoverEffect: boolean = false) => {
-    const badges = [];
-
-    // Course badges
-    if (event.courses) {
-      if (event.courses.all) {
-        badges.push(
-          <span
-            key="courses-all"
-            className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
-              hoverEffect ? "hover:bg-gray-200" : ""
-            }`}
-          >
-            All Courses
-          </span>
-        );
-      } else {
-        Object.entries(event.courses).forEach(([course, selected]) => {
-          if (course !== "all" && selected) {
-            badges.push(
-              <span
-                key={`course-${course}`}
-                className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
-                  hoverEffect ? "hover:bg-gray-200" : ""
-                }`}
-              >
-                {course.toUpperCase()}
-              </span>
-            );
-          }
-        });
-      }
-    }
-
-    // Section badges
-    if (event.sections) {
-      if (event.sections.all) {
-        badges.push(
-          <span
-            key="sections-all"
-            className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
-              hoverEffect ? "hover:bg-gray-200" : ""
-            }`}
-          >
-            All Sections
-          </span>
-        );
-      } else {
-        Object.entries(event.sections).forEach(([section, selected]) => {
-          if (section !== "all" && selected) {
-            badges.push(
-              <span
-                key={`section-${section}`}
-                className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
-                  hoverEffect ? "hover:bg-gray-200" : ""
-                }`}
-              >
-                {section.toUpperCase()}
-              </span>
-            );
-          }
-        });
-      }
-    }
-
-    // School year badges
-    if (event.schoolYears) {
-      if (event.schoolYears.all) {
-        badges.push(
-          <span
-            key="years-all"
-            className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
-              hoverEffect ? "hover:bg-gray-200" : ""
-            }`}
-          >
-            All Years
-          </span>
-        );
-      } else {
-        Object.entries(event.schoolYears).forEach(([year, selected]) => {
-          if (year !== "all" && selected) {
-            badges.push(
-              <span
-                key={`year-${year}`}
-                className={`inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-200 bg-gray-100 text-gray-700 ${
-                  hoverEffect ? "hover:bg-gray-200" : ""
-                }`}
-              >
-                Year {year}
-              </span>
-            );
-          }
-        });
-      }
-    }
-
-    return badges;
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalOpen(false);
+    setEventToDelete(null);
+    setDeleteEventConfirmChecked(false);
   };
 
   return (
-    <div className="relative" ref={eventSelectorRef}>
+    <div className="relative w-fit md:w-auto" ref={eventSelectorRef}>
       <div
-        className={`${className}  w-[100px]  xs:w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-md hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-xs`}
-        onClick={() => setIsOpen(!isOpen)}
+        className={`${className} min-w-full xs:min-w-44 w-fit flex flex-row items-center border border-border-dark px-4 py-2 gap-2 rounded-[8px] hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-sm`}
+        onClick={handleToggleDropdown}
       >
-        <span className="text-textbox-placeholder">
-          <EventIcon sx={{ fontSize: "0.9rem" }} />
+        <span className={`${selectedEvent ? "text-black" : "text-zinc-500"}`}>
+          <EventIcon sx={{ fontSize: "1rem" }} />
         </span>
         <input
           type="text"
-          className="w-full outline-none text-xs cursor-pointer bg-transparent"
+          className="w-full outline-none text-sm cursor-pointer bg-transparent font-medium text-ellipsis"
           placeholder={placeholder}
           value={selectedEvent ? selectedEvent.name : ""}
           readOnly
         />
       </div>
 
-      {/* Event Selector Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md  shadow-lg z-20 w-56 xs:w-72 lg:w-80">
-          <div className="max-h-64 w-full overflow-y-auto">
-            {events.length === 0 ? (
-              <div className="text-center py-4 text-gray-400 text-xs">
-                No events found
-              </div>
-            ) : (
-              events
-                .sort(
-                  (a, b) =>
-                    new Date(b.date).getTime() - new Date(a.date).getTime()
-                )
-                .map((event, idx, arr) => (
-                  <div key={event.id}>
-                    <div className="relative group w-[calc(100%-10px)]">
-                      <button
-                        onClick={() => handleEventSelect(event)}
-                        className={`flex flex-col m-2 w-full text-left p-3 pb-2 hover:bg-gray-100 hover:bg-opacity-60 transition-all rounded-md text-xs gap-2 ${
-                          selectedEvent?.id === event.id
-                            ? "border border-gray-300"
-                            : ""
-                        }`}
-                      >
-                        <div className="font-semibold ">{event.name}</div>
-                        <div className="flex flex-col gap-1">
-                          <div className="text-gray-500 text-xs flex flex-row items-center">
-                            {event.location}
-                          </div>
-                          <div className="text-gray-500 text-xs">
-                            {new Date(event.date).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </div>
-                          <div className="text-gray-500 text-xs">
-                            ₱{event.fine}
-                          </div>
-                          {/* Badges */}
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {renderBadges(event, false)}
-                          </div>
-                        </div>
-                      </button>
-                      {/* Hide ellipsis button for viewer */}
-                      {currentUserRole !== "Viewer" && (
-                        <button
-                          onClick={(e) => handleMenuClick(event.id, e)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-zinc-100 rounded-md opacity-0 group-hover:opacity-100"
-                        >
-                          <Ellipsis size={16} />
-                        </button>
-                      )}
-                    </div>
-                    {idx < arr.length - 1 && (
-                      <hr className="border-t border-gray-300" />
-                    )}
-                  </div>
-                ))
-            )}
-          </div>
-          <div className=" pt-2 m-2">
-            {/* Hide Add Event button for viewer */}
-            {currentUserRole !== "Viewer" && (
-              <Button
-                className="w-full flex items-center justify-center gap-1 py-1.5 text-xs text-black hover:bg-gray-100 rounded-md font-medium"
-                label="Add Event"
-                variant="secondary"
-                onClick={() => {
-                  setIsAddEventModalOpen(true);
-                  setIsOpen(false);
-                }}
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Action Menu */}
-      {menuOpenFor && (
-        <div
-          ref={menuRef}
-          className="fixed bg-white border border-border-dark rounded-md shadow-lg z-20 w-28 p-1"
-          style={{
-            top: `${menuPosition.top}px`,
-            left: `${menuPosition.left}px`,
-          }}
-        >
-          <button
-            onClick={(e) =>
-              handleEditClick(events.find((e) => e.id === menuOpenFor)!, e)
-            }
-            className="w-full rounded-md text-left px-3 py-1.5 hover:bg-zinc-100 text-xs"
-          >
-            Edit
-          </button>
-          <button
-            onClick={(e) => handleDeleteClick(menuOpenFor, e)}
-            className="w-full rounded-md text-left px-3 py-1.5 hover:bg-zinc-100 text-xs text-red-600"
-          >
-            Delete
-          </button>
-        </div>
-      )}
+      <EventDropdown
+        events={events}
+        selectedEvent={selectedEvent}
+        isOpen={isOpen}
+        isVisible={isDropdownVisible}
+        dropdownRef={dropdownRef}
+        menuRef={menuRef}
+        menuOpenFor={menuOpenFor}
+        currentUserRole={currentUserRole}
+        canAddEvent={canAddEvent}
+        canEditEvent={canEditEvent}
+        canDeleteEvent={canDeleteEvent}
+        onSelect={handleEventSelect}
+        onMenuClick={handleMenuClick}
+        onEditClick={handleEditClick}
+        onDeleteClick={handleDeleteClick}
+        onAddEventClick={() => setIsAddEventModalOpen(true)}
+        onCloseDropdown={handleCloseDropdown}
+      />
 
       <Modal
         isOpen={isAddEventModalOpen}
         onClose={() => setIsAddEventModalOpen(false)}
+        modalClassName="!max-w-[44rem] max-h-[85vh] overflow-y-scroll"
       >
         <AddEventForm
           onSubmit={handleAddEvent}
@@ -413,13 +278,13 @@ export const EventSelector = ({
         />
       </Modal>
 
-      {/* Edit Event Modal */}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setEventToEdit(null);
         }}
+        modalClassName="!max-w-[44rem] max-h-[85vh] overflow-y-scroll"
       >
         {eventToEdit && (
           <EditEventForm
@@ -433,62 +298,14 @@ export const EventSelector = ({
         )}
       </Modal>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
+      <DeleteEventModal
         isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setEventToDelete(null);
-        }}
-      >
-        <div className="p-5 w-fit">
-          <h2 className="text-sm font-semibold text-gray-900 mb-4">
-            Confirm to delete the event
-          </h2>
-          <p className="text-xs text-gray-600 mb-6">
-            Are you sure you want to delete "{eventToDelete?.name}"? <br /> This
-            action cannot be undone.
-          </p>
-
-          <div className="flex items-start gap-2 mb-6 p-3 bg-red-50 border border-red-200 rounded-md">
-            <input
-              type="checkbox"
-              id="delete-event-confirm"
-              checked={deleteEventConfirmChecked}
-              onChange={(e) => setDeleteEventConfirmChecked(e.target.checked)}
-              className="mt-0.5 h-3 w-3 text-red-600 border-gray-300 rounded focus:ring-red-500"
-            />
-            <label
-              htmlFor="delete-event-confirm"
-              className="text-xs text-red-700"
-            >
-              I understand that this action will permanently delete the event "
-              {eventToDelete?.name}" from the database. This data cannot be
-              recovered once deleted. I confirm that I have verified the
-              selection and take full responsibility for this action.
-            </label>
-          </div>
-
-          <div className="flex gap-2 justify-end">
-            <Button
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setEventToDelete(null);
-                setDeleteEventConfirmChecked(false);
-              }}
-              label="Cancel"
-              variant="secondary"
-            />
-            <Button
-              onClick={handleConfirmDelete}
-              className="bg-red-400 !text-white !border-red-500 hover:bg-red-500 !hover:border-red-500 !hover:text-white"
-              label="Delete"
-              variant="danger"
-              disabled={!deleteEventConfirmChecked}
-            />
-          </div>
-        </div>
-      </Modal>
+        eventToDelete={eventToDelete}
+        confirmChecked={deleteEventConfirmChecked}
+        onConfirmCheckedChange={setDeleteEventConfirmChecked}
+        onConfirm={handleConfirmDelete}
+        onClose={handleDeleteModalClose}
+      />
     </div>
   );
 };

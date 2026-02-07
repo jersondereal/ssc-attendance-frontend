@@ -64,7 +64,7 @@ export const Toast = ({
         `}
       >
         {styles.icon}
-        <p className="text-xs">{message}</p>
+        <p className="text-sm">{message}</p>
       </div>
     </div>,
     document.body

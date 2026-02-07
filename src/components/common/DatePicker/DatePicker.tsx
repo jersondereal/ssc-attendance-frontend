@@ -1,14 +1,14 @@
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import {
-  eachDayOfInterval,
-  endOfMonth,
-  format,
-  getDay,
-  isSameDay,
-  isSameMonth,
-  isToday,
-  startOfMonth,
-  subDays,
+    eachDayOfInterval,
+    endOfMonth,
+    format,
+    getDay,
+    isSameDay,
+    isSameMonth,
+    isToday,
+    startOfMonth,
+    subDays,
 } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 
@@ -67,7 +67,7 @@ export const DatePicker = ({
   return (
     <div className="relative" ref={datePickerRef}>
       <div
-        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-md hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-xs`}
+        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-[8px] hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-sm`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-textbox-placeholder">
@@ -75,7 +75,7 @@ export const DatePicker = ({
         </span>
         <input
           type="text"
-          className="w-full outline-none text-xs cursor-pointer bg-transparent"
+          className="w-full outline-none text-sm cursor-pointer bg-transparent"
           placeholder={placeholder}
           value={selectedDate ? format(selectedDate, "MMM dd, yyyy") : ""}
           readOnly
@@ -83,7 +83,7 @@ export const DatePicker = ({
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md shadow-lg p-2 z-10 w-64">
+        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg p-2 z-10 w-64">
           <div className="flex justify-between items-center mb-2">
             <button
               onClick={() =>
@@ -98,7 +98,7 @@ export const DatePicker = ({
             >
               ←
             </button>
-            <span className="text-xs font-medium">
+            <span className="text-sm font-medium">
               {format(currentMonth, "MMMM yyyy")}
             </span>
             <button
@@ -118,7 +118,7 @@ export const DatePicker = ({
 
           <div className="grid grid-cols-7 gap-1">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-xs text-center text-gray-500 py-1">
+              <div key={day} className="text-sm text-center text-gray-500 py-1">
                 {day}
               </div>
             ))}
@@ -128,7 +128,7 @@ export const DatePicker = ({
                 key={day.toISOString()}
                 onClick={() => handleDateClick(day)}
                 className={`
-                  text-xs p-1 rounded hover:bg-gray-100
+                  text-sm p-1 rounded hover:bg-gray-100
                   ${!isSameMonth(day, currentMonth) ? "text-gray-300" : ""}
                   ${isToday(day) ? "bg-blue-50 text-blue-600" : ""}
                   ${

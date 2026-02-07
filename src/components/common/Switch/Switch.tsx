@@ -65,7 +65,7 @@ const Switch = ({
         />
       </div>
       {label && (
-        <label htmlFor={id} className="text-xs font-medium text-gray-900 select-none cursor-pointer">
+        <label htmlFor={id} className="text-sm font-medium text-gray-900 select-none cursor-pointer">
           {label}
         </label>
       )}

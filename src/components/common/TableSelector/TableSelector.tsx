@@ -1,6 +1,5 @@
-import { ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown } from 'lucide-react';
 import { useEffect, useRef, useState } from "react";
-import { Check } from 'lucide-react';
 
 interface TableSelectorProps {
   value: string;
@@ -43,19 +42,19 @@ export const TableSelector = ({ value, onChange }: TableSelectorProps) => {
         className="flex flex-row items-center cursor-pointer gap-1"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="font-medium text-header text-xs">
+        <span className="font-medium text-header text-sm">
           {selectedOption?.label}
         </span>
         <ChevronsUpDown size={12} />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-md shadow-lg z-10 min-w-[120px] p-1 flex flex-col">
+        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg z-10 min-w-[120px] p-1 flex flex-col">
           {options.map((option) => (
             <button
               key={option.value}
               onClick={() => handleSelect(option.value)}
-              className={`w-full rounded-md text-left px-2 py-1.5 hover:bg-gray-100 transition-colors text-xs font-medium flex flex-row items-center justify-between ${
+              className={`w-full rounded-[8px] text-left px-2 py-1.5 hover:bg-gray-100 transition-colors text-sm font-medium flex flex-row items-center justify-between ${
                 value === option.value ? "" : ""
               }`}
             >

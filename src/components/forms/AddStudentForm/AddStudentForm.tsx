@@ -1,143 +1,121 @@
-import React from "react";
-import { Button } from "../../common/Button/Button";
-import { DropdownSelector } from "../../common/DropdownSelector/DropdownSelector";
-import { Textbox } from "../../common/Textbox/Textbox";
+import { Ellipsis, Link2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { useToast } from "../../../contexts/ToastContext";
+import { StudentForm, type StudentFormData } from "../StudentForm/StudentForm";
 
 interface AddStudentFormProps {
-  onSubmit: (data: {
-    studentId: string;
-    name: string;
-    course: string;
-    year: string;
-    section: string;
-    rfid: string;
-  }) => void;
+  onSubmit: (data: StudentFormData) => void;
   onCancel: () => void;
+  showHeader?: boolean;
+  className?: string;
+  showCancelButton?: boolean;
 }
 
-export const AddStudentForm = ({ onSubmit, onCancel }: AddStudentFormProps) => {
-  const courseOptions = [
-    { value: "bsit", label: "BSIT" },
-    { value: "bshm", label: "BSHM" },
-    { value: "bscrim", label: "BSCrim" },
-  ];
+export const AddStudentForm = ({
+  onSubmit,
+  onCancel,
+  showHeader = true,
+  className = "",
+  showCancelButton = true,
+}: AddStudentFormProps) => {
+  const { showToast } = useToast();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const location = useLocation();
+  const isStudentRegistrationPage = location.pathname === "/register";
 
-  const yearOptions = [
-    { value: "1", label: "Year 1" },
-    { value: "2", label: "Year 2" },
-    { value: "3", label: "Year 3" },
-    { value: "4", label: "Year 4" },
-  ];
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const sectionOptions = [
-    { value: "a", label: "Section A" },
-    { value: "b", label: "Section B" },
-    { value: "c", label: "Section C" },
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    onSubmit({
-      studentId: formData.get("studentId") as string,
-      name: formData.get("name") as string,
-      course: formData.get("course") as string,
-      year: formData.get("year") as string,
-      section: formData.get("section") as string,
-      rfid: formData.get("rfid") as string,
-    });
+  const handleCopyRegistrationLink = async () => {
+    const link = `${window.location.origin}/register`;
+    try {
+      await navigator.clipboard.writeText(link);
+      showToast("Registration link copied to clipboard", "success");
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = link;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      showToast("Registration link copied to clipboard", "success");
+    }
+    setIsMenuOpen(false);
   };
 
+  const headerContent = showHeader ? (
+    <div className="flex flex-row relative items-center justify-between mb-6">
+      <h2 className="text-sm font-semibold">
+        {isStudentRegistrationPage
+          ? "Student Registration"
+          : "Register New Student"}
+      </h2>
+      {!isStudentRegistrationPage && (
+        <div className="relative" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-all"
+            aria-label="Registration menu"
+          >
+            <Ellipsis className="size-5" />
+          </button>
+          <div
+            className={`absolute right-0 top-full mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg z-10 w-fit p-1.5 origin-top-right transition-all duration-200 ease-out ${
+              isMenuOpen
+                ? "opacity-100 scale-100 pointer-events-auto"
+                : "opacity-0 scale-95 pointer-events-none"
+            }`}
+          >
+            <button
+              type="button"
+              onClick={handleCopyRegistrationLink}
+              className="w-fit rounded-[8px] text-left px-3 py-2 hover:bg-zinc-100 text-sm flex items-center gap-3"
+            >
+              <Link2 className="size-4 shrink-0" />
+              <span className="leading-none text-nowrap">
+                Copy registration link
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  const initialData = useMemo<StudentFormData>(
+    () => ({
+      studentId: "",
+      name: "",
+      college: "",
+      year: "",
+      section: "",
+      rfid: "",
+    }),
+    []
+  );
+
   return (
-    <form onSubmit={handleSubmit} className="p-6">
-      <h2 className="text-base font-semibold mb-6">Register New Student</h2>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Student ID
-          </label>
-          <Textbox
-            name="studentId"
-            placeholder="Enter student ID (e.g. 23-0001)"
-            className="w-full py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Full Name
-          </label>
-          <Textbox
-            name="name"
-            placeholder="Enter full name (e.g. John Doe)"
-            className="w-full py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Course
-          </label>
-          <DropdownSelector
-            name="course"
-            options={courseOptions}
-            placeholder="Select course"
-            className="!w-full py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Year Level
-          </label>
-          <DropdownSelector
-            name="year"
-            options={yearOptions}
-            placeholder="Select year"
-            className="!w-full py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            Section
-          </label>
-          <DropdownSelector
-            name="section"
-            options={sectionOptions}
-            placeholder="Select section"
-            className="!w-full py-2"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
-            RFID
-          </label>
-          <Textbox
-            name="rfid"
-            placeholder="Enter RFID (optional)"
-            className="w-full py-2"
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-3 mt-8">
-        <Button
-          type="button"
-          label="Cancel"
-          variant="secondary"
-          className="flex-1 py-2"
-          onClick={onCancel}
-        />
-        <Button
-          type="submit"
-          label="Submit"
-          variant="primary"
-          className="flex-1 py-2 bg-zinc-700 text-white hover:bg-zinc-600"
-        />
-      </div>
-    </form>
+    <StudentForm
+      initialData={initialData}
+      onSubmit={onSubmit}
+      onCancel={onCancel}
+      headerContent={headerContent}
+      submitLabel="Register"
+      className={`p-6 ${className}`}
+      showCancelButton={showCancelButton}
+    />
   );
 };

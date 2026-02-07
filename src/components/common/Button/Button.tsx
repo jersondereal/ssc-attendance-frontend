@@ -29,14 +29,14 @@ export const Button = ({
       "text-red-500 hover:bg-red-50 hover:border-red-400 border border-red-300",
   };
 
-  const paddingStyles = icon ? "pl-7 pr-3 py-1.5" : "px-3 py-1.5";
+  const paddingStyles = icon ? "pl-7 pr-4 py-2" : "px-4 py-2";
 
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`relative rounded-md focus:outline-none transition-colors h-fit w-fit text-nowrap text-xs flex flex-row items-center justify-center gap-2 ${
+      className={`relative rounded-[8px] focus:outline-none transition-colors h-fit w-fit text-nowrap text-sm flex flex-row items-center justify-center gap-2 ${
         variantStyles[variant]
       } ${paddingStyles} ${className} ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
@@ -44,7 +44,7 @@ export const Button = ({
       title={title}
     >
       {icon && <span className="text-current absolute left-2">{icon}</span>}
-      {label && <span>{label}</span>}
+      {label && <span className="w-full truncate cursor-pointer">{label}</span>}
     </button>
   );
 };

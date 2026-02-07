@@ -1,21 +1,5 @@
-* {
-  line-height: 1;
-}
-
-body {
-  overflow: hidden;
-}
-
 #root {
   width: 100%;
-  min-height: 100vh;
-}
-
-.app {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .logo {
@@ -121,4 +105,13 @@ body {
 
 .table-container::-webkit-scrollbar-thumb:hover {
   background: #666;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
