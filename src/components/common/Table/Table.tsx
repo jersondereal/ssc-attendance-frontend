@@ -38,6 +38,7 @@ interface TableProps {
   data: TableRecord[];
   className?: string;
   onActionClick?: (action: string, row: TableRecord) => void;
+  onRowClick?: (row: TableRecord) => void;
   sortConfig: {
     key: string;
     direction: "asc" | "desc";
@@ -54,6 +55,7 @@ export const Table = ({
   data,
   className,
   onActionClick,
+  onRowClick,
   sortConfig,
   onSortChange,
   selectedRows,
@@ -123,9 +125,8 @@ export const Table = ({
   };
 
   const showCheckbox = currentUserRole !== "Viewer";
-  const showActions = !(
-    tableType === "attendance" && currentUserRole === "Viewer"
-  );
+  // Viewers: no action column. Admin/Mod: show actions (attendance = status; students = Edit only).
+  const showActions = currentUserRole !== "Viewer";
 
   // Reorder status column after name
   const getReorderedColumns = (cols: Column[]) => {
@@ -241,120 +242,140 @@ export const Table = ({
               </td>
             </tr>
           ) : (
-            data.map((row, rowIndex) => (
-              <tr
-                key={rowIndex}
-                className="group border-b border-gray-100 hover:bg-gray-50 h-10"
-              >
-                <td className="w-10 px-3">
-                  {showCheckbox && (
-                    <Checkbox
-                      checked={selectedRows.includes(rowIndex)}
-                      onChange={(checked) =>
-                        onSelectedRowsChange(
-                          checked
-                            ? [...selectedRows, rowIndex]
-                            : selectedRows.filter((i) => i !== rowIndex)
-                        )
-                      }
-                    />
-                  )}
-                </td>
-                {orderedColumns.map((column) => (
+            data.map((row, rowIndex) => {
+              const isStudentRow =
+                tableType === "students" && !isAttendanceRecord(row);
+              const isRowClickable = Boolean(onRowClick) && isStudentRow;
+              return (
+                <tr
+                  key={rowIndex}
+                  role={isRowClickable ? "button" : undefined}
+                  tabIndex={isRowClickable ? 0 : undefined}
+                  onClick={
+                    isRowClickable
+                      ? (e) => {
+                          if (
+                            (e.target as HTMLElement).closest("button") ||
+                            (e.target as HTMLElement).closest(
+                              "[role='checkbox']"
+                            ) ||
+                            (e.target as HTMLElement).closest(
+                              "input[type='checkbox']"
+                            )
+                          )
+                            return;
+                          onRowClick?.(row);
+                        }
+                      : undefined
+                  }
+                  onKeyDown={
+                    isRowClickable
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onRowClick?.(row);
+                          }
+                        }
+                      : undefined
+                  }
+                  className={`group border-b border-gray-100 hover:bg-gray-50 h-10 ${
+                    isRowClickable ? "cursor-pointer" : ""
+                  }`}
+                >
                   <td
-                    key={`${rowIndex}-${column.key}`}
-                    className="px-3 text-gray-800 truncate"
-                    style={column.width ? { width: column.width } : undefined}
+                    className="w-10 px-3"
+                    onClick={(e) => isRowClickable && e.stopPropagation()}
                   >
-                    {column.key === "status" && isAttendanceRecord(row) ? (
-                      <span
-                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusClass(
-                          row.status
-                        )}`}
-                      >
-                        {row.status}
-                      </span>
-                    ) : (
-                      row[column.key as keyof TableRecord]
+                    {showCheckbox && (
+                      <Checkbox
+                        checked={selectedRows.includes(rowIndex)}
+                        onChange={(checked) =>
+                          onSelectedRowsChange(
+                            checked
+                              ? [...selectedRows, rowIndex]
+                              : selectedRows.filter((i) => i !== rowIndex)
+                          )
+                        }
+                      />
                     )}
                   </td>
-                ))}
-                {showActions && (
-                  <td
-                    className="w-10 px-3 bg-white group-hover:bg-gray-50"
-                    style={{
-                      position: "sticky",
-                      right: 0,
-                      zIndex: activeMenu === rowIndex ? 30 : 1,
-                      boxShadow: "-2px 0 4px -2px rgba(0,0,0,0.08)",
-                    }}
-                  >
-                    <div
-                      ref={activeMenu === rowIndex ? menuRef : undefined}
-                      className="relative"
+                  {orderedColumns.map((column) => (
+                    <td
+                      key={`${rowIndex}-${column.key}`}
+                      className="px-3 text-gray-800 truncate"
+                      style={column.width ? { width: column.width } : undefined}
                     >
-                      <button
-                        type="button"
-                        onClick={(e) => handleMenuClick(rowIndex, e)}
-                        className="rounded-md p-1.5 text-gray-600 hover:bg-gray-100"
-                        aria-label="Row actions"
+                      {column.key === "status" && isAttendanceRecord(row) ? (
+                        <span
+                          className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusClass(
+                            row.status
+                          )}`}
+                        >
+                          {row.status}
+                        </span>
+                      ) : (
+                        row[column.key as keyof TableRecord]
+                      )}
+                    </td>
+                  ))}
+                  {showActions && (
+                    <td
+                      className="w-10 px-3 bg-white group-hover:bg-gray-50"
+                      style={{
+                        position: "sticky",
+                        right: 0,
+                        zIndex: activeMenu === rowIndex ? 30 : 1,
+                        boxShadow: "-2px 0 4px -2px rgba(0,0,0,0.08)",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div
+                        ref={activeMenu === rowIndex ? menuRef : undefined}
+                        className="relative"
                       >
-                        <Ellipsis className="size-5" />
-                      </button>
-                      {activeMenu === rowIndex && (
-                        <div className="absolute right-0 z-[100] mt-1 w-28 rounded-md p-1 flex flex-col gap-1 border border-gray-200 bg-white shadow-lg">
-                          {isAttendanceRecord(row) ? (
-                            ["Present", "Absent", "Excused"].map((status) => (
-                              <button
-                                key={status}
-                                type="button"
-                                onClick={() =>
-                                  handleActionClick("status", {
-                                    ...row,
-                                    status,
-                                  })
-                                }
-                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
-                              >
-                                {status}
-                              </button>
-                            ))
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleActionClick("metrics", row)
-                                }
-                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
-                              >
-                                Metrics
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleActionClick("fines", row)}
-                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
-                              >
-                                Fines
-                              </button>
-                              {currentUserRole !== "Viewer" && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleMenuClick(rowIndex, e)}
+                          className="rounded-md p-1.5 text-gray-600 hover:bg-gray-100"
+                          aria-label="Row actions"
+                        >
+                          <Ellipsis className="size-5" />
+                        </button>
+                        {activeMenu === rowIndex && (
+                          <div className="absolute right-0 z-[100] mt-1 w-28 rounded-md p-1 flex flex-col gap-1 border border-gray-200 bg-white shadow-lg">
+                            {isAttendanceRecord(row) ? (
+                              ["Present", "Absent", "Excused"].map((status) => (
                                 <button
+                                  key={status}
                                   type="button"
-                                  onClick={() => handleActionClick("edit", row)}
+                                  onClick={() =>
+                                    handleActionClick("status", {
+                                      ...row,
+                                      status,
+                                    })
+                                  }
                                   className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
                                 >
-                                  Edit
+                                  {status}
                                 </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                )}
-              </tr>
-            ))
+                              ))
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleActionClick("edit", row)}
+                                className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
+                              >
+                                Edit
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

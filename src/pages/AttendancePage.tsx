@@ -18,8 +18,7 @@ import { Table } from "../components/common/Table/Table";
 import { AddStudentForm } from "../components/forms/AddStudentForm/AddStudentForm";
 import { EditStudentForm } from "../components/forms/EditStudentForm/EditStudentForm";
 import type { StudentFormData } from "../components/forms/StudentForm/StudentForm";
-import { Metrics } from "../components/ui/Metrics/Metrics";
-import { StudentFines } from "../components/ui/StudentFines/StudentFines";
+import { StudentProfileCard } from "../components/ui/StudentProfileCard/StudentProfileCard";
 import config from "../config";
 import { useSettings } from "../contexts/SettingsContext";
 import { useToast } from "../contexts/ToastContext";
@@ -130,8 +129,8 @@ export function AttendancePage({
   const [isRfidModalOpen, setIsRfidModalOpen] = useState(false);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
-  const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
-  const [isFinesModalOpen, setIsFinesModalOpen] = useState(false);
+  const [selectedStudentForProfile, setSelectedStudentForProfile] =
+    useState<StudentRecord | null>(null);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] =
     useState(false);
   const [deleteConfirmChecked, setDeleteConfirmChecked] = useState(false);
@@ -146,10 +145,6 @@ export function AttendancePage({
   const [editingStudent, setEditingStudent] = useState<
     AttendanceRecord | StudentRecord | null
   >(null);
-  const [selectedStudentForMetrics, setSelectedStudentForMetrics] =
-    useState<StudentRecord | null>(null);
-  const [selectedStudentForFines, setSelectedStudentForFines] =
-    useState<StudentRecord | null>(null);
   const [events, setEvents] = useState<DBEvent[]>([]);
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [students, setStudents] = useState<StudentRecord[]>([]);
@@ -294,18 +289,6 @@ export function AttendancePage({
         if ("studentId" in row) {
           setEditingStudent(row as AttendanceRecord | StudentRecord);
           setIsEditStudentModalOpen(true);
-        }
-        break;
-      case "metrics":
-        if ("studentId" in row) {
-          setSelectedStudentForMetrics(row as StudentRecord);
-          setIsMetricsModalOpen(true);
-        }
-        break;
-      case "fines":
-        if ("studentId" in row) {
-          setSelectedStudentForFines(row as StudentRecord);
-          setIsFinesModalOpen(true);
         }
         break;
     }
@@ -559,12 +542,12 @@ export function AttendancePage({
   ];
 
   const studentColumns = [
-    { key: "studentId", label: "Id", width: "0" },
-    { key: "rfid", label: "Rfid", width: "0" },
-    { key: "name", label: "Name", width: "100" },
-    { key: "college", label: "College", width: "0" },
-    { key: "year", label: "Year", width: "0" },
-    { key: "section", label: "Section", width: "0" },
+    { key: "studentId", label: "Id", width: "90px" },
+    { key: "rfid", label: "Rfid", width: "100px" },
+    { key: "name", label: "Name", width: "80px" },
+    { key: "college", label: "College", width: "80px" },
+    { key: "year", label: "Year", width: "80px" },
+    { key: "section", label: "Section", width: "80px" },
   ];
 
   const yearOptions = [
@@ -883,6 +866,11 @@ export function AttendancePage({
           columns={studentColumns}
           data={currentData}
           onActionClick={handleTableAction}
+          onRowClick={(row) => {
+            if ("studentId" in row && !("status" in row)) {
+              setSelectedStudentForProfile(row as StudentRecord);
+            }
+          }}
           sortConfig={sortConfig}
           onSortChange={setSortConfig}
           selectedRows={selectedRows}
@@ -932,42 +920,16 @@ export function AttendancePage({
         )}
       </Modal>
 
-      {/* Metrics Modal */}
+      {/* Student profile (metrics + fines) modal – opened by row click */}
       <Modal
-        modalClassName="!w-fit !max-w-fit"
-        isOpen={isMetricsModalOpen}
-        onClose={() => {
-          setIsMetricsModalOpen(false);
-          setSelectedStudentForMetrics(null);
-        }}
+        modalClassName="!w-fit !max-w-fit !max-h-[90vh] overflow-y-auto !rounded-[20px]"
+        isOpen={selectedStudentForProfile !== null}
+        onClose={() => setSelectedStudentForProfile(null)}
       >
-        {selectedStudentForMetrics && (
-          <Metrics
-            studentData={selectedStudentForMetrics}
-            onClose={() => {
-              setIsMetricsModalOpen(false);
-              setSelectedStudentForMetrics(null);
-            }}
-          />
-        )}
-      </Modal>
-
-      {/* Fines Modal */}
-      <Modal
-        modalClassName="!w-fit !max-w-fit"
-        isOpen={isFinesModalOpen}
-        onClose={() => {
-          setIsFinesModalOpen(false);
-          setSelectedStudentForFines(null);
-        }}
-      >
-        {selectedStudentForFines && (
-          <StudentFines
-            studentData={selectedStudentForFines}
-            onClose={() => {
-              setIsFinesModalOpen(false);
-              setSelectedStudentForFines(null);
-            }}
+        {selectedStudentForProfile && (
+          <StudentProfileCard
+            studentData={selectedStudentForProfile}
+            onClose={() => setSelectedStudentForProfile(null)}
             currentUserRole={currentUser?.role}
           />
         )}
