@@ -18,7 +18,7 @@ export function SettingsPage({ currentUser }: SettingsPageProps) {
 
   return (
     <div className="w-full h-full overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-6 pb-24">
+      <div className="max-w-4xl mx-auto px-6 py-6 pb-10">
         <div className="space-y-8">
           <GeneralSettingsSection />
           <SystemConfigurationSection />

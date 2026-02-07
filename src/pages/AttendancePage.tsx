@@ -815,7 +815,7 @@ export function AttendancePage({
     : !isViewer && systemSettings.featureAccess.moderator.deleteEvent;
 
   return (
-    <div className="w-full !h-full px-5 pb-20">
+    <div className="w-full !h-full px-5 pb-10">
       {/* Menu bar container  */}
       <div className="flex flex-row w-full max-w-[70rem] mx-auto mb-3 z-100 items-end ">
         {selectedRows.length > 0 ? (

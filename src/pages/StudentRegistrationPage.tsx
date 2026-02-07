@@ -1,8 +1,18 @@
+import axios from "axios";
+import { useState } from "react";
 import { AddStudentForm } from "../components/forms/AddStudentForm/AddStudentForm";
+import type { StudentFormData } from "../components/forms/StudentForm/StudentForm";
+import config from "../config";
 import { useSettings } from "../contexts/SettingsContext";
+import { useToast } from "../contexts/ToastContext";
 
 export function StudentRegistrationPage() {
   const { systemSettings } = useSettings();
+  const { showToast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [formKey, setFormKey] = useState(0);
   const registrationEnabled =
     systemSettings.featureAccess.viewer.studentRegistration;
 
@@ -37,8 +47,47 @@ export function StudentRegistrationPage() {
       </h2>
       <div className="border border-border-dark w-full p-3 pt-8 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg">
         <h2 className="text-lg font-bold text-center">Student Registration</h2>
+        {submitMessage && (
+          <p className="mt-3 text-sm text-green-700 text-center" role="status">
+            {submitMessage}
+          </p>
+        )}
+        {submitError && (
+          <p className="mt-3 text-sm text-red-600 text-center" role="alert">
+            {submitError}
+          </p>
+        )}
         <AddStudentForm
-          onSubmit={() => {}}
+          key={formKey}
+          onSubmit={async (data: StudentFormData) => {
+            if (isSubmitting) return;
+            setSubmitError(null);
+            setSubmitMessage(null);
+            setIsSubmitting(true);
+            try {
+              await axios.post(`${config.API_BASE_URL}/students`, {
+                student_id: data.studentId,
+                name: data.name,
+                college: data.college.toLowerCase(),
+                year: data.year,
+                section: data.section.toLowerCase(),
+                rfid: (data.rfid ?? "").trim(),
+              });
+              setSubmitMessage(
+                "Registration submitted successfully. You may close this page."
+              );
+              showToast("Registration submitted successfully", "success");
+              setFormKey((prev) => prev + 1);
+            } catch (error: unknown) {
+              const message = axios.isAxiosError(error)
+                ? error.response?.data?.message || "Registration failed"
+                : "Registration failed";
+              setSubmitError(message);
+              showToast(message, "error");
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
           onCancel={() => {}}
           showHeader={false}
           className="w-full"

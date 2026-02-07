@@ -81,6 +81,7 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [deleteEventConfirmChecked, setDeleteEventConfirmChecked] =
     useState(false);
+  const [visibleEventCount, setVisibleEventCount] = useState(6);
 
   const [range, setRange] = useState<RangeValue>("last_30_days");
   const menuRef = useRef<HTMLDivElement>(null);
@@ -122,6 +123,10 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
         setEventsLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    setVisibleEventCount(6);
+  }, [events.length]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -258,7 +263,7 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
     : !isViewer && systemSettings.featureAccess.moderator.deleteEvent;
 
   return (
-    <div className="w-full max-w-[70rem] mx-auto px-5 pb-20 flex flex-col gap-6">
+    <div className="w-full max-w-[70rem] mx-auto px-5 pb-10 flex flex-col gap-6">
       <div className="flex flex-wrap justify-between gap-3 items-center">
         <div className="space-y-1">
           <h1 className="text-lg font-semibold text-gray-900">Overview</h1>
@@ -286,7 +291,10 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
       <div className="flex flex-col md:flex-row gap-6">
         <div className="flex flex-row md:flex-col gap-6 px-0! w-full md:w-fit">
           <div className="flex flex-col gap-6 w-full md:w-fit">
-            <MetricsSection title="Students" containerClassName="w-full min-w-full">
+            <MetricsSection
+              title="Students"
+              containerClassName="w-full min-w-full"
+            >
               <MetricCard
                 label="Total students"
                 value={formatNumber(totalStudents)}
@@ -313,38 +321,53 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
             </MetricsSection>
           </div>
         </div>
-        <div className="min-h-full w-full">
-          <MetricsSection title="Events" containerClassName="min-w-full">
-            <div className="w-full grid gap-4 grid-cols-1 md:grid-cols-2">
-              {/* Show skeletons while loading */}
-              {eventsLoading
-                ? Array.from({ length: 4 }).map((_, idx) => (
-                    <EventCardSkeleton key={idx} />
-                  ))
-                : events.map((event) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      isMenuOpen={menuOpenFor === event.id}
-                      onMenuClick={(e) => handleMenuClick(event.id, e)}
-                      onEditClick={(e) => handleEditClick(event, e)}
-                      onDeleteClick={(e) => handleDeleteClick(event.id, e)}
-                      onCardClick={() => {
-                        navigate("/attendance", {
-                          state: { eventId: event.id },
-                        });
-                        window.scrollTo(0, 0);
-                      }}
-                      menuRef={menuRef}
-                      canEdit={canEditEvent}
-                      canDelete={canDeleteEvent}
-                    />
-                  ))}
-            </div>
-            {!eventsLoading && events.length === 0 && (
-              <p className="text-sm text-gray-500 py-4">No events yet.</p>
-            )}
-          </MetricsSection>
+        <div className="flex flex-col w-full">
+          <div className="w-full">
+            <MetricsSection title="Events" containerClassName="min-w-full">
+              <div className="w-full grid gap-4 grid-cols-1 md:grid-cols-2">
+                {/* Show skeletons while loading */}
+                {eventsLoading
+                  ? Array.from({ length: 6 }).map((_, idx) => (
+                      <EventCardSkeleton key={idx} />
+                    ))
+                  : events.slice(0, visibleEventCount).map((event) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        isMenuOpen={menuOpenFor === event.id}
+                        onMenuClick={(e) => handleMenuClick(event.id, e)}
+                        onEditClick={(e) => handleEditClick(event, e)}
+                        onDeleteClick={(e) => handleDeleteClick(event.id, e)}
+                        onCardClick={() => {
+                          navigate("/attendance", {
+                            state: { eventId: event.id },
+                          });
+                          window.scrollTo(0, 0);
+                        }}
+                        menuRef={menuRef}
+                        canEdit={canEditEvent}
+                        canDelete={canDeleteEvent}
+                      />
+                    ))}
+              </div>
+            </MetricsSection>
+          </div>
+          {!eventsLoading && events.length === 0 && (
+            <p className="text-sm text-gray-500 py-4">No events yet.</p>
+          )}
+          {!eventsLoading && events.length > visibleEventCount && (
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleEventCount((prev) =>
+                  Math.min(prev + 6, events.length)
+                )
+              }
+              className="w-full mt-4 rounded-[10px] border border-border-dark bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Show more
+            </button>
+          )}
         </div>
       </div>
 
