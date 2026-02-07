@@ -27,7 +27,6 @@ const NAV_ITEMS = [
     path: "/students",
     hiddenForViewer: false,
   },
-  { id: "events", label: "Events", path: "/events", hiddenForViewer: false },
   {
     id: "settings",
     label: "Settings",
@@ -91,13 +90,13 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
     >
       <div
         ref={wrapperRef}
-        className="relative flex items-center space-x-1 py-2 px-4 w-max min-w-full"
+        className="relative flex items-center space-x-1 pb-2 md:pb-0 md:pt-0 px-4 w-max min-w-full md:min-w-fit md:ml-auto"
       >
         {navItems.map((item) => {
           const isDisabled =
             disableUnauthorized && isViewer && item.hiddenForViewer;
           const baseClass =
-            "group inline-flex h-9 w-max items-center justify-center rounded-[8px] px-4 py-2 text-xs font-medium transition-all duration-200 ease-in-out shrink-0";
+            "group inline-flex h-9 md:h-14 w-max items-center justify-center rounded-[8px] px-4 py-2 text-xs font-medium transition-all duration-200 ease-in-out shrink-0";
           const disabledClass = "text-zinc-300 cursor-not-allowed";
           const activeClass = "text-black relative";
           const inactiveClass =

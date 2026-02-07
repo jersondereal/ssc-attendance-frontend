@@ -149,7 +149,7 @@ export const Table = ({
   return (
     <div
       ref={tableRef}
-      className={`w-full max-w-[70rem] min-h-0 flex-shrink h-[70vh] mx-auto overflow-auto rounded-lg border border-gray-200 pb-32 bg-white shadow-sm relative contain-layout ${
+      className={`w-full max-w-[70rem] min-h-0 flex-shrink h-[75vh] mx-auto overflow-auto rounded-lg border border-gray-200 pb-32 bg-white shadow-sm relative contain-layout ${
         className ?? ""
       }`}
     >

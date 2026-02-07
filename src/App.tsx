@@ -10,7 +10,6 @@ import { FooterSection } from "./components/shared"; // import the FooterSection
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import { AttendancePage } from "./pages/AttendancePage";
-import { EventsPage } from "./pages/EventsPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { StudentPage } from "./pages/StudentPage";
@@ -98,24 +97,32 @@ function AppContent() {
               !isSettings ? "mb-5" : ""
             }`}
           >
-            {/* First Level: Logo/Title and UserMenu */}
-            <div className="flex flex-row items-center w-full pt-3 px-4">
+            {/* Header row */}
+            <div className="flex flex-row items-center w-full pt-3 md:pt-0 px-4 flex-wrap gap-y-2">
               {/* Left: Logo and Title */}
-              <div className="flex flex-row items-center gap-3">
+              <div className="flex flex-row items-center gap-3 order-1">
                 <img
                   src="/logo.png"
                   alt="SSC Logo"
                   className="h-8 w-auto"
                   style={{ maxHeight: "2rem" }}
                 />
-                <div className="border-l-2 border-gray-300 h-4 rotate-12 "></div>
-                <span className="text-[12px] font-semibold text-gray-900 flex flex-row items-center gap-1">
+                <div className="border-l-2 border-gray-300 h-4 rotate-12 md:hidden lg:block "></div>
+                <span className="text-[12px] font-semibold text-gray-900 flex-row items-center gap-1 flex md:hidden lg:flex">
                   Supreme Student Council{" "}
                   <span className="sm:block hidden">- ESSU Guiuan</span>
                 </span>
               </div>
+              {/* Navigation: below on mobile, left of user menu on md+ */}
+              <div className="order-3 w-full md:order-2 md:w-fit md:flex-1 md:mx-4">
+                <NavigationMenu
+                  currentUserRole={currentUser?.role}
+                  hideAll={showMaintenanceNotice}
+                  disableUnauthorized
+                />
+              </div>
               {/* Right: User Menu */}
-              <div className="flex flex-row items-center gap-2 ml-auto">
+              <div className="flex flex-row items-center gap-2 ml-auto md:ml-10 order-2 md:order-3">
                 <div
                   className={`rounded-full cursor-not-allowed border border-gray-500 p-2 flex items-center justify-center ${
                     currentUser?.role === "Viewer" ? "hidden" : ""
@@ -135,14 +142,6 @@ function AppContent() {
                   onUserChange={handleUserChange}
                 />
               </div>
-            </div>
-            {/* Second Level: Navigation Menu */}
-            <div className="flex flex-row items-center w-full border-border-dark">
-              <NavigationMenu
-                currentUserRole={currentUser?.role}
-                hideAll={showMaintenanceNotice}
-                disableUnauthorized
-              />
             </div>
           </div>
         </>
@@ -172,12 +171,6 @@ function AppContent() {
                 ) : (
                   <Navigate to="/" replace />
                 )
-              }
-            />
-            <Route
-              path="/events"
-              element={
-                currentUser ? <EventsPage /> : <Navigate to="/" replace />
               }
             />
             <Route
