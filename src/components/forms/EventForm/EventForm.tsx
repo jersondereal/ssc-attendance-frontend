@@ -49,6 +49,7 @@ interface EventFormProps {
   className?: string;
 }
 
+// Hide section input, but keep handling logic
 const buildSectionsState = (data?: Partial<SectionsState>): SectionsState => ({
   all: data?.all ?? false,
   a: data?.a ?? false,
@@ -57,14 +58,15 @@ const buildSectionsState = (data?: Partial<SectionsState>): SectionsState => ({
   d: data?.d ?? false,
 });
 
+// Always return all years as selected by default
 const buildSchoolYearsState = (
   data?: Partial<SchoolYearsState>
 ): SchoolYearsState => ({
-  all: data?.all ?? false,
-  1: data?.[1] ?? false,
-  2: data?.[2] ?? false,
-  3: data?.[3] ?? false,
-  4: data?.[4] ?? false,
+  all: true,
+  1: true,
+  2: true,
+  3: true,
+  4: true,
 });
 
 export const EventForm = ({
@@ -86,8 +88,9 @@ export const EventForm = ({
   const [sections, setSections] = useState<SectionsState>(
     buildSectionsState(initialSections)
   );
+  // Always set all school years as true by default
   const [schoolYears, setSchoolYears] = useState<SchoolYearsState>(
-    buildSchoolYearsState(initialSchoolYears)
+    buildSchoolYearsState()
   );
 
   useEffect(() => {
@@ -98,8 +101,9 @@ export const EventForm = ({
     setSections(buildSectionsState(initialSections));
   }, [initialSections]);
 
+  // Always set all school years as true by default, no matter the initialSchoolYears prop
   useEffect(() => {
-    setSchoolYears(buildSchoolYearsState(initialSchoolYears));
+    setSchoolYears(buildSchoolYearsState());
   }, [initialSchoolYears]);
 
   useEffect(() => {
@@ -292,7 +296,7 @@ export const EventForm = ({
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        {/* <div className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Attendees Section
@@ -330,6 +334,9 @@ export const EventForm = ({
               />
             </div>
           </div>
+        </div> */}
+
+        <div className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Attendees School Year

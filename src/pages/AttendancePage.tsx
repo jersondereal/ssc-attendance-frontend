@@ -138,6 +138,19 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     [selectedEvent, attendanceByEventId]
   );
 
+  const mapAttendanceRows = useCallback(
+    (rows: DBAttendance[]): AttendanceRecord[] =>
+      rows.map((record) => ({
+        studentId: record.student_id,
+        name: record.name,
+        college: (record.college ?? record.course ?? "").toUpperCase(),
+        year: record.year,
+        section: record.section.toUpperCase(),
+        status: record.status,
+      })),
+    []
+  );
+
   useEffect(() => {
     if (events.length === 0) fetchEvents();
   }, [events.length, fetchEvents]);
@@ -176,18 +189,11 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     axios
       .get(`${config.API_BASE_URL}/attendance/event/${selectedEvent.id}`)
       .then((res) => {
-        const mapped = (res.data as DBAttendance[]).map((record) => ({
-          studentId: record.student_id,
-          name: record.name,
-          college: (record.college ?? record.course ?? "").toUpperCase(),
-          year: record.year,
-          section: record.section.toUpperCase(),
-          status: record.status,
-        }));
+        const mapped = mapAttendanceRows(res.data as DBAttendance[]);
         setAttendanceForEvent(selectedEvent.id, mapped);
       })
       .catch((err) => console.error(err));
-  }, [selectedEvent, attendanceByEventId, setAttendanceForEvent]);
+  }, [selectedEvent, attendanceByEventId, setAttendanceForEvent, mapAttendanceRows]);
 
   const handleTableAction = (action: string, row: TableRecord) => {
     switch (action) {
@@ -382,6 +388,29 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
       );
       const updatedEvent = response.data;
       updateEventInStore(event.id, updatedEvent);
+
+      if (selectedEvent?.id === event.id) {
+        const nextSelectedEvent: Event = {
+          id: updatedEvent.id.toString(),
+          name: updatedEvent.title,
+          date: updatedEvent.event_date,
+          location: updatedEvent.location,
+          fine: updatedEvent.fine,
+          colleges: updatedEvent.colleges ?? updatedEvent.courses,
+          sections: updatedEvent.sections as Event["sections"],
+          schoolYears: updatedEvent.school_years as Event["schoolYears"],
+        };
+        setSelectedEvent(nextSelectedEvent);
+
+        const attendanceResponse = await axios.get(
+          `${config.API_BASE_URL}/attendance/event/${event.id}`
+        );
+        setAttendanceForEvent(
+          event.id,
+          mapAttendanceRows(attendanceResponse.data as DBAttendance[])
+        );
+      }
+
       showToast(`Event "${updatedEvent.title}" updated successfully`);
     } catch (error) {
       console.error("Error updating event:", error);
@@ -499,13 +528,68 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     { key: "section", label: "Section", width: "80px" },
   ];
 
-  const yearOptions = [
-    { value: "all", label: "All Years" },
-    { value: "1", label: "Year 1" },
-    { value: "2", label: "Year 2" },
-    { value: "3", label: "Year 3" },
-    { value: "4", label: "Year 4" },
-  ];
+  const yearOptions = useMemo(
+    () => [
+      { value: "all", label: "All Years" },
+      { value: "1", label: "Year 1" },
+      { value: "2", label: "Year 2" },
+      { value: "3", label: "Year 3" },
+      { value: "4", label: "Year 4" },
+    ],
+    []
+  );
+
+  const scopedCollegeOptions = useMemo(() => {
+    if (tableType !== "attendance" || !selectedEvent?.colleges) {
+      return collegeOptions;
+    }
+
+    const selectedColleges = Object.entries(selectedEvent.colleges)
+      .filter(([key, enabled]) => key !== "all" && enabled)
+      .map(([key]) => key.toLowerCase());
+
+    if (selectedEvent.colleges.all || selectedColleges.length === 0) {
+      return collegeOptions;
+    }
+
+    const selectedCollegeSet = new Set(selectedColleges);
+    const filtered = collegeOptions.filter(
+      (option) =>
+        option.value === "all" || selectedCollegeSet.has(option.value.toLowerCase())
+    );
+
+    return filtered.length > 1 ? filtered : collegeOptions;
+  }, [tableType, selectedEvent, collegeOptions]);
+
+  const scopedYearOptions = useMemo(() => {
+    if (tableType !== "attendance" || !selectedEvent?.schoolYears) {
+      return yearOptions;
+    }
+
+    const selectedYears = Object.entries(selectedEvent.schoolYears)
+      .filter(([key, enabled]) => key !== "all" && enabled)
+      .map(([key]) => key);
+
+    if (selectedEvent.schoolYears.all || selectedYears.length === 0) {
+      return yearOptions;
+    }
+
+    const selectedYearSet = new Set(selectedYears);
+    return yearOptions.filter(
+      (option) => option.value === "all" || selectedYearSet.has(option.value)
+    );
+  }, [tableType, selectedEvent, yearOptions]);
+
+  useEffect(() => {
+    const validCollegeValues = new Set(scopedCollegeOptions.map((o) => o.value));
+    const validYearValues = new Set(scopedYearOptions.map((o) => o.value));
+
+    setSelectedFilters((prev) => ({
+      ...prev,
+      college: validCollegeValues.has(prev.college) ? prev.college : "all",
+      year: validYearValues.has(prev.year) ? prev.year : "all",
+    }));
+  }, [scopedCollegeOptions, scopedYearOptions, setSelectedFilters]);
 
   const sectionOptions = [
     { value: "all", label: "All Sections" },
@@ -785,8 +869,8 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
             onSearch={handleSearch}
-            collegeOptions={collegeOptions}
-            yearOptions={yearOptions}
+            collegeOptions={scopedCollegeOptions}
+            yearOptions={scopedYearOptions}
             sectionOptions={sectionOptions}
             hasAttendanceTableData={hasAttendanceTableData}
           />

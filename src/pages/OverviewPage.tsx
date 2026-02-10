@@ -64,7 +64,6 @@ export const OverviewPage = () => {
   const eventsRaw = useEventsStore((s) => s.events);
   const eventsLoading = useEventsStore((s) => s.loading);
   const fetchEvents = useEventsStore((s) => s.fetchEvents);
-  const updateEventInStore = useEventsStore((s) => s.updateEvent);
   const removeEventFromStore = useEventsStore((s) => s.removeEvent);
   const addEventToStore = useEventsStore((s) => s.addEvent);
 
@@ -157,6 +156,7 @@ export const OverviewPage = () => {
     setMenuOpenFor(null);
   };
 
+  // Modified: on event update, reload page.
   const handleEditSubmit = (data: {
     title: string;
     event_date: string;
@@ -177,10 +177,13 @@ export const OverviewPage = () => {
         sections: data.sections,
         schoolYears: data.schoolYears,
       })
-      .then((res) => {
+      .then(() => {
         showToast("Event updated successfully", "success");
         setEventToEdit(null);
-        updateEventInStore(eventToEdit.id, res.data as DBEvent);
+        // Instead of updating in store, force page reload
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       })
       .catch(() => showToast("Failed to update event", "error"));
   };
