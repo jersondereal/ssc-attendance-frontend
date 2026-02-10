@@ -81,7 +81,7 @@ export function StudentRegistrationPage() {
       <h2 className="text-lg font-medium text-center mt-2 text-zinc-500">
         Attendance Monitoring System
       </h2>
-      <div className="border border-border-dark w-full p-6 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg">
+      <div className="border border-border-dark w-full md:p-6 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg">
         {submitMessage && registeredStudent ? (
           <RegistrationSuccessView
             student={registeredStudent}

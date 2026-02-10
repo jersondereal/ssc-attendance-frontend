@@ -189,9 +189,6 @@ export const StudentForm = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Profile Picture
           </label>
-          <p className="text-xs text-gray-500 mb-1">Upload a clear photo of yourself (1:1 aspect ratio). <br />
-          This photo is private and can only be seen by school administrators. <br />
-          Other students will not see this photo.</p>
           <input
             type="file"
             accept="image/*"
@@ -199,6 +196,9 @@ export const StudentForm = ({
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             onChange={handleProfileImageChange}
           />
+          <p className="text-xs text-gray-500 mt-2">Upload a clear photo of yourself (1:1 aspect ratio). <br />
+          This photo is private and can only be seen by school administrators. <br />
+          Other students will not see this photo.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
