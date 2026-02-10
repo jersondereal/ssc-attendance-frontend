@@ -1,5 +1,6 @@
 import SearchIcon from "@mui/icons-material/Search";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 interface SearchBarProps {
   onSearch?: (value: string) => void;
@@ -9,12 +10,20 @@ interface SearchBarProps {
 export const SearchBar = ({ onSearch, className = "" }: SearchBarProps) => {
   const [searchValue, setSearchValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchValue(value);
     onSearch?.(value);
   };
+
+  // Clear the search bar on route (location) change
+  useEffect(() => {
+    setSearchValue("");
+    onSearch?.("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   return (
     <div
