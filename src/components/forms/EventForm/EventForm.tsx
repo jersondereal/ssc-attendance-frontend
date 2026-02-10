@@ -60,7 +60,7 @@ const buildSectionsState = (data?: Partial<SectionsState>): SectionsState => ({
 
 // Always return all years as selected by default
 const buildSchoolYearsState = (
-  data?: Partial<SchoolYearsState>
+  // data?: Partial<SchoolYearsState>
 ): SchoolYearsState => ({
   all: true,
   1: true,
@@ -149,22 +149,22 @@ export const EventForm = ({
     }
   };
 
-  const handleSectionChange = (key: keyof SectionsState, checked: boolean) => {
-    if (key === "all") {
-      setSections({
-        all: checked,
-        a: checked,
-        b: checked,
-        c: checked,
-        d: checked,
-      });
-    } else {
-      const newSections = { ...sections, [key]: checked };
-      newSections.all =
-        newSections.a && newSections.b && newSections.c && newSections.d;
-      setSections(newSections);
-    }
-  };
+  // const handleSectionChange = (key: keyof SectionsState, checked: boolean) => {
+  //   if (key === "all") {
+  //     setSections({
+  //       all: checked,
+  //       a: checked,
+  //       b: checked,
+  //       c: checked,
+  //       d: checked,
+  //     });
+  //   } else {
+  //     const newSections = { ...sections, [key]: checked };
+  //     newSections.all =
+  //       newSections.a && newSections.b && newSections.c && newSections.d;
+  //     setSections(newSections);
+  //   }
+  // };
 
   const handleSchoolYearChange = (
     key: keyof SchoolYearsState,
