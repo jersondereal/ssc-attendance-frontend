@@ -1,14 +1,15 @@
 import { Analytics } from "@vercel/analytics/react";
-import axios from "axios";
+// import axios from "axios";
 import { Bell, BookOpen } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./App.css";
 import NavigationMenu from "./components/common/NavigationMenu/NavigationMenu";
 import { UserMenu } from "./components/common/UserMenu/UserMenu";
-import { FooterSection } from "./components/shared"; // import the FooterSection
-import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
+import { FooterSection } from "./components/shared";
 import { ToastProvider } from "./contexts/ToastContext";
+import { useAuthStore } from "./stores/useAuthStore";
+import { useSettingsStore } from "./stores/useSettingsStore";
 import { AttendancePage } from "./pages/AttendancePage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -34,52 +35,48 @@ function MaintenanceNotice() {
 
 function AppContent() {
   const { pathname } = useLocation();
-  const { systemSettings } = useSettings();
-  const [currentUser, setCurrentUser] = useState<{
-    username: string;
-    role: string;
-  } | null>(null);
+  const systemSettings = useSettingsStore((s) => s.systemSettings);
+  const refreshSettings = useSettingsStore((s) => s.refreshSettings);
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const initFromStorage = useAuthStore((s) => s.initFromStorage);
 
   const standalonePages = ["/register"];
 
   const isSettings = pathname === "/settings";
   const isStandalonePage = standalonePages.includes(pathname);
 
-  // get IP address and location of user
   useEffect(() => {
-    axios
-      .get(
-        `https://api.ipgeolocation.io/v2/ipgeo?apiKey=535486062e0045ac85d929f699d16ecd`,
-        {
-          method: "GET",
-        }
-      )
-      .then((res) => {
-        console.log("User IP:", res.data.ip);
-        console.log("User Location:", {
-          latitude: res.data.latitude,
-          longitude: res.data.longitude,
-          city: res.data.city,
-          country: res.data.country_name,
-          state: res.data.state_prov,
-          district: res.data.district,
-        });
-      })
-      .catch((err) => {
-        console.error("Error fetching location:", err);
-      });
-  }, []);
+    initFromStorage();
+  }, [initFromStorage]);
 
-  const handleLogout = () => {
-    console.log("Logging out...");
-  };
+  useEffect(() => {
+    refreshSettings();
+  }, [refreshSettings]);
 
-  const handleUserChange = useCallback(
-    (user: { username: string; role: string } | null) => {
-      setCurrentUser(user);
-    },
-    []
-  );
+  // get IP address and location of user
+  // useEffect(() => {
+  //   axios
+  //     .get(
+  //       `https://api.ipgeolocation.io/v2/ipgeo?apiKey=535486062e0045ac85d929f699d16ecd`,
+  //       {
+  //         method: "GET",
+  //       }
+  //     )
+  //     .then((res) => {
+  //       console.log("User IP:", res.data.ip);
+  //       console.log("User Location:", {
+  //         latitude: res.data.latitude,
+  //         longitude: res.data.longitude,
+  //         city: res.data.city,
+  //         country: res.data.country_name,
+  //         state: res.data.state_prov,
+  //         district: res.data.district,
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       console.error("Error fetching location:", err);
+  //     });
+  // }, []);
 
   const isAdmin = currentUser?.role?.toLowerCase() === "administrator";
   const role = currentUser?.role?.toLowerCase();
@@ -137,10 +134,7 @@ function AppContent() {
                 >
                   <BookOpen className="w-4 h-4" />
                 </div>
-                <UserMenu
-                  onLogout={handleLogout}
-                  onUserChange={handleUserChange}
-                />
+                <UserMenu />
               </div>
             </div>
           </div>
@@ -167,7 +161,7 @@ function AppContent() {
               path="/overview"
               element={
                 currentUser ? (
-                  <OverviewPage currentUser={currentUser} />
+                  <OverviewPage />
                 ) : (
                   <Navigate to="/" replace />
                 )
@@ -177,7 +171,7 @@ function AppContent() {
               path="/students"
               element={
                 currentUser ? (
-                  <StudentPage currentUser={currentUser} />
+                  <StudentPage />
                 ) : (
                   <Navigate to="/" replace />
                 )
@@ -187,10 +181,7 @@ function AppContent() {
               path="/attendance"
               element={
                 currentUser ? (
-                  <AttendancePage
-                    tableType="attendance"
-                    currentUser={currentUser}
-                  />
+                  <AttendancePage tableType="attendance" />
                 ) : (
                   <Navigate to="/" replace />
                 )
@@ -200,7 +191,7 @@ function AppContent() {
               path="/settings"
               element={
                 currentUser && isAdmin ? (
-                  <SettingsPage currentUser={currentUser} />
+                  <SettingsPage />
                 ) : (
                   <Navigate to="/" replace />
                 )
@@ -220,9 +211,7 @@ function AppContent() {
 function App() {
   return (
     <ToastProvider>
-      <SettingsProvider>
-        <AppContent />
-      </SettingsProvider>
+      <AppContent />
     </ToastProvider>
   );
 }

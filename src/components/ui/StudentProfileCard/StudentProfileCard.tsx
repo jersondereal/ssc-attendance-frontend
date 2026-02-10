@@ -1,13 +1,16 @@
 import NorthIcon from "@mui/icons-material/North";
 import SouthIcon from "@mui/icons-material/South";
 import axios from "axios";
+import html2canvas from "html2canvas";
 import { X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import config from "../../../config";
 import Checkbox from "../../common/Checkbox/Checkbox";
 import { Modal } from "../../common/Modal/Modal";
 import type { StudentRecord } from "../../common/Table/Table";
+import { StudentQRCard } from "../StudentQRCard/StudentQRCard";
 import { MetricCard } from "../../shared/MetricCard/MetricCard";
+import { useToast } from "../../../contexts/ToastContext";
 
 interface AttendanceRecord {
   event_id: number;
@@ -88,6 +91,9 @@ export function StudentProfileCard({
   onClose,
   currentUserRole,
 }: StudentProfileCardProps) {
+  const { showToast } = useToast();
+  const qrCardRef = useRef<HTMLDivElement>(null);
+
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [fines, setFines] = useState<StudentFine[]>([]);
   const [loadingMetrics, setLoadingMetrics] = useState(true);
@@ -255,15 +261,20 @@ export function StudentProfileCard({
 
   return (
     <>
-      <div className="w-[90vw] md:w-[28rem] max-h-[85vh] overflow-y-auto rounded-[20px] border border-gray-200 bg-white shadow-lg relative">
+      <div id="student-profile-card" className="w-[90vw] md:w-[28rem] max-h-[85vh] overflow-y-auto rounded-[20px] border border-gray-200 bg-white shadow-lg relative">
         {/* Header row: close and profile */}
         <div className="sticky top-0 z-10 flex flex-row items-start justify-between bg-white rounded-t-xl p-8 pb-5">
           {/* Profile header – no profile pic */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex flex-col items-start gap-2">
+            {(studentData.profileImageUrl && currentUserRole !== "Viewer") && (
+              <div className="size-32 bg-gray-100 rounded-[10px] border border-gray-300 grid place-items-center overflow-hidden">
+                <img src={studentData.profileImageUrl} alt="" className="h-full object-cover" />
+              </div>
+            )}
             <h2 className="text-2xl font-semibold text-gray-900 tracking-tight break-words font-serif">
               {studentData.name}
             </h2>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs font-bold">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs font-bold">
               <span>{studentData.studentId}</span>
               <span>{studentData.college}</span>
               <span>
@@ -419,7 +430,7 @@ export function StudentProfileCard({
         </div>
 
         {/* Metrics */}
-        <div className="p-8 pt-0">
+        <div className="p-8 py-0">
           {metricsError ? (
             <p className="text-sm text-red-500">{metricsError}</p>
           ) : metrics ? (
@@ -502,13 +513,54 @@ export function StudentProfileCard({
           ) : (
             <p className="text-sm text-gray-700 font-medium">No metrics available</p>
           )}
-          <p className="text-xs mb-20 mt-8 font-medium text-gray-600">
+          <p className="text-xs mb-8 mt-8 font-medium text-gray-600">
             The data presented here encompasses all records from the start of the school year on July 1, {schoolYearStart}, through the end of April 30, {schoolYearEnd}.
           </p>
         </div>
+        {/* Hidden QR card for download only; button visible */}
+        <div className="relative px-8 pb-8 pt-4">
+          <button
+            type="button"
+            onClick={async () => {
+              if (!qrCardRef.current) {
+                showToast("Failed to download QR code", "error");
+                return;
+              }
+              try {
+                const canvas = await html2canvas(qrCardRef.current, {
+                  backgroundColor: "#ffffff",
+                  scale: 2,
+                });
+                const url = canvas.toDataURL("image/png");
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${studentData.studentId}_qr.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              } catch {
+                showToast("Failed to download QR code", "error");
+              }
+            }}
+            className="w-full rounded-[10px] border border-gray-300 bg-white py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Download QR Code
+          </button>
+        </div>
 
-        {/* Gradient to hide the bottom of the card */}
-        <div className="fixed bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent"></div>
+        <div className="pointer-events-none w-max fixed bottom-0 -left-full">
+          <div className="rounded-[10px] border border-gray-200 bg-gray-50/50 p-5 w-fit">
+            <StudentQRCard
+              ref={qrCardRef}
+              studentId={studentData.studentId}
+              name={studentData.name}
+              college={studentData.college}
+              year={studentData.year}
+              section={studentData.section}
+              size={100}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Bulk mark all paid modal */}

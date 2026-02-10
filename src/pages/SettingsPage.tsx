@@ -3,15 +3,10 @@ import {
   SettingsUnavailable,
   SystemConfigurationSection,
 } from "../components/settings";
+import { useAuthStore } from "../stores/useAuthStore";
 
-interface SettingsPageProps {
-  currentUser: {
-    username: string;
-    role: string;
-  } | null;
-}
-
-export function SettingsPage({ currentUser }: SettingsPageProps) {
+export function SettingsPage() {
+  const currentUser = useAuthStore((s) => s.currentUser);
   if (currentUser?.role?.toLowerCase() === "viewer") {
     return <SettingsUnavailable />;
   }

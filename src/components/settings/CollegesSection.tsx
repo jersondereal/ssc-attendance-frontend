@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import {
   createCollege,
   deleteCollege,
-  getColleges,
   updateCollege,
   type College,
 } from "../../api/colleges";
 import { useToast } from "../../contexts/ToastContext";
+import { useCollegesStore } from "../../stores/useCollegesStore";
 import { Button } from "../common/Button/Button";
 import { Modal } from "../common/Modal/Modal";
 import { Textbox } from "../common/Textbox/Textbox";
@@ -19,7 +19,8 @@ const deleteBtnClass =
 
 export function CollegesSection() {
   const { showToast } = useToast();
-  const [colleges, setColleges] = useState<College[]>([]);
+  const colleges = useCollegesStore((s) => s.colleges);
+  const fetchColleges = useCollegesStore((s) => s.fetchColleges);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -32,9 +33,9 @@ export function CollegesSection() {
   const [deleteError, setDeleteError] = useState("");
 
   const loadColleges = () => {
-    getColleges()
-      .then(setColleges)
-      .catch(() => showToast("Failed to load colleges", "error"));
+    fetchColleges().catch(() =>
+      showToast("Failed to load colleges", "error")
+    );
   };
 
   useEffect(() => {

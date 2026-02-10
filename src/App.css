@@ -115,3 +115,50 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* QR Code Scanner Styles */
+
+.html5-qrcode-element {
+ @apply border border-border-dark rounded-md bg-white p-1 text-sm;
+}
+
+#reader {
+  @apply !border-0
+}
+
+#reader img, #reader br {
+  @apply !hidden
+}
+
+#reader button, #reader select {
+  @apply w-full h-9
+}
+
+#reader__dashboard_section {
+  @apply space-y-2
+}
+
+#reader__scan_region {
+  @apply !min-h-0 rounded-lg overflow-hidden
+}
+
+#reader__dashboard_section_csr {
+  @apply text-sm
+}
+
+#reader__dashboard_section_csr select {
+  @apply mt-1
+}
+
+#html5-qrcode-button-camera-start, 
+#html5-qrcode-button-camera-stop {
+  @apply mt-2
+}
+
+#reader__dashboard_section > div:last-child {
+  @apply hidden
+}
+
+#html5-qrcode-anchor-scan-type-change {
+  display: none;
+}

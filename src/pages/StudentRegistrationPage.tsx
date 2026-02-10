@@ -1,98 +1,22 @@
 import axios from "axios";
-import { ChevronDown, Phone } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AddStudentForm } from "../components/forms/AddStudentForm/AddStudentForm";
 import type { StudentFormData } from "../components/forms/StudentForm/StudentForm";
+import { defaultFaqItems, FaqSection, RegistrationSuccessView } from "../components/shared";
 import config from "../config";
-import { useSettings } from "../contexts/SettingsContext";
+import { useSettingsStore } from "../stores/useSettingsStore";
 import { useToast } from "../contexts/ToastContext";
-
-const contactItems = [
-  {
-    id: "email",
-    label: "essuguiuansc@gmail.com",
-    icon: "/gmail.svg",
-  },
-  {
-    id: "facebook",
-    label: "Supreme Student Council- ESSU Guiuan",
-    icon: "/facebook.svg",
-  },
-  {
-    id: "phone",
-    label: "+63 909 919 9236",
-    icon: "phone" as const,
-  },
-];
-
-const FAQ_ITEMS: { question: string; answer: ReactNode }[] = [
-  {
-    question: "Who should I contact if I can’t fix the error?",
-    answer: (
-      <>
-        For any registration issues, please visit or contact the SSC office via
-        Email or Facebook Messenger for assistance.
-        <div className="flex flex-col gap-1 mt-2">
-          {contactItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-row items-center gap-3 text-nowrap"
-            >
-              {item.icon === "phone" ? (
-                <Phone className="size-4 shrink-0" />
-              ) : (
-                <img src={item.icon} alt={item.label} className="size-4" />
-              )}
-              <span>{item.label}</span>
-            </div>
-          ))}
-        </div>
-      </>
-    ),
-  },
-  {
-    question: "I made a mistake in my details. What should I do?",
-    answer:
-      "Please contact the SSC office so they can update your information in the system.",
-  },
-  {
-    question: "What is an RFID?",
-    answer:
-      "RFID (Radio Frequency Identification) is a card used to identify students during events and allow faster attendance recording. Each student will be provided an RFID card by the SSC at a later time.",
-  },
-  {
-    question: "Do I need an RFID to register?",
-    answer:
-      "No. RFID is optional. You can submit the form without it and update it later if needed.",
-  },
-  {
-    question:
-      "It says my Student ID is already registered. What does that mean?",
-    answer:
-      "This Student ID already exists in the system. You may have registered before. If you believe this is a mistake, please contact the SSC office for assistance.",
-  },
-  {
-    question: "My RFID is already in use. What should I do?",
-    answer:
-      "Each RFID can only be linked to one student. Please double-check the RFID number or register without it and update later through the SSC office.",
-  },
-  {
-    question:
-      "I’m getting an error saying some details are already registered.",
-    answer:
-      "Some of the information you entered already exists in the system. Please review your details carefully or reach out to the SSC office for help.",
-  },
-];
+import type { DBStudent } from "../stores/types";
 
 const getFriendlyError = (raw: string | undefined) => {
   if (!raw) return "Registration failed. Please try again.";
   const normalized = raw.toLowerCase();
   if (normalized.includes("students_student_id_key")) {
-    return "That student ID is already registered. Please use a different ID.";
+    return "That student ID is already registered. Please make sure you entered your student ID correctly.";
   }
   if (normalized.includes("students_rfid_key")) {
-    return "That RFID is already in use. Please use a different RFID.";
+    return "That RFID is already in use. Please make sure you entered your RFID correctly.";
   }
   if (normalized.includes("duplicate key value violates unique constraint")) {
     return "Some of the details are already registered. Please double-check.";
@@ -101,16 +25,32 @@ const getFriendlyError = (raw: string | undefined) => {
 };
 
 export function StudentRegistrationPage() {
-  const { systemSettings } = useSettings();
+  const systemSettings = useSettingsStore((s) => s.systemSettings);
   const { showToast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [registeredStudent, setRegisteredStudent] =
+    useState<DBStudent | null>(null);
   const registrationEnabled =
     systemSettings.featureAccess.viewer.studentRegistration;
+
+  const uploadProfileImage = async (file: File, year: string) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("year", year);
+    const response = await axios.post<{ url: string }>(
+      `${config.API_BASE_URL}/upload/profile-image`,
+      formData
+    );
+    const imageUrl = response.data?.url;
+    if (!imageUrl) {
+      throw new Error("Image upload failed");
+    }
+    return { imageUrl };
+  };
 
   if (!registrationEnabled) {
     return (
@@ -141,18 +81,22 @@ export function StudentRegistrationPage() {
       <h2 className="text-lg font-medium text-center mt-2 text-zinc-500">
         Attendance Monitoring System
       </h2>
-      <div className="border border-border-dark w-full p-3 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg">
-        {submitMessage ? (
-          <div className="flex flex-col items-center text-center gap-10 py-14">
-            <h2 className="text-lg font-bold">🎉Registration Successful</h2>
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="w-fit rounded-[10px] border border-border-dark bg-white py-2 px-8 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Continue to Attendance Portal
-            </button>
-          </div>
+      <div className="border border-border-dark w-full p-6 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg">
+        {submitMessage && registeredStudent ? (
+          <RegistrationSuccessView
+            student={registeredStudent}
+            onDone={() => navigate("/")}
+            title="Registration Successful 🎉"
+            description={
+              <>
+                Please download and securely store your QR code,{" "}
+                <br className="hidden sm:block" /> as it is required for
+                attendance verification.
+              </>
+            }
+            doneLabel="Continue to Attendance Portal"
+            className="py-14"
+          />
         ) : (
           <>
             <h2 className="text-lg font-bold text-center mt-6">
@@ -169,16 +113,29 @@ export function StudentRegistrationPage() {
                 if (isSubmitting) return;
                 setSubmitError(null);
                 setSubmitMessage(null);
+                setRegisteredStudent(null);
                 setIsSubmitting(true);
                 try {
-                  await axios.post(`${config.API_BASE_URL}/students`, {
+                  let profileImageUrl: string | null = null;
+                  if (data.profileImageFile) {
+                    const uploaded = await uploadProfileImage(
+                      data.profileImageFile,
+                      data.year
+                    );
+                    profileImageUrl = uploaded.imageUrl;
+                  }
+                  const createdStudent = (
+                    await axios.post(`${config.API_BASE_URL}/students`, {
                     student_id: data.studentId,
                     name: data.name,
                     college: data.college.toLowerCase(),
                     year: data.year,
                     section: data.section.toLowerCase(),
                     rfid: (data.rfid ?? "").trim(),
-                  });
+                    profile_image_url: profileImageUrl,
+                  })
+                  ).data as DBStudent;
+                  setRegisteredStudent(createdStudent);
                   setSubmitMessage("Registration submitted successfully.");
                   showToast("Registration submitted successfully", "success");
                   setFormKey((prev) => prev + 1);
@@ -213,46 +170,7 @@ export function StudentRegistrationPage() {
         <h3 className="text-base font-semibold text-gray-900 mb-4">
           Frequently Asked Questions
         </h3>
-        <div className="flex flex-col gap-3">
-          {FAQ_ITEMS.map((item, index) => {
-            const isOpen = openFaqIndex === index;
-            return (
-              <div
-                key={item.question}
-                className="w-full border border-border-dark rounded-[12px] bg-white"
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                  className="w-full text-left px-4 py-3 flex items-center justify-between"
-                  aria-expanded={isOpen}
-                >
-                  <span className="text-sm font-medium">{item.question}</span>
-                  <span className="text-gray-400 text-sm">
-                    <ChevronDown
-                      className={`size-4 transition-all duration-300 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </span>
-                </button>
-                <div
-                  className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                    isOpen
-                      ? "grid-rows-[1fr] opacity-100"
-                      : "grid-rows-[0fr] opacity-0"
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <p className="px-4 pb-4 pt-1 text-sm text-gray-600">
-                      {item.answer}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <FaqSection items={defaultFaqItems} />
       </div>
     </div>
   );

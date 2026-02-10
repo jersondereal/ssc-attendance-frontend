@@ -28,6 +28,7 @@ export interface StudentRecord {
   college: string;
   year: string;
   section: string;
+  profileImageUrl?: string | null;
 }
 
 export type TableRecord = AttendanceRecord | StudentRecord;

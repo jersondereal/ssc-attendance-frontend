@@ -2,12 +2,11 @@ import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
-import { collegesToOptions, getColleges } from "../api/colleges";
 import { AttendanceBulkActionsBar } from "../components/attendance/AttendanceBulkActionsBar";
 import { AttendanceControls } from "../components/attendance/AttendanceControls";
 import { BulkAttendanceModal } from "../components/attendance/BulkAttendanceModal";
 import { DeleteConfirmationModal } from "../components/attendance/DeleteConfirmationModal";
-import { RfidCheckInModal } from "../components/attendance/RfidCheckInModal";
+import { QrCheckInModal } from "../components/attendance/QrCheckInModal";
 import type {
   AddEventData,
   Event,
@@ -18,195 +17,139 @@ import { Table } from "../components/common/Table/Table";
 import { AddStudentForm } from "../components/forms/AddStudentForm/AddStudentForm";
 import { EditStudentForm } from "../components/forms/EditStudentForm/EditStudentForm";
 import type { StudentFormData } from "../components/forms/StudentForm/StudentForm";
+import { RegistrationSuccessView } from "../components/shared";
 import { StudentProfileCard } from "../components/ui/StudentProfileCard/StudentProfileCard";
 import config from "../config";
-import { useSettings } from "../contexts/SettingsContext";
 import { useToast } from "../contexts/ToastContext";
-
-interface AttendanceRecord {
-  studentId: string;
-  name: string;
-  college: string;
-  year: string;
-  section: string;
-  status: string;
-}
-
-interface StudentRecord {
-  studentId: string;
-  name: string;
-  college: string;
-  year: string;
-  section: string;
-  rfid?: string;
-}
-
-interface DBStudent {
-  id: number;
-  student_id: string;
-  name: string;
-  college?: string;
-  course?: string;
-  year: string;
-  section: string;
-  rfid: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface DBAttendance {
-  id: number;
-  student_id: string;
-  event_id: number;
-  status: string;
-  check_in_time: string;
-  created_at: string;
-  updated_at: string;
-  name: string;
-  college?: string;
-  course?: string;
-  year: string;
-  section: string;
-}
-
-interface DBEvent {
-  id: number;
-  title: string;
-  event_date: string;
-  location: string;
-  fine: number;
-  colleges?: {
-    all: boolean;
-    bsit: boolean;
-    bshm: boolean;
-    bscrim: boolean;
-  };
-  courses?: {
-    all: boolean;
-    bsit: boolean;
-    bshm: boolean;
-    bscrim: boolean;
-  };
-  sections?: {
-    all: boolean;
-    a: boolean;
-    b: boolean;
-    c: boolean;
-    d: boolean;
-  };
-  school_years?: {
-    all: boolean;
-    1: boolean;
-    2: boolean;
-    3: boolean;
-    4: boolean;
-  };
-  created_at: string;
-  updated_at: string;
-}
+import type {
+  AttendanceRecord,
+  DBAttendance,
+  DBStudent,
+  StudentRecord,
+} from "../stores/types";
+import { useAuthStore } from "../stores/useAuthStore";
+import { useAttendanceStore } from "../stores/useAttendanceStore";
+import { useCollegesStore } from "../stores/useCollegesStore";
+import { useEventsStore } from "../stores/useEventsStore";
+import { useSettingsStore } from "../stores/useSettingsStore";
+import { useStudentsStore } from "../stores/useStudentsStore";
 
 interface AttendancePageProps {
   tableType: "attendance" | "students";
-  currentUser: {
-    username: string;
-    role: string;
-  } | null;
 }
 
-export function AttendancePage({
-  tableType,
-  currentUser,
-}: AttendancePageProps) {
+export function AttendancePage({ tableType }: AttendancePageProps) {
+  const currentUser = useAuthStore((s) => s.currentUser);
   const { showToast } = useToast();
-  const { systemSettings } = useSettings();
+  const systemSettings = useSettingsStore((s) => s.systemSettings);
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedFilters, setSelectedFilters] = useState({
-    college: "all",
-    year: "all",
-    section: "all",
-  });
-  const [isRfidModalOpen, setIsRfidModalOpen] = useState(false);
-  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
-  const [isEditStudentModalOpen, setIsEditStudentModalOpen] = useState(false);
-  const [selectedStudentForProfile, setSelectedStudentForProfile] =
-    useState<StudentRecord | null>(null);
-  const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] =
-    useState(false);
-  const [deleteConfirmChecked, setDeleteConfirmChecked] = useState(false);
-  const [isBulkAttendanceModalOpen, setIsBulkAttendanceModalOpen] =
-    useState(false);
-  const [bulkAttendanceStatus, setBulkAttendanceStatus] = useState<string>("");
-  const [bulkAttendanceConfirmChecked, setBulkAttendanceConfirmChecked] =
-    useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(
-    undefined
+
+  const events = useEventsStore((s) => s.events);
+  const fetchEvents = useEventsStore((s) => s.fetchEvents);
+  const addEventToStore = useEventsStore((s) => s.addEvent);
+  const updateEventInStore = useEventsStore((s) => s.updateEvent);
+  const removeEventFromStore = useEventsStore((s) => s.removeEvent);
+
+  const students = useStudentsStore((s) => s.students);
+  const fetchStudents = useStudentsStore((s) => s.fetchStudents);
+  const addStudentToStore = useStudentsStore((s) => s.addStudent);
+  const updateStudentInStore = useStudentsStore((s) => s.updateStudent);
+  const removeStudentsFromStore = useStudentsStore((s) => s.removeStudents);
+
+  const collegeOptions = useCollegesStore((s) => s.collegeOptions);
+  const fetchColleges = useCollegesStore((s) => s.fetchColleges);
+
+  const selectedEvent = useAttendanceStore((s) => s.selectedEvent);
+  const attendanceByEventId = useAttendanceStore((s) => s.attendanceByEventId);
+  const selectedFilters = useAttendanceStore((s) => s.selectedFilters);
+  const searchQuery = useAttendanceStore((s) => s.searchQuery);
+  const sortConfig = useAttendanceStore((s) => s.sortConfig);
+  const selectedRows = useAttendanceStore((s) => s.selectedRows);
+  const selectedStudentForProfile = useAttendanceStore(
+    (s) => s.selectedStudentForProfile
   );
-  const [editingStudent, setEditingStudent] = useState<
-    AttendanceRecord | StudentRecord | null
-  >(null);
-  const [events, setEvents] = useState<DBEvent[]>([]);
-  const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
-  const [students, setStudents] = useState<StudentRecord[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "asc" | "desc";
-  }>({ key: "name", direction: "asc" });
+  const editingStudent = useAttendanceStore((s) => s.editingStudent);
+  const setSelectedEvent = useAttendanceStore((s) => s.setSelectedEvent);
+  const setAttendanceForEvent = useAttendanceStore((s) => s.setAttendanceForEvent);
+  const updateAttendanceRecord = useAttendanceStore(
+    (s) => s.updateAttendanceRecord
+  );
+  const setSelectedFilters = useAttendanceStore((s) => s.setSelectedFilters);
+  const setSearchQuery = useAttendanceStore((s) => s.setSearchQuery);
+  const setSortConfig = useAttendanceStore((s) => s.setSortConfig);
+  const setSelectedRows = useAttendanceStore((s) => s.setSelectedRows);
+  const setSelectedStudentForProfile = useAttendanceStore(
+    (s) => s.setSelectedStudentForProfile
+  );
+  const setEditingStudent = useAttendanceStore((s) => s.setEditingStudent);
+  const isQrModalOpen = useAttendanceStore((s) => s.isQrModalOpen);
+  const setIsQrModalOpen = useAttendanceStore((s) => s.setIsQrModalOpen);
+  const isAddStudentModalOpen = useAttendanceStore(
+    (s) => s.isAddStudentModalOpen
+  );
+  const setIsAddStudentModalOpen = useAttendanceStore(
+    (s) => s.setIsAddStudentModalOpen
+  );
+  const isEditStudentModalOpen = useAttendanceStore(
+    (s) => s.isEditStudentModalOpen
+  );
+  const [addedStudent, setAddedStudent] = useState<DBStudent | null>(null);
 
-  // Selected rows state
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
-  const [collegeOptions, setCollegeOptions] = useState<
-    { value: string; label: string }[]
-  >([{ value: "all", label: "All Colleges" }]);
+  const setIsEditStudentModalOpen = useAttendanceStore(
+    (s) => s.setIsEditStudentModalOpen
+  );
+  const isDeleteConfirmModalOpen = useAttendanceStore(
+    (s) => s.isDeleteConfirmModalOpen
+  );
+  const setIsDeleteConfirmModalOpen = useAttendanceStore(
+    (s) => s.setIsDeleteConfirmModalOpen
+  );
+  const deleteConfirmChecked = useAttendanceStore(
+    (s) => s.deleteConfirmChecked
+  );
+  const setDeleteConfirmChecked = useAttendanceStore(
+    (s) => s.setDeleteConfirmChecked
+  );
+  const isBulkAttendanceModalOpen = useAttendanceStore(
+    (s) => s.isBulkAttendanceModalOpen
+  );
+  const setIsBulkAttendanceModalOpen = useAttendanceStore(
+    (s) => s.setIsBulkAttendanceModalOpen
+  );
+  const bulkAttendanceStatus = useAttendanceStore(
+    (s) => s.bulkAttendanceStatus
+  );
+  const setBulkAttendanceStatus = useAttendanceStore(
+    (s) => s.setBulkAttendanceStatus
+  );
+  const bulkAttendanceConfirmChecked = useAttendanceStore(
+    (s) => s.bulkAttendanceConfirmChecked
+  );
+  const setBulkAttendanceConfirmChecked = useAttendanceStore(
+    (s) => s.setBulkAttendanceConfirmChecked
+  );
 
-  // Fetch colleges for filter dropdown
+  const attendanceData = useMemo(
+    () =>
+      selectedEvent
+        ? attendanceByEventId[selectedEvent.id] ?? []
+        : [],
+    [selectedEvent, attendanceByEventId]
+  );
+
   useEffect(() => {
-    getColleges()
-      .then((list) =>
-        setCollegeOptions([
-          { value: "all", label: "All Colleges" },
-          ...collegesToOptions(list),
-        ])
-      )
-      .catch(() =>
-        setCollegeOptions([{ value: "all", label: "All Colleges" }])
-      );
-  }, []);
+    if (events.length === 0) fetchEvents();
+  }, [events.length, fetchEvents]);
 
-  // Fetch students from database
   useEffect(() => {
-    axios
-      .get(`${config.API_BASE_URL}/students`)
-      .then((res) => {
-        const mappedStudents = res.data.map((student: DBStudent) => ({
-          studentId: student.student_id,
-          name: student.name,
-          college: (student.college ?? student.course ?? "").toUpperCase(),
-          year: student.year,
-          section: student.section.toUpperCase(),
-          rfid: student.rfid,
-        }));
-        setStudents(mappedStudents);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }, []);
+    if (students.length === 0) fetchStudents();
+  }, [students.length, fetchStudents]);
 
-  // Fetch all events from database
   useEffect(() => {
-    axios
-      .get(`${config.API_BASE_URL}/events`)
-      .then((res) => {
-        setEvents(res.data);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }, []);
+    if (collegeOptions.length <= 1) fetchColleges();
+  }, [collegeOptions.length, fetchColleges]);
 
-  // Pre-select event when navigating from Overview with state.eventId
   useEffect(() => {
     const eventId = (location.state as { eventId?: string } | null)?.eventId;
     if (!eventId || events.length === 0) return;
@@ -219,60 +162,50 @@ export function AttendancePage({
         location: match.location,
         fine: match.fine,
         colleges: match.colleges ?? match.courses,
-        sections: match.sections,
-        schoolYears: match.school_years,
+        sections: match.sections as Event["sections"],
+        schoolYears: match.school_years as Event["schoolYears"],
       });
     }
     navigate("/attendance", { replace: true, state: {} });
-  }, [events, location.state, navigate]);
+  }, [events, location.state, navigate, setSelectedEvent]);
 
-  // Fetch attendance data from database
   useEffect(() => {
-    if (selectedEvent) {
-      axios
-        .get(`${config.API_BASE_URL}/attendance/event/${selectedEvent?.id}`)
-        .then((res) => {
-          const mappedAttendance = res.data.map((record: DBAttendance) => ({
-            studentId: record.student_id,
-            name: record.name,
-            college: (record.college ?? record.course ?? "").toUpperCase(),
-            year: record.year,
-            section: record.section.toUpperCase(),
-            status: record.status,
-          }));
-
-          setAttendanceData(mappedAttendance);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    } else {
-      setAttendanceData([]);
-    }
-  }, [selectedEvent]);
+    if (!selectedEvent) return;
+    const cached = attendanceByEventId[selectedEvent.id];
+    if (cached !== undefined) return;
+    axios
+      .get(`${config.API_BASE_URL}/attendance/event/${selectedEvent.id}`)
+      .then((res) => {
+        const mapped = (res.data as DBAttendance[]).map((record) => ({
+          studentId: record.student_id,
+          name: record.name,
+          college: (record.college ?? record.course ?? "").toUpperCase(),
+          year: record.year,
+          section: record.section.toUpperCase(),
+          status: record.status,
+        }));
+        setAttendanceForEvent(selectedEvent.id, mapped);
+      })
+      .catch((err) => console.error(err));
+  }, [selectedEvent, attendanceByEventId, setAttendanceForEvent]);
 
   const handleTableAction = (action: string, row: TableRecord) => {
     switch (action) {
       case "status":
-        if ("status" in row) {
-          setAttendanceData((prevData) =>
-            prevData.map((item) =>
-              item.studentId === row.studentId ? row : item
-            )
+        if ("status" in row && selectedEvent) {
+          updateAttendanceRecord(
+            selectedEvent.id,
+            row.studentId,
+            row as AttendanceRecord
           );
-
-          // update attendance in database
           axios
             .put(
-              `${config.API_BASE_URL}/attendance/${row.studentId}/${selectedEvent?.id}`,
+              `${config.API_BASE_URL}/attendance/${row.studentId}/${selectedEvent.id}`,
               { status: row.status }
             )
-            .then((res) => {
-              console.log("Attendance updated in database:", res);
+            .then(() => {
               showToast(
-                `${row.name} (${
-                  row.studentId
-                }) is marked as ${row.status.toLowerCase()}`,
+                `${row.name} (${row.studentId}) is marked as ${row.status.toLowerCase()}`,
                 "success"
               );
             })
@@ -298,8 +231,28 @@ export function AttendancePage({
     setIsAddStudentModalOpen(true);
   };
 
+  const uploadProfileImage = async (file: File, year: string) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("year", year);
+    const response = await axios.post<{ url: string }>(
+      `${config.API_BASE_URL}/upload/profile-image`,
+      formData
+    );
+    const imageUrl = response.data?.url;
+    if (!imageUrl) {
+      throw new Error("Image upload failed");
+    }
+    return { imageUrl };
+  };
+
   const handleAddStudentSubmit = async (data: StudentFormData) => {
     try {
+      let profileImageUrl: string | null = null;
+      if (data.profileImageFile) {
+        const uploaded = await uploadProfileImage(data.profileImageFile, data.year);
+        profileImageUrl = uploaded.imageUrl;
+      }
       const response = await axios.post(`${config.API_BASE_URL}/students`, {
         student_id: data.studentId,
         name: data.name,
@@ -307,29 +260,13 @@ export function AttendancePage({
         year: data.year,
         section: data.section.toLowerCase(),
         rfid: (data.rfid ?? "").trim(),
+        profile_image_url: profileImageUrl,
       });
 
-      const newStudent = response.data;
-
-      // Update local state with the new student
-      setStudents((prev) => [
-        ...prev,
-        {
-          studentId: newStudent.student_id,
-          name: newStudent.name,
-          college: (
-            newStudent.college ??
-            newStudent.course ??
-            ""
-          ).toUpperCase(),
-          year: newStudent.year,
-          section: newStudent.section.toUpperCase(),
-          rfid: newStudent.rfid,
-        },
-      ]);
-
+      const newStudent = response.data as DBStudent;
+      addStudentToStore(newStudent);
+      setAddedStudent(newStudent);
       showToast(`Student ${newStudent.name} added successfully`, "success");
-      setIsAddStudentModalOpen(false);
     } catch (error: unknown) {
       console.error("Error adding student:", error);
       if (axios.isAxiosError(error)) {
@@ -345,6 +282,13 @@ export function AttendancePage({
 
   const handleEditStudentSubmit = async (data: StudentFormData) => {
     try {
+      const existingStudent = students.find((s) => s.studentId === data.studentId);
+      let profileImageUrl =
+        data.profileImageUrl ?? existingStudent?.profileImageUrl ?? null;
+      if (data.profileImageFile) {
+        const uploaded = await uploadProfileImage(data.profileImageFile, data.year);
+        profileImageUrl = uploaded.imageUrl;
+      }
       const response = await axios.put(
         `${config.API_BASE_URL}/students/${data.studentId}`,
         {
@@ -353,41 +297,34 @@ export function AttendancePage({
           year: data.year,
           section: data.section.toLowerCase(),
           rfid: data.rfid?.trim() || null,
+          profile_image_url: profileImageUrl,
         }
       );
 
       const updatedStudent = response.data;
 
       // Update local state with the updated student data
-      const updatedStudentData = {
-        studentId: updatedStudent.student_id,
-        name: updatedStudent.name,
-        college: (
-          updatedStudent.college ??
-          updatedStudent.course ??
-          ""
-        ).toUpperCase(),
-        year: updatedStudent.year,
-        section: updatedStudent.section.toUpperCase(),
-        rfid: updatedStudent.rfid,
-      };
+      updateStudentInStore(data.studentId, updatedStudent);
 
-      if (tableType === "attendance") {
-        setAttendanceData((prevData) =>
-          prevData.map((item) =>
-            item.studentId === data.studentId
-              ? { ...item, ...updatedStudentData }
-              : item
-          )
+      if (tableType === "attendance" && selectedEvent) {
+        const list = attendanceByEventId[selectedEvent.id] ?? [];
+        const mapped = list.map((item) =>
+          item.studentId === data.studentId
+            ? {
+                ...item,
+                studentId: updatedStudent.student_id,
+                name: updatedStudent.name,
+                college: (
+                  updatedStudent.college ??
+                  updatedStudent.course ??
+                  ""
+                ).toUpperCase(),
+                year: updatedStudent.year,
+                section: updatedStudent.section.toUpperCase(),
+              }
+            : item
         );
-      } else {
-        setStudents((prevData) =>
-          prevData.map((item) =>
-            item.studentId === data.studentId
-              ? { ...item, ...updatedStudentData }
-              : item
-          )
-        );
+        setAttendanceForEvent(selectedEvent.id, mapped);
       }
 
       showToast(
@@ -421,8 +358,7 @@ export function AttendancePage({
         colleges: eventData.colleges,
       });
       const newEvent = response.data;
-
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
+      addEventToStore(newEvent);
       showToast(`Event "${newEvent.title}" created successfully`);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -445,13 +381,7 @@ export function AttendancePage({
         }
       );
       const updatedEvent = response.data;
-
-      setEvents((prevEvents) =>
-        prevEvents.map((e) =>
-          e.id.toString() === updatedEvent.id.toString() ? updatedEvent : e
-        )
-      );
-
+      updateEventInStore(event.id, updatedEvent);
       showToast(`Event "${updatedEvent.title}" updated successfully`);
     } catch (error) {
       console.error("Error updating event:", error);
@@ -462,15 +392,10 @@ export function AttendancePage({
   const handleDeleteEvent = async (eventId: string) => {
     try {
       await axios.delete(`${config.API_BASE_URL}/events/${eventId}`);
-
-      setEvents((prevEvents) =>
-        prevEvents.filter((e) => e.id.toString() !== eventId)
-      );
-
+      removeEventFromStore(eventId);
       if (selectedEvent?.id === eventId) {
         setSelectedEvent(undefined);
       }
-
       showToast("Event deleted successfully");
     } catch (error) {
       console.error("Error deleting event:", error);
@@ -478,59 +403,83 @@ export function AttendancePage({
     }
   };
 
-  const handleRfidSubmit = async (rfid: string) => {
-    if (!selectedEvent) {
-      showToast("Please select an event first", "error");
-      return;
-    }
-
-    try {
-      const response = await axios.put(
-        `${config.API_BASE_URL}/attendance/rfid/${rfid}/${selectedEvent.id}`,
-        { status: "present" }
-      );
-
-      const studentData = response.data;
-
-      const newAttendanceRecord: AttendanceRecord = {
-        studentId: studentData.student_id,
-        name: studentData.student.name,
-        college: (
-          studentData.student.college ??
-          studentData.student.course ??
-          ""
-        ).toUpperCase(),
-        year: studentData.student.year,
-        section: studentData.student.section.toUpperCase(),
-        status: "present",
-      };
-
-      setAttendanceData((prev) => {
-        const existingIndex = prev.findIndex(
-          (a) => a.studentId === studentData.student_id
-        );
-        if (existingIndex >= 0) {
-          const updated = [...prev];
-          updated[existingIndex] = newAttendanceRecord;
-          return updated;
-        } else {
-          return [...prev, newAttendanceRecord];
-        }
-      });
-
-      showToast(`${studentData.student.name} marked as present`, "success");
-    } catch (error) {
-      console.error("Error updating attendance:", error);
-      if (axios.isAxiosError(error)) {
-        showToast(
-          error.response?.data?.message || "Failed to update attendance",
-          "error"
-        );
-      } else {
-        showToast("Failed to update attendance", "error");
+  const handleQrScanSubmit = useCallback(
+    async (studentId: string) => {
+      if (!selectedEvent) {
+        showToast("Please select an event first", "error");
+        return;
       }
-    }
-  };
+
+      try {
+        const cleanedId = studentId.trim();
+        if (!cleanedId) return;
+
+        await axios.put(
+          `${config.API_BASE_URL}/attendance/${cleanedId}/${selectedEvent.id}`,
+          { status: "Present" }
+        );
+
+        let student = students.find((s) => s.studentId === cleanedId);
+        if (!student) {
+          const response = await axios.get(
+            `${config.API_BASE_URL}/students/${cleanedId}`
+          );
+          const fetched = response.data as DBStudent;
+          student = {
+            studentId: fetched.student_id,
+            name: fetched.name,
+            college: (fetched.college ?? fetched.course ?? "").toUpperCase(),
+            year: fetched.year,
+            section: fetched.section.toUpperCase(),
+            rfid: fetched.rfid,
+            profileImageUrl: fetched.profile_image_url ?? null,
+          };
+        }
+
+        const newAttendanceRecord: AttendanceRecord = {
+          studentId: student?.studentId ?? cleanedId,
+          name: student?.name ?? cleanedId,
+          college: student?.college ?? "",
+          year: student?.year ?? "",
+          section: student?.section ?? "",
+          status: "Present",
+        };
+
+        if (selectedEvent) {
+          const prev = attendanceByEventId[selectedEvent.id] ?? [];
+          const existingIndex = prev.findIndex(
+            (a) => a.studentId === cleanedId
+          );
+          const next =
+            existingIndex >= 0
+              ? prev.map((a, i) =>
+                  i === existingIndex ? newAttendanceRecord : a
+                )
+              : [...prev, newAttendanceRecord];
+          setAttendanceForEvent(selectedEvent.id, next);
+        }
+
+        showToast(`${newAttendanceRecord.name} marked as present`, "success");
+      } catch (error) {
+        console.error("Error updating attendance:", error);
+        if (axios.isAxiosError(error)) {
+          showToast(
+            error.response?.data?.message || "Failed to update attendance",
+            "error"
+          );
+        } else {
+          showToast("Failed to update attendance", "error");
+        }
+      }
+    },
+    [
+      selectedEvent,
+      showToast,
+      students,
+      attendanceByEventId,
+      setAttendanceForEvent,
+    ]
+  );
 
   const attendanceColumns = [
     { key: "studentId", label: "Id", width: "90px" },
@@ -543,7 +492,7 @@ export function AttendancePage({
 
   const studentColumns = [
     { key: "studentId", label: "Id", width: "90px" },
-    { key: "rfid", label: "Rfid", width: "100px" },
+    // { key: "rfid", label: "Rfid", width: "100px" },
     { key: "name", label: "Name", width: "80px" },
     { key: "college", label: "College", width: "80px" },
     { key: "year", label: "Year", width: "80px" },
@@ -650,17 +599,13 @@ export function AttendancePage({
 
   useEffect(() => {
     setSelectedRows([]);
-  }, [tableType]);
+  }, [tableType, setSelectedRows]);
 
   const handleFilterChange = (
     filterType: "college" | "year" | "section",
     value: string
   ) => {
-    setSelectedFilters((prev) => ({
-      ...prev,
-      [filterType]: value,
-    }));
-
+    setSelectedFilters((prev) => ({ ...prev, [filterType]: value }));
     const filterName = filterType.charAt(0).toUpperCase() + filterType.slice(1);
     const filterValue = value === "all" ? "All" : value.toUpperCase();
     showToast(`${filterName} filter set to ${filterValue}`, "info");
@@ -688,9 +633,7 @@ export function AttendancePage({
       );
 
       if (tableType === "students") {
-        setStudents((prev) =>
-          prev.filter((student) => !studentIds.includes(student.studentId))
-        );
+        removeStudentsFromStore(studentIds);
       }
 
       setSelectedRows([]);
@@ -734,13 +677,15 @@ export function AttendancePage({
 
       await Promise.all(updatePromises);
 
-      setAttendanceData((prev) =>
-        prev.map((item) =>
+      if (selectedEvent) {
+        const prev = attendanceByEventId[selectedEvent.id] ?? [];
+        const next = prev.map((item) =>
           studentIds.includes(item.studentId)
             ? { ...item, status: bulkAttendanceStatus }
             : item
-        )
-      );
+        );
+        setAttendanceForEvent(selectedEvent.id, next);
+      }
 
       setSelectedRows([]);
       setIsBulkAttendanceModalOpen(false);
@@ -767,7 +712,7 @@ export function AttendancePage({
   }, [tableType, filteredData]);
 
   const mappedEvents = useMemo(
-    () =>
+    (): Event[] =>
       events.map((event) => ({
         id: event.id.toString(),
         name: event.title,
@@ -775,8 +720,8 @@ export function AttendancePage({
         location: event.location,
         fine: event.fine,
         colleges: event.colleges,
-        sections: event.sections,
-        schoolYears: event.school_years,
+        sections: event.sections as Event["sections"],
+        schoolYears: event.school_years as Event["schoolYears"],
       })),
     [events]
   );
@@ -835,7 +780,7 @@ export function AttendancePage({
             canAddEvent={canAddEvent}
             canEditEvent={canEditEvent}
             canDeleteEvent={canDeleteEvent}
-            onRfidClick={() => setIsRfidModalOpen(true)}
+            onQRScanClick={() => setIsQrModalOpen(true)}
             onAddStudent={handleAddStudent}
             selectedFilters={selectedFilters}
             onFilterChange={handleFilterChange}
@@ -880,23 +825,38 @@ export function AttendancePage({
         />
       )}
 
-      {/* RFID Check-in Modal */}
-      <RfidCheckInModal
-        isOpen={isRfidModalOpen}
-        onClose={() => setIsRfidModalOpen(false)}
-        onSubmit={handleRfidSubmit}
+      {/* QR Check-in Modal */}
+      <QrCheckInModal
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        onScan={handleQrScanSubmit}
       />
 
       {/* Add Student Modal */}
       <Modal
         isOpen={isAddStudentModalOpen}
-        onClose={() => setIsAddStudentModalOpen(false)}
-        modalClassName="!max-w-[44rem] max-h-[85vh] overflow-y-auto md:overflow-y-visible"
+        onClose={() => {
+          setIsAddStudentModalOpen(false);
+          setAddedStudent(null);
+        }}
+        modalClassName="!max-w-[44rem] max-h-[80vh] overflow-y-auto"
       >
-        <AddStudentForm
-          onSubmit={handleAddStudentSubmit}
-          onCancel={() => setIsAddStudentModalOpen(false)}
-        />
+        {addedStudent ? (
+          <RegistrationSuccessView
+            student={addedStudent}
+            onDone={() => {
+              setIsAddStudentModalOpen(false);
+              setAddedStudent(null);
+            }}
+            doneLabel="Done"
+            className="p-6"
+          />
+        ) : (
+          <AddStudentForm
+            onSubmit={handleAddStudentSubmit}
+            onCancel={() => setIsAddStudentModalOpen(false)}
+          />
+        )}
       </Modal>
 
       {/* Edit Student Modal */}
@@ -906,7 +866,7 @@ export function AttendancePage({
           setIsEditStudentModalOpen(false);
           setEditingStudent(null);
         }}
-        modalClassName="!max-w-[44rem] max-h-[85vh] overflow-y-auto md:overflow-y-visible"
+        modalClassName="!max-w-[44rem] max-h-[80vh] overflow-y-auto"
       >
         {editingStudent && (
           <EditStudentForm

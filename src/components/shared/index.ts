@@ -1,7 +1,12 @@
 export { EventCard } from "./EventCard";
+export { defaultFaqItems } from "./FaqSection/defaultFaqItems";
+export { FaqSection } from "./FaqSection/FaqSection";
+export type { FaqItem } from "./FaqSection/FaqSection";
 export { FooterSection } from "./Footer/Footer";
 export { FormActions } from "./FormActions/FormActions";
 export { LabeledInput } from "./LabeledInput/LabeledInput";
 export { MetricCard } from "./MetricCard/MetricCard";
+export { RegistrationSuccessView } from "./RegistrationSuccessView/RegistrationSuccessView";
+export type { RegistrationSuccessViewProps } from "./RegistrationSuccessView/RegistrationSuccessView";
 export { SecondaryButton } from "./SecondaryButton/SecondaryButton";
 export { SubmitButton } from "./SubmitButton/SubmitButton";

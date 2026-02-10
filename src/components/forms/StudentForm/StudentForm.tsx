@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collegesToOptions, getColleges } from "../../../api/colleges";
 import { Button } from "../../common/Button/Button";
 import { DropdownSelector } from "../../common/DropdownSelector/DropdownSelector";
 import { Textbox } from "../../common/Textbox/Textbox";
+import { useCollegesStore } from "../../../stores/useCollegesStore";
 
 export interface StudentFormData {
   studentId: string;
@@ -11,6 +11,8 @@ export interface StudentFormData {
   year: string;
   section: string;
   rfid?: string;
+  profileImageFile?: File | null;
+  profileImageUrl?: string | null;
 }
 
 interface StudentFormProps {
@@ -32,12 +34,17 @@ export const StudentForm = ({
   className = "p-6",
   showCancelButton = true,
 }: StudentFormProps) => {
-  const [collegeOptions, setCollegeOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
+  const collegeOptionsFromStore = useCollegesStore((s) => s.collegeOptions);
+  const fetchColleges = useCollegesStore((s) => s.fetchColleges);
+  const collegeOptions = useMemo(
+    () => collegeOptionsFromStore.filter((o) => o.value !== "all"),
+    [collegeOptionsFromStore]
+  );
+
   const [formData, setFormData] = useState<StudentFormData>({
     ...initialData,
     rfid: initialData.rfid ?? "",
+    profileImageFile: null,
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -45,14 +52,13 @@ export const StudentForm = ({
     setFormData({
       ...initialData,
       rfid: initialData.rfid ?? "",
+      profileImageFile: null,
     });
   }, [initialData]);
 
   useEffect(() => {
-    getColleges()
-      .then((list) => setCollegeOptions(collegesToOptions(list)))
-      .catch(() => setCollegeOptions([]));
-  }, []);
+    if (collegeOptionsFromStore.length <= 1) fetchColleges();
+  }, [collegeOptionsFromStore.length, fetchColleges]);
 
   const yearOptions = [
     { value: "1", label: "Year Level 1" },
@@ -122,6 +128,16 @@ export const StudentForm = ({
     }
   };
 
+  const handleProfileImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0] ?? null;
+    setFormData((prev) => ({
+      ...prev,
+      profileImageFile: file,
+    }));
+  };
+
   const handleDropdownChange =
     (name: keyof StudentFormData) => (value: string) => {
       setFormData((prev) => ({
@@ -159,94 +175,104 @@ export const StudentForm = ({
       year,
       section,
       rfid,
+      profileImageFile: formData.profileImageFile ?? null,
+      profileImageUrl: formData.profileImageUrl,
     });
   };
 
   return (
-    <form onSubmit={handleSubmit} className={className}>
+    <form onSubmit={handleSubmit} className={`${className}`}>
       {headerContent}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Student ID
-            </label>
-            <Textbox
-              name="studentId"
-              placeholder="Enter student ID (e.g. 23-0001)"
-              required
-              className="w-full py-2"
-              value={formData.studentId}
-              onChange={handleChange}
-              onKeyDown={handleStudentIdKeyDown}
-              onPaste={handleStudentIdPaste}
-              inputMode="text"
-              autoComplete="off"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <Textbox
-              name="name"
-              placeholder="Enter full name (e.g. John Doe)"
-              required
-              className="w-full py-2"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
+      <div className="flex flex-col gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Profile Picture
+          </label>
+          <p className="text-xs text-gray-500 mb-1">Upload a clear photo of yourself (1:1 aspect ratio). <br />
+          This photo is private and can only be seen by school administrators. <br />
+          Other students will not see this photo.</p>
+          <input
+            type="file"
+            accept="image/*"
+            required
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            onChange={handleProfileImageChange}
+          />
         </div>
-
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              College
-            </label>
-            <DropdownSelector
-              name="college"
-              options={collegeOptions}
-              placeholder="Select college"
-              className="!w-full !py-0 !h-10"
-              textClassName="text-[16px]"
-              value={collegeValue}
-              onChange={handleDropdownChange("college")}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Year Level
-            </label>
-            <DropdownSelector
-              name="year"
-              options={yearOptions}
-              placeholder="Select year"
-              className="!w-full !py-0 !h-10 "
-              textClassName="text-[16px]"
-              value={formData.year}
-              onChange={handleDropdownChange("year")}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Student ID
+          </label>
+          <Textbox
+            name="studentId"
+            placeholder="Enter student ID (e.g. 23-0001)"
+            required
+            className="w-full py-2"
+            value={formData.studentId}
+            onChange={handleChange}
+            onKeyDown={handleStudentIdKeyDown}
+            onPaste={handleStudentIdPaste}
+            inputMode="text"
+            autoComplete="off"
+          />
         </div>
-
-        <div className="flex flex-col gap-4 md:col-span-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Section
-            </label>
-            <DropdownSelector
-              name="section"
-              options={sectionOptions}
-              placeholder="Select section"
-              className="!w-full !py-0 !h-10"
-              textClassName="text-[16px]"
-              value={formData.section?.toLowerCase() ?? ""}
-              onChange={handleDropdownChange("section")}
-            />
-          </div>
-          <div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Full Name
+          </label>
+          <Textbox
+            name="name"
+            placeholder="Enter full name (e.g. John Doe)"
+            required
+            className="w-full py-2"
+            value={formData.name}
+            onChange={handleChange}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            College
+          </label>
+          <DropdownSelector
+            name="college"
+            options={collegeOptions}
+            placeholder="Select college"
+            className="!w-full !py-0 !h-10"
+            textClassName="text-[16px]"
+            value={collegeValue}
+            onChange={handleDropdownChange("college")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Year Level
+          </label>
+          <DropdownSelector
+            name="year"
+            options={yearOptions}
+            placeholder="Select year"
+            className="!w-full !py-0 !h-10 "
+            textClassName="text-[16px]"
+            value={formData.year}
+            onChange={handleDropdownChange("year")}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Section
+          </label>
+          <DropdownSelector
+            name="section"
+            options={sectionOptions}
+            placeholder="Select section"
+            className="!w-full !py-0 !h-10"
+            textClassName="text-[16px]"
+            value={formData.section?.toLowerCase() ?? ""}
+            onChange={handleDropdownChange("section")}
+          />
+        </div>
+        {/* <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               RFID
             </label>
@@ -257,8 +283,7 @@ export const StudentForm = ({
               value={formData.rfid ?? ""}
               onChange={handleChange}
             />
-          </div>
-        </div>
+          </div> */}
       </div>
 
       {submitError && (

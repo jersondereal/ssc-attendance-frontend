@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { useCallback, useEffect, useRef, useState } from "react";
 import config from "../../../config";
+import { useAuthStore } from "../../../stores/useAuthStore";
 import { Toast } from "../Toast/Toast";
 import { AdminAccountsModal } from "./AdminAccountsModal";
 import { DeleteUserModal } from "./DeleteUserModal";
@@ -10,20 +11,22 @@ import type {
   LoginFormData,
   User,
   UserFormData,
-  UserMenuProps,
 } from "./types";
 import { getRoleLabel } from "./types";
 import { UserFormModal } from "./UserFormModal";
 import { UserMenuDropdown } from "./UserMenuDropdown";
 
-export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
+export const UserMenu = () => {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoginModalOpen = useAuthStore((s) => s.isLoginModalOpen);
+  const setUser = useAuthStore((s) => s.setUser);
+  const logout: () => void = useAuthStore((s) => s.logout);
+
   const [isOpen, setIsOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isUserFormModalOpen, setIsUserFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [adminAccounts, setAdminAccounts] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [toast, setToast] = useState<{
@@ -48,31 +51,6 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const loginFormRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    const checkAuth = () => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          const { token, user } = JSON.parse(storedUser);
-          if (token) {
-            axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-            setCurrentUser(user);
-            setIsAuthenticated(true);
-            setIsLoginModalOpen(false);
-            return;
-          }
-        } catch (error) {
-          console.error("Error parsing stored user data:", error);
-          localStorage.removeItem("user");
-        }
-      }
-      setIsLoginModalOpen(true);
-      setIsAuthenticated(false);
-      setCurrentUser(null);
-    };
-    checkAuth();
-  }, []);
 
   useEffect(() => {
     const timeoutData = localStorage.getItem("ssc-login-timeout");
@@ -130,18 +108,6 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!onUserChange) return;
-    if (currentUser) {
-      onUserChange({
-        username: currentUser.username,
-        role: getRoleLabel(currentUser.role),
-      });
-    } else {
-      onUserChange(null);
-    }
-  }, [currentUser, onUserChange]);
-
   const handleLoginAttempt = useCallback(
     (success: boolean) => {
       const now = Date.now();
@@ -178,18 +144,18 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
         loginFormData
       );
       const { token, user } = response.data;
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      localStorage.setItem("user", JSON.stringify({ token, user }));
-      setCurrentUser(user);
-      setIsAuthenticated(true);
+      setUser(
+        {
+          id: user.id,
+          username: user.username,
+          role: getRoleLabel(user.role),
+          rawRole: user.role,
+        },
+        token
+      );
       handleLoginAttempt(true);
       setToast({ message: "Login successful!", variant: "success" });
       setLoginFormData({ username: "", password: "" });
-      setIsLoginModalOpen(false);
-      onUserChange?.({
-        username: user.username,
-        role: getRoleLabel(user.role),
-      });
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
       handleLoginAttempt(false);
@@ -210,16 +176,10 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
   }, []);
 
   const handleLogout = useCallback(() => {
-    delete axios.defaults.headers.common["Authorization"];
-    localStorage.removeItem("user");
-    setCurrentUser(null);
-    setIsAuthenticated(false);
-    setIsLoginModalOpen(true);
+    logout();
     setIsOpen(false);
     setToast({ message: "Logged out successfully", variant: "success" });
-    onUserChange?.(null);
-    onLogout?.();
-  }, [onLogout, onUserChange]);
+  }, [logout]);
 
   const handleAddUser = useCallback(() => {
     setSelectedUser(null);
@@ -305,9 +265,13 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
         onQuickFillStudent={handleQuickFillStudent}
       />
 
-      {isAuthenticated && (
+      {isAuthenticated && currentUser && (
         <UserMenuDropdown
-          currentUser={currentUser}
+          currentUser={{
+            id: currentUser.id ?? "",
+            username: currentUser.username,
+            role: currentUser.rawRole ?? "viewer",
+          }}
           isOpen={isOpen}
           onToggle={() => setIsOpen(!isOpen)}
           onAccountsClick={() => {
@@ -336,7 +300,15 @@ export const UserMenu = ({ onLogout, onUserChange }: UserMenuProps) => {
         formData={formData}
         onFormDataChange={setFormData}
         selectedUser={selectedUser}
-        currentUser={currentUser}
+        currentUser={
+          currentUser
+            ? {
+                id: currentUser.id ?? "",
+                username: currentUser.username,
+                role: currentUser.rawRole ?? "viewer",
+              }
+            : null
+        }
         onSubmit={handleFormSubmit}
         onClose={() => {
           setIsUserFormModalOpen(false);

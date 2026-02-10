@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getColleges, type College } from "../../../api/colleges";
 import { Button } from "../../common/Button/Button";
+import { useCollegesStore } from "../../../stores/useCollegesStore";
 import Checkbox from "../../common/Checkbox/Checkbox";
 import { Textbox } from "../../common/Textbox/Textbox";
 
@@ -80,7 +80,8 @@ export const EventForm = ({
 }: EventFormProps) => {
   const [formData, setFormData] = useState<EventFormData>(initialData);
   const [fineError, setFineError] = useState("");
-  const [collegeList, setCollegeList] = useState<College[]>([]);
+  const collegeList = useCollegesStore((s) => s.colleges);
+  const fetchColleges = useCollegesStore((s) => s.fetchColleges);
   const [colleges, setColleges] = useState<CollegesState>({ all: false });
   const [sections, setSections] = useState<SectionsState>(
     buildSectionsState(initialSections)
@@ -102,10 +103,8 @@ export const EventForm = ({
   }, [initialSchoolYears]);
 
   useEffect(() => {
-    getColleges().then((list) => {
-      setCollegeList(list);
-    });
-  }, []);
+    if (collegeList.length === 0) fetchColleges();
+  }, [collegeList.length, fetchColleges]);
 
   useEffect(() => {
     const initial: CollegesState = { all: initialColleges?.all ?? false };

@@ -34,7 +34,7 @@ export function EventCard({
     <div
       className={`relative w-full border border-border-dark rounded-[10px] p-4 transition-colors ${
         isSelected
-          ? "bg-emerald-100/60 border-2 border-emerald-400/60"
+          ? "bg-emerald-100/60 border border-emerald-400/60"
           : "bg-gray-50 hover:bg-gray-100/80"
       }`}
     >

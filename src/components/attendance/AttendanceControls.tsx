@@ -26,7 +26,7 @@ interface AttendanceControlsProps {
   canAddEvent?: boolean;
   canEditEvent?: boolean;
   canDeleteEvent?: boolean;
-  onRfidClick: () => void;
+  onQRScanClick: () => void;
   onAddStudent: () => void;
   selectedFilters: {
     college: string;
@@ -56,7 +56,7 @@ export function AttendanceControls({
   canAddEvent = true,
   canEditEvent = true,
   canDeleteEvent = true,
-  onRfidClick,
+  onQRScanClick,
   onAddStudent,
   selectedFilters,
   onFilterChange,
@@ -87,11 +87,18 @@ export function AttendanceControls({
           />
           {currentUserRole !== "Viewer" && (
             <Button
-              label="RFID Check-In"
+              label="QR Scan"
+              variant="primary"
+              onClick={onQRScanClick}
+            />
+          )}
+          {/* {currentUserRole !== "Viewer" && (
+            <Button
+              label="RFID Scan"
               variant="primary"
               onClick={onRfidClick}
             />
-          )}
+          )} */}
         </div>
       )}
       {tableType === "students" && (

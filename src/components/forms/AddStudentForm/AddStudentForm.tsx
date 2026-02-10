@@ -103,6 +103,8 @@ export const AddStudentForm = ({
       year: "",
       section: "",
       rfid: "",
+      profileImageFile: null,
+      profileImageUrl: "",
     }),
     []
   );

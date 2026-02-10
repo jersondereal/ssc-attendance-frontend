@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/common/Button/Button";
 import { DropdownSelector } from "../components/common/DropdownSelector/DropdownSelector";
@@ -18,20 +18,12 @@ import {
 import { EventCard, MetricCard } from "../components/shared";
 import config from "../config";
 import { RANGE_OPTIONS } from "../constants/metrics";
-import { useSettings } from "../contexts/SettingsContext";
+import { useSettingsStore } from "../stores/useSettingsStore";
 import { useToast } from "../contexts/ToastContext";
-
-interface DBEvent {
-  id: number;
-  title: string;
-  event_date: string;
-  location: string;
-  fine: number;
-  colleges?: Event["colleges"];
-  courses?: Event["colleges"];
-  sections?: Event["sections"];
-  school_years?: Event["schoolYears"];
-}
+import type { DBEvent } from "../stores/types";
+import { useAuthStore } from "../stores/useAuthStore";
+import { useEventsStore } from "../stores/useEventsStore";
+import { useOverviewStore } from "../stores/useOverviewStore";
 
 function mapDbEventToEvent(e: DBEvent): Event {
   return {
@@ -41,8 +33,8 @@ function mapDbEventToEvent(e: DBEvent): Event {
     location: e.location,
     fine: e.fine,
     colleges: e.colleges ?? e.courses,
-    sections: e.sections,
-    schoolYears: e.school_years,
+    sections: e.sections as Event["sections"],
+    schoolYears: e.school_years as Event["schoolYears"],
   };
 }
 
@@ -62,38 +54,64 @@ function EventCardSkeleton() {
   );
 }
 
-interface OverviewPageProps {
-  currentUser: { username: string; role: string } | null;
-}
-
-export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
+export const OverviewPage = () => {
   const { showToast } = useToast();
-  const { systemSettings } = useSettings();
+  const systemSettings = useSettingsStore((s) => s.systemSettings);
+  const currentUser = useAuthStore((s) => s.currentUser);
   const navigate = useNavigate();
-  const [totalStudents, setTotalStudents] = useState<number | null>(null);
-  const [averageAttendanceRate, setAverageAttendanceRate] = useState<
-    number | null
-  >(null);
-  const [totalFinesOutstanding, setTotalFinesOutstanding] = useState<
-    number | null
-  >(null);
-  const [totalFinesCollected, setTotalFinesCollected] = useState<number | null>(
-    null
-  );
-  const [events, setEvents] = useState<Event[]>([]);
-  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
-  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
-  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
-  const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-  const [deleteEventConfirmChecked, setDeleteEventConfirmChecked] =
-    useState(false);
-  const [visibleEventCount, setVisibleEventCount] = useState(6);
-
-  const [range, setRange] = useState<RangeValue>("last_30_days");
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Add loading state for events (true while loading, false when loaded)
-  const [eventsLoading, setEventsLoading] = useState(true);
+  const eventsRaw = useEventsStore((s) => s.events);
+  const eventsLoading = useEventsStore((s) => s.loading);
+  const fetchEvents = useEventsStore((s) => s.fetchEvents);
+  const updateEventInStore = useEventsStore((s) => s.updateEvent);
+  const removeEventFromStore = useEventsStore((s) => s.removeEvent);
+  const addEventToStore = useEventsStore((s) => s.addEvent);
+
+  const totalStudents = useOverviewStore((s) => s.totalStudents);
+  const averageAttendanceRate = useOverviewStore(
+    (s) => s.averageAttendanceRate
+  );
+  const totalFinesOutstanding = useOverviewStore(
+    (s) => s.totalFinesOutstanding
+  );
+  const totalFinesCollected = useOverviewStore((s) => s.totalFinesCollected);
+  const range = useOverviewStore((s) => s.range);
+  const setRange = useOverviewStore((s) => s.setRange);
+  const visibleEventCount = useOverviewStore((s) => s.visibleEventCount);
+  const setVisibleEventCount = useOverviewStore((s) => s.setVisibleEventCount);
+  const eventToEdit = useOverviewStore((s) => s.eventToEdit);
+  const setEventToEdit = useOverviewStore((s) => s.setEventToEdit);
+  const eventToDelete = useOverviewStore((s) => s.eventToDelete);
+  const setEventToDelete = useOverviewStore((s) => s.setEventToDelete);
+  const setDeleteEventConfirmChecked = useOverviewStore(
+    (s) => s.setDeleteEventConfirmChecked
+  );
+  const menuOpenFor = useOverviewStore((s) => s.menuOpenFor);
+  const setMenuOpenFor = useOverviewStore((s) => s.setMenuOpenFor);
+  const isAddEventModalOpen = useOverviewStore(
+    (s) => s.isAddEventModalOpen
+  );
+  const setIsAddEventModalOpen = useOverviewStore(
+    (s) => s.setIsAddEventModalOpen
+  );
+  const deleteEventConfirmChecked = useOverviewStore(
+    (s) => s.deleteEventConfirmChecked
+  );
+  const fetchOverviewMetrics = useOverviewStore(
+    (s) => s.fetchOverviewMetrics
+  );
+
+  const events = useMemo(
+    () =>
+      [...eventsRaw]
+        .map(mapDbEventToEvent)
+        .sort(
+          (a, b) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+        ),
+    [eventsRaw]
+  );
 
   const currencyFormatter = useMemo(
     () =>
@@ -106,33 +124,16 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
   );
 
   useEffect(() => {
-    axios
-      .get(`${config.API_BASE_URL}/overview/students`)
-      .then((res) => setTotalStudents(res.data.totalStudents))
-      .catch(() => setTotalStudents(null));
-  }, []);
+    if (eventsRaw.length === 0) fetchEvents();
+  }, [eventsRaw.length, fetchEvents]);
 
   useEffect(() => {
-    setEventsLoading(true);
-    axios
-      .get(`${config.API_BASE_URL}/events`)
-      .then((res) => {
-        const mapped = (res.data as DBEvent[]).map(mapDbEventToEvent);
-        const sorted = [...mapped].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setEvents(sorted);
-        setEventsLoading(false);
-      })
-      .catch(() => {
-        setEvents([]);
-        setEventsLoading(false);
-      });
-  }, []);
+    fetchOverviewMetrics();
+  }, [fetchOverviewMetrics, range]);
 
   useEffect(() => {
     setVisibleEventCount(6);
-  }, [events.length]);
+  }, [events.length, setVisibleEventCount]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -142,25 +143,7 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const fetchEvents = useCallback(() => {
-    setEventsLoading(true);
-    axios
-      .get(`${config.API_BASE_URL}/events`)
-      .then((res) => {
-        const mapped = (res.data as DBEvent[]).map(mapDbEventToEvent);
-        const sorted = [...mapped].sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        setEvents(sorted);
-        setEventsLoading(false);
-      })
-      .catch(() => {
-        setEvents([]);
-        setEventsLoading(false);
-      });
-  }, []);
+  }, [setMenuOpenFor]);
 
   const handleMenuClick = (eventId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -194,10 +177,10 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
         sections: data.sections,
         schoolYears: data.schoolYears,
       })
-      .then(() => {
+      .then((res) => {
         showToast("Event updated successfully", "success");
         setEventToEdit(null);
-        fetchEvents();
+        updateEventInStore(eventToEdit.id, res.data as DBEvent);
       })
       .catch(() => showToast("Failed to update event", "error"));
   };
@@ -208,9 +191,12 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
         ...eventData,
         colleges: eventData.colleges,
       });
-      const newEvent = mapDbEventToEvent(response.data as DBEvent);
-      setEvents((prevEvents) => [newEvent, ...prevEvents]);
-      showToast(`Event "${newEvent.name}" created successfully`, "success");
+      const newEvent = response.data as DBEvent;
+      addEventToStore(newEvent);
+      showToast(
+        `Event "${mapDbEventToEvent(newEvent).name}" created successfully`,
+        "success"
+      );
       setIsAddEventModalOpen(false);
     } catch (error) {
       console.error("Error creating event:", error);
@@ -230,40 +216,17 @@ export const OverviewPage = ({ currentUser }: OverviewPageProps) => {
 
   const handleConfirmDelete = () => {
     if (!eventToDelete) return;
+    const id = eventToDelete.id;
     axios
-      .delete(`${config.API_BASE_URL}/events/${eventToDelete.id}`)
+      .delete(`${config.API_BASE_URL}/events/${id}`)
       .then(() => {
         showToast("Event deleted successfully", "success");
         setEventToDelete(null);
         setDeleteEventConfirmChecked(false);
-        fetchEvents();
+        removeEventFromStore(id);
       })
       .catch(() => showToast("Failed to delete event", "error"));
   };
-
-  useEffect(() => {
-    axios
-      .get(`${config.API_BASE_URL}/overview/attendance`, {
-        params: { range },
-      })
-      .then((res) => setAverageAttendanceRate(res.data.averageAttendanceRate))
-      .catch(() => setAverageAttendanceRate(null));
-  }, [range]);
-
-  useEffect(() => {
-    axios
-      .get(`${config.API_BASE_URL}/overview/fines`, {
-        params: { range },
-      })
-      .then((res) => {
-        setTotalFinesOutstanding(res.data.totalFinesOutstanding);
-        setTotalFinesCollected(res.data.totalFinesCollected);
-      })
-      .catch(() => {
-        setTotalFinesOutstanding(null);
-        setTotalFinesCollected(null);
-      });
-  }, [range]);
 
   const formatNumber = (value: number | null) =>
     value === null ? "--" : value.toLocaleString();
