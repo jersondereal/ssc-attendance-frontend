@@ -211,9 +211,12 @@ export const StudentForm = ({
             onChange={handleProfileImageChange}
             disabled={isSubmitting}
           />
-          <p className="text-xs text-gray-500 mt-2">Upload a clear photo of yourself (1:1 aspect ratio). <br />
-          This photo is private and can only be seen by school administrators. <br />
-          Other students will not see this photo.</p>
+          <p className="text-xs text-gray-500 mt-2">
+            Upload a clear photo of yourself (1:1 aspect ratio) <br />
+            This photo is private and can only be seen by school administrators. <br />
+            Allowed file types: JPEG, PNG, WEBP <br />
+            Maximum file size: 10MB <br />
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
