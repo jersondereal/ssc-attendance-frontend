@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Button } from "../../common/Button/Button";
+import { SubmitButton } from "../../shared/SubmitButton/SubmitButton";
 import { DropdownSelector } from "../../common/DropdownSelector/DropdownSelector";
 import { Textbox } from "../../common/Textbox/Textbox";
 import { useCollegesStore } from "../../../stores/useCollegesStore";
@@ -17,7 +18,7 @@ export interface StudentFormData {
 
 interface StudentFormProps {
   initialData: StudentFormData;
-  onSubmit: (data: StudentFormData) => void;
+  onSubmit: (data: StudentFormData) => void | Promise<void>;
   onCancel: () => void;
   headerContent?: React.ReactNode;
   submitLabel: string;
@@ -47,6 +48,7 @@ export const StudentForm = ({
     profileImageFile: null,
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setFormData({
@@ -146,9 +148,10 @@ export const StudentForm = ({
       }));
     };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+
     const studentId = formData.studentId?.trim() ?? "";
     const name = formData.name?.trim() ?? "";
     const college = formData.college?.trim() ?? "";
@@ -168,16 +171,27 @@ export const StudentForm = ({
       return;
     }
 
-    onSubmit({
-      studentId,
-      name,
-      college,
-      year,
-      section,
-      rfid,
-      profileImageFile: formData.profileImageFile ?? null,
-      profileImageUrl: formData.profileImageUrl,
-    });
+    setIsSubmitting(true);
+    try {
+      // Allow both synchronous and async `onSubmit`
+      await Promise.resolve(
+        onSubmit({
+          studentId,
+          name,
+          college,
+          year,
+          section,
+          rfid,
+          profileImageFile: formData.profileImageFile ?? null,
+          profileImageUrl: formData.profileImageUrl,
+        })
+      );
+    } catch (err) {
+      console.error("Error submitting student form:", err);
+      setSubmitError("An error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -195,6 +209,7 @@ export const StudentForm = ({
             required
             className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             onChange={handleProfileImageChange}
+            disabled={isSubmitting}
           />
           <p className="text-xs text-gray-500 mt-2">Upload a clear photo of yourself (1:1 aspect ratio). <br />
           This photo is private and can only be seen by school administrators. <br />
@@ -215,6 +230,7 @@ export const StudentForm = ({
             onPaste={handleStudentIdPaste}
             inputMode="text"
             autoComplete="off"
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -228,6 +244,7 @@ export const StudentForm = ({
             className="w-full py-2"
             value={formData.name}
             onChange={handleChange}
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -242,6 +259,7 @@ export const StudentForm = ({
             textClassName="text-[16px]"
             value={collegeValue}
             onChange={handleDropdownChange("college")}
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -256,6 +274,7 @@ export const StudentForm = ({
             textClassName="text-[16px]"
             value={formData.year}
             onChange={handleDropdownChange("year")}
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -270,6 +289,7 @@ export const StudentForm = ({
             textClassName="text-[16px]"
             value={formData.section?.toLowerCase() ?? ""}
             onChange={handleDropdownChange("section")}
+            disabled={isSubmitting}
           />
         </div>
         {/* <div>
@@ -300,14 +320,17 @@ export const StudentForm = ({
             variant="secondary"
             className="flex-1 py-2 !text-base"
             onClick={onCancel}
+            disabled={isSubmitting}
           />
         )}
-        <Button
+        <SubmitButton
           type="submit"
-          label={submitLabel}
-          variant="primary"
+          disabled={isSubmitting}
+          loading={isSubmitting}
           className="flex-1 py-2 bg-zinc-700 text-white hover:bg-zinc-600 !text-base"
-        />
+        >
+          {isSubmitting ? "Submitting..." : submitLabel}
+        </SubmitButton>
       </div>
     </form>
   );

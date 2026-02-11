@@ -8,7 +8,6 @@ import { DropdownSelector } from "../DropdownSelector/DropdownSelector";
 import { Modal } from "../Modal/Modal";
 import type { User, UserFormData } from "./types";
 import { ROLE_OPTIONS } from "./types";
-import { useState } from "react";
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -16,7 +15,7 @@ interface UserFormModalProps {
   onFormDataChange: (data: UserFormData) => void;
   selectedUser: User | null;
   currentUser: User | null;
-  onSubmit: (e: React.FormEvent) => void | Promise<void>;
+  onSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
 }
 
@@ -32,27 +31,14 @@ export function UserFormModal({
   const isPresident = selectedUser?.username === "president";
   const canEditPresident = currentUser?.username === "president";
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const passwordDisabled = isPresident && !canEditPresident;
   const passwordLabel = selectedUser
     ? "Password (leave blank to keep current)"
     : "Password";
 
-  // Handles submit with loading
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await Promise.resolve(onSubmit(e));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="p-6">
+      <form onSubmit={onSubmit} className="p-6">
         <h2 className="text-sm font-semibold mb-6">
           {selectedUser ? "Edit User" : "Add New User"}
         </h2>
@@ -94,10 +80,10 @@ export function UserFormModal({
           </div>
         </div>
         <FormActions>
-          <SecondaryButton onClick={onClose} fullWidth={false} disabled={isSubmitting}>
+          <SecondaryButton onClick={onClose} fullWidth={false}>
             Cancel
           </SecondaryButton>
-          <SubmitButton loading={isSubmitting} disabled={isSubmitting}>
+          <SubmitButton>
             {selectedUser ? "Save Changes" : "Add User"}
           </SubmitButton>
         </FormActions>
