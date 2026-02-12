@@ -1,8 +1,8 @@
 import { Analytics } from "@vercel/analytics/react";
 // import axios from "axios";
-import { Bell, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
 import NavigationMenu from "./components/common/NavigationMenu/NavigationMenu";
 import { UserMenu } from "./components/common/UserMenu/UserMenu";
@@ -16,6 +16,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { StudentPage } from "./pages/StudentPage";
 import { StudentRegistrationPage } from "./pages/StudentRegistrationPage";
 import { WelcomePage } from "./pages/WelcomePage";
+import { UserGuide } from "./pages/UserGuide";
 
 function MaintenanceNotice() {
   return (
@@ -35,6 +36,7 @@ function MaintenanceNotice() {
 
 function AppContent() {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const systemSettings = useSettingsStore((s) => s.systemSettings);
   const refreshSettings = useSettingsStore((s) => s.refreshSettings);
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -83,6 +85,10 @@ function AppContent() {
   const showMaintenanceNotice =
     role === "viewer" && systemSettings.maintenanceMode;
 
+  const handleOpenUserGuide = () => {
+    navigate("/user-guide");
+  };
+
   return (
     <div className="app bg-white min-h-screen flex flex-col">
       <Analytics />
@@ -120,20 +126,23 @@ function AppContent() {
               </div>
               {/* Right: User Menu */}
               <div className="flex flex-row items-center gap-2 ml-auto md:ml-10 order-2 md:order-3">
-                <div
+                {/* <div
                   className={`rounded-full cursor-not-allowed border border-gray-500 p-2 flex items-center justify-center ${
                     currentUser?.role === "Viewer" ? "hidden" : ""
                   }`}
                 >
                   <Bell className="w-4 h-4" />
-                </div>
-                <div
-                  className={`rounded-full cursor-not-allowed border border-gray-500 p-2 flex items-center justify-center ${
+                </div> */}
+                <button
+                  type="button"
+                  title="User Guide"
+                  className={`rounded-full hidden border border-gray-500 p-2 items-center justify-center cursor-pointer ${
                     currentUser?.role === "Viewer" ? "hidden" : ""
                   }`}
+                  onClick={handleOpenUserGuide}
                 >
                   <BookOpen className="w-4 h-4" />
-                </div>
+                </button>
                 <UserMenu />
               </div>
             </div>
@@ -142,7 +151,7 @@ function AppContent() {
       )}
 
       {/* Main Content (Routes) */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-h-full">
         {showMaintenanceNotice ? (
           <MaintenanceNotice />
         ) : (
@@ -198,6 +207,7 @@ function AppContent() {
               }
             />
             <Route path="/register" element={<StudentRegistrationPage />} />
+            <Route path="/user-guide" element={<UserGuide />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}

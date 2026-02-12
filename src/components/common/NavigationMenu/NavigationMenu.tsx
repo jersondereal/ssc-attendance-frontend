@@ -53,6 +53,12 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
     return NAV_ITEMS;
   }, [hideAll]);
 
+  // Find if a page is selected & nav item present -- for hiding indicator
+  const showIndicator = React.useMemo(() => {
+    if (navItems.length === 0) return false;
+    return navItems.some((item) => item.id === activeItem);
+  }, [navItems, activeItem]);
+
   useEffect(() => {
     const updateIndicator = () => {
       const activeEl = navRef.current?.querySelector(
@@ -61,11 +67,17 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
       const indicator = indicatorRef.current;
       const wrapper = wrapperRef.current;
 
+      // Only show indicator if a valid nav item is selected
       if (activeEl && indicator && wrapper) {
         const left = activeEl.offsetLeft;
         const width = activeEl.offsetWidth;
         indicator.style.width = `${width}px`;
         indicator.style.left = `${left}px`;
+        indicator.style.opacity = "1";
+      } else if (indicator) {
+        indicator.style.width = "0px";
+        indicator.style.left = "0px";
+        indicator.style.opacity = "0";
       }
     };
 
@@ -134,8 +146,12 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
         {navItems.length > 0 && (
           <div
             ref={indicatorRef}
-            className="absolute bottom-0 left-0 h-[2px] bg-black transition-[width,left] duration-200 ease-in-out !m-0 pointer-events-none"
-            style={{ width: "0px", left: "0px" }}
+            className="absolute bottom-0 left-0 h-[2px] bg-black transition-[width,left,opacity] duration-200 ease-in-out !m-0 pointer-events-none"
+            style={{
+              width: "0px",
+              left: "0px",
+              opacity: showIndicator ? 1 : 0,
+            }}
           />
         )}
       </div>
