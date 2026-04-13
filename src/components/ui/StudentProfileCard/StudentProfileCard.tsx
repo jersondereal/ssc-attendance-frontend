@@ -403,9 +403,9 @@ export function StudentProfileCard({
                               {new Date(fine.eventDate).toLocaleDateString(
                                 "en-US",
                                 {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                  year: "2-digit",
                                 }
                               )}
                             </td>
@@ -488,7 +488,7 @@ export function StudentProfileCard({
                             {record.event_title}
                           </p>
                           <p className="text-gray-700 font-medium text-xs">
-                            {new Date(record.event_date).toLocaleDateString()}
+                            {new Date(record.event_date).toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" })}
                           </p>
                         </div>
                         <span
