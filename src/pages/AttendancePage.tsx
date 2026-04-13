@@ -159,6 +159,16 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     if (students.length === 0) fetchStudents();
   }, [students.length, fetchStudents]);
 
+  // Open profile card from URL param ?student=<id> (on students page only)
+  useEffect(() => {
+    if (tableType !== "students" || students.length === 0) return;
+    const params = new URLSearchParams(location.search);
+    const studentId = params.get("student");
+    if (!studentId) return;
+    const match = students.find((s) => s.studentId === studentId);
+    if (match) setSelectedStudentForProfile(match);
+  }, [tableType, students, location.search, setSelectedStudentForProfile]);
+
   useEffect(() => {
     if (collegeOptions.length <= 1) fetchColleges();
   }, [collegeOptions.length, fetchColleges]);
@@ -898,6 +908,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
           onRowClick={(row) => {
             if ("studentId" in row && !("status" in row)) {
               setSelectedStudentForProfile(row as StudentRecord);
+              navigate(`/students?student=${(row as StudentRecord).studentId}`, { replace: true });
             }
           }}
           sortConfig={sortConfig}
@@ -968,12 +979,18 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
       <Modal
         modalClassName="!w-fit !max-w-fit !max-h-[90vh] overflow-y-auto !rounded-[20px]"
         isOpen={selectedStudentForProfile !== null}
-        onClose={() => setSelectedStudentForProfile(null)}
+        onClose={() => {
+          setSelectedStudentForProfile(null);
+          navigate("/students", { replace: true });
+        }}
       >
         {selectedStudentForProfile && (
           <StudentProfileCard
             studentData={selectedStudentForProfile}
-            onClose={() => setSelectedStudentForProfile(null)}
+            onClose={() => {
+              setSelectedStudentForProfile(null);
+              navigate("/students", { replace: true });
+            }}
             currentUserRole={currentUser?.role}
           />
         )}

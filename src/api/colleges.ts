@@ -55,5 +55,5 @@ export async function deleteCollege(id: number): Promise<void> {
 export function collegesToOptions(
   colleges: College[]
 ): { value: string; label: string }[] {
-  return colleges.map((c) => ({ value: c.code, label: c.name }));
+  return colleges.map((c) => ({ value: c.code, label: `${c.name} (${c.code.toUpperCase()})` }));
 }

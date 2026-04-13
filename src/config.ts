@@ -15,8 +15,13 @@ const getBaseUrl = () => {
     return 'https://ssc-attendance-backend.onrender.com/api';
   }
 
-  // Development environment
-  return `${protocol}//${hostname}:5000/api`;
+  // Local dev (localhost or LAN IP)
+  if (hostname === 'localhost' || /^\d{1,3}(\.\d{1,3}){3}$/.test(hostname)) {
+    return `${protocol}//${hostname}:5000/api`;
+  }
+
+  // Tunnel or any other external host — use production backend
+  return 'https://ssc-attendance-backend.onrender.com/api';
 };
 
 const config: Config = {

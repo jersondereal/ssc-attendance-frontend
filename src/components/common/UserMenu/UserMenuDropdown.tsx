@@ -10,6 +10,7 @@ interface UserMenuDropdownProps {
   onToggle: () => void;
   onAccountsClick: () => void;
   onHelpClick: () => void;
+  onLoginAsAdmin: () => void;
   onLogout: () => void;
 }
 
@@ -19,9 +20,11 @@ export function UserMenuDropdown({
   onToggle,
   onAccountsClick,
   onHelpClick,
+  onLoginAsAdmin,
   onLogout,
 }: UserMenuDropdownProps) {
   const isAdmin = currentUser?.role === "administrator";
+  const isStudent = !currentUser || currentUser.role === "viewer";
 
   // Keep the dropdown rendered briefly after closing to allow transition-out (and appear immediately when opening)
   const [show, setShow] = useState(isOpen);
@@ -106,15 +109,25 @@ export function UserMenuDropdown({
           </div>
 
           <div className="border-t border-gray-300 mt-1" />
-            
+
           <div className="flex flex-col px-1">
-            <button
-              type="button"
-              className="w-full flex items-center gap-2 px-5 py-2 my-1 text-sm text-red-400 hover:text-red-600 hover:bg-red-50 font-normal rounded-[8px]"
-              onClick={onLogout}
-            >
-              <span>Log out</span>
-            </button>
+            {isStudent ? (
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-5 py-2 my-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-normal rounded-[8px]"
+                onClick={onLoginAsAdmin}
+              >
+                <span>Login as Admin</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-5 py-2 my-1 text-sm text-red-400 hover:text-red-600 hover:bg-red-50 font-normal rounded-[8px]"
+                onClick={onLogout}
+              >
+                <span>Log out as Admin</span>
+              </button>
+            )}
           </div>
         </div>
       )}

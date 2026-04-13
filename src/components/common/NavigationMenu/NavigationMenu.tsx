@@ -50,8 +50,9 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const isViewer = currentUserRole?.toLowerCase() === "viewer";
   const navItems = useMemo(() => {
     if (hideAll) return [];
+    if (isViewer) return NAV_ITEMS.filter((item) => !item.hiddenForViewer);
     return NAV_ITEMS;
-  }, [hideAll]);
+  }, [hideAll, isViewer]);
 
   // Find if a page is selected & nav item present -- for hiding indicator
   const showIndicator = React.useMemo(() => {

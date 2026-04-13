@@ -22,6 +22,7 @@ export const UserMenu = () => {
   const isLoginModalOpen = useAuthStore((s) => s.isLoginModalOpen);
   const setUser = useAuthStore((s) => s.setUser);
   const logout: () => void = useAuthStore((s) => s.logout);
+  const setLoginModalOpen = useAuthStore((s) => s.setLoginModalOpen);
 
   const [isOpen, setIsOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -170,16 +171,39 @@ export const UserMenu = () => {
     }
   };
 
-  const handleQuickFillStudent = useCallback(() => {
-    setLoginFormData({ username: "student", password: "password" });
-    setTimeout(() => loginFormRef.current?.requestSubmit(), 0);
-  }, []);
+  const autoLoginAsStudent = useCallback(async () => {
+    try {
+      const response = await axios.post(`${config.API_BASE_URL}/users/login`, {
+        username: "student",
+        password: "password",
+      });
+      const { token, user } = response.data;
+      setUser(
+        {
+          id: user.id,
+          username: user.username,
+          role: getRoleLabel(user.role),
+          rawRole: user.role,
+        },
+        token
+      );
+    } catch (error) {
+      console.error("Auto student login failed:", error);
+    }
+  }, [setUser]);
 
-  const handleLogout = useCallback(() => {
+  useEffect(() => {
+    if (!isAuthenticated) {
+      autoLoginAsStudent();
+    }
+  }, [isAuthenticated, autoLoginAsStudent]);
+
+  const handleLogout = useCallback(async () => {
     logout();
     setIsOpen(false);
     setToast({ message: "Logged out successfully", variant: "success" });
-  }, [logout]);
+    await autoLoginAsStudent();
+  }, [logout, autoLoginAsStudent]);
 
   const handleAddUser = useCallback(() => {
     setSelectedUser(null);
@@ -255,6 +279,7 @@ export const UserMenu = () => {
     <div className="relative" ref={menuRef}>
       <LoginModal
         isOpen={isLoginModalOpen}
+        onClose={() => setLoginModalOpen(false)}
         formData={loginFormData}
         onFormDataChange={setLoginFormData}
         onSubmit={handleLoginSubmit}
@@ -262,29 +287,34 @@ export const UserMenu = () => {
         isLoginBlocked={isLoginBlocked}
         blockedUntil={blockedUntil}
         formRef={loginFormRef}
-        onQuickFillStudent={handleQuickFillStudent}
       />
 
-      {isAuthenticated && currentUser && (
-        <UserMenuDropdown
-          currentUser={{
-            id: currentUser.id ?? "",
-            username: currentUser.username,
-            role: currentUser.rawRole ?? "viewer",
-          }}
-          isOpen={isOpen}
-          onToggle={() => setIsOpen(!isOpen)}
-          onAccountsClick={() => {
-            setIsAdminModalOpen(true);
-            setIsOpen(false);
-          }}
-          onHelpClick={() => {
-            console.log("Help clicked");
-            setIsOpen(false);
-          }}
-          onLogout={handleLogout}
-        />
-      )}
+      <UserMenuDropdown
+        currentUser={
+          currentUser
+            ? {
+                id: currentUser.id ?? "",
+                username: currentUser.username,
+                role: currentUser.rawRole ?? "viewer",
+              }
+            : null
+        }
+        isOpen={isOpen}
+        onToggle={() => setIsOpen(!isOpen)}
+        onAccountsClick={() => {
+          setIsAdminModalOpen(true);
+          setIsOpen(false);
+        }}
+        onHelpClick={() => {
+          console.log("Help clicked");
+          setIsOpen(false);
+        }}
+        onLoginAsAdmin={() => {
+          setLoginModalOpen(true);
+          setIsOpen(false);
+        }}
+        onLogout={handleLogout}
+      />
 
       <AdminAccountsModal
         isOpen={isAdminModalOpen && !isUserFormModalOpen && !isDeleteModalOpen}

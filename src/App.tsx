@@ -103,19 +103,19 @@ function AppContent() {
             {/* Header row */}
             <div className="flex flex-row items-center w-full pt-3 md:pt-0 px-4 flex-wrap gap-y-2">
               {/* Left: Logo and Title */}
-              <div className="flex flex-row items-center gap-3 order-1">
+              <a href="/overview" className="flex flex-row items-center gap-3 order-1">
                 <img
                   src="/logo.png"
                   alt="SSC Logo"
                   className="h-8 w-auto"
                   style={{ maxHeight: "2rem" }}
                 />
-                <div className="border-l-2 border-gray-300 h-4 rotate-12 md:hidden lg:block "></div>
+                <div className="border-l-2 border-gray-300 h-4 md:hidden lg:block"></div>
                 <span className="text-[12px] font-semibold text-gray-900 flex-row items-center gap-1 flex md:hidden lg:flex">
                   Supreme Student Council{" "}
                   <span className="sm:block hidden">- ESSU Guiuan</span>
                 </span>
-              </div>
+              </a>
               {/* Navigation: below on mobile, left of user menu on md+ */}
               <div className="order-3 w-full md:order-2 md:w-fit md:flex-1 md:mx-4">
                 <NavigationMenu

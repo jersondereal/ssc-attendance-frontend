@@ -15,7 +15,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   currentUser: null,
   isAuthenticated: false,
-  isLoginModalOpen: true,
+  isLoginModalOpen: false,
 
   setUser: (user, token) => {
     axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       currentUser: null,
       isAuthenticated: false,
-      isLoginModalOpen: true,
+      isLoginModalOpen: false,
     });
   },
 
@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       currentUser: null,
       isAuthenticated: false,
-      isLoginModalOpen: true,
+      isLoginModalOpen: false,
     });
   },
 }));

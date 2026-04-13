@@ -1,8 +1,8 @@
 import { useRef } from "react";
+import { X } from "lucide-react";
 import {
   FaqSection,
   LabeledInput,
-  SecondaryButton,
   SubmitButton,
 } from "../../shared";
 import { Modal } from "../Modal/Modal";
@@ -15,16 +15,19 @@ const contactItems = [
   {
     id: "email",
     label: "essuguiuansc@gmail.com",
+    href: "mailto:essuguiuansc@gmail.com",
     icon: "/gmail.svg",
   },
   {
     id: "facebook",
     label: "Supreme Student Council- ESSU Guiuan",
+    href: "https://www.facebook.com/share/14h86jqKtSS/?mibextid=wwXIfr",
     icon: "/facebook.svg",
   },
   {
     id: "phone",
     label: "+63 909 919 9236",
+    href: "tel:+639099199236",
     icon: "phone" as const,
   },
 ];
@@ -38,9 +41,12 @@ const loginFaqItems: FaqItem[] = [
         If you experience login issues, you can reach out to the Supreme Student Council (SSC) office using any of the contact options below:
         <div className="flex flex-col gap-1 mt-2">
           {contactItems.map((item) => (
-            <div
+            <a
               key={item.id}
-              className="flex flex-row items-center gap-3 text-nowrap"
+              href={item.href}
+              target={item.id === "facebook" ? "_blank" : undefined}
+              rel={item.id === "facebook" ? "noopener noreferrer" : undefined}
+              className="flex flex-row items-center gap-3 text-nowrap hover:underline"
             >
               {item.icon === "phone" ? (
                 <Phone className="size-4 shrink-0" />
@@ -48,7 +54,7 @@ const loginFaqItems: FaqItem[] = [
                 <img src={item.icon} alt={item.label} className="size-4" />
               )}
               <span>{item.label}</span>
-            </div>
+            </a>
           ))}
         </div>
       </>
@@ -69,15 +75,11 @@ const loginFaqItems: FaqItem[] = [
     answer:
       "Make sure you entered your username exactly as registered. If you continue to experience issues, contact the SSC office for verification.",
   },
-  {
-    question: "Do I need to know anything to log in as a student?",
-    answer:
-      'No, you don\'t need to know anything or enter credentials to log in as a student. Just click the "Login as Student" button and you will be logged in automatically.',
-  },
 ];
 
 interface LoginModalProps {
   isOpen: boolean;
+  onClose: () => void;
   formData: LoginFormData;
   onFormDataChange: (data: LoginFormData) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -85,11 +87,11 @@ interface LoginModalProps {
   isLoginBlocked: boolean;
   blockedUntil: number | null;
   formRef: React.RefObject<HTMLFormElement | null>;
-  onQuickFillStudent?: () => void;
 }
 
 export function LoginModal({
   isOpen,
+  onClose,
   formData,
   onFormDataChange,
   onSubmit,
@@ -97,7 +99,6 @@ export function LoginModal({
   isLoginBlocked,
   blockedUntil,
   formRef,
-  onQuickFillStudent,
 }: LoginModalProps) {
   // Ref for FAQ section
   const faqRef = useRef<HTMLDivElement | null>(null);
@@ -111,8 +112,16 @@ export function LoginModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={() => {}}>
-      <div className="p-6 max-h-[530px] overflow-y-auto">
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <div className="relative p-6 pt-[50px] max-h-[530px] overflow-y-auto">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+          aria-label="Close"
+        >
+          <X className="size-4" />
+        </button>
         <img
           src="/logo.png"
           alt="SSC Logo"
@@ -164,13 +173,6 @@ export function LoginModal({
           </div>
         </form>
 
-        {onQuickFillStudent && (
-          <div className="mt-3">
-            <SecondaryButton onClick={onQuickFillStudent}>
-              Login as Student
-            </SecondaryButton>
-          </div>
-        )}
         {/* FAQ section */}
         <div className="flex flex-col items-center mt-4">
           <a
@@ -180,7 +182,7 @@ export function LoginModal({
           >
             Having problems?
           </a>
-          <div id="faq-section" ref={faqRef} className="w-full mt-5">
+          <div id="faq-section" ref={faqRef} className="w-full mt-[100px]">
             <FaqSection items={loginFaqItems} />
           </div>
         </div>

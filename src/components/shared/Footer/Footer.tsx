@@ -5,16 +5,19 @@ const footerItems = [
   {
     id: "email",
     label: "essuguiuansc@gmail.com",
+    href: "mailto:essuguiuansc@gmail.com",
     icon: "/gmail.svg",
   },
   {
     id: "facebook",
     label: "Supreme Student Council- ESSU Guiuan",
+    href: "https://www.facebook.com/share/14h86jqKtSS/?mibextid=wwXIfr",
     icon: "/facebook.svg",
   },
   {
     id: "phone",
     label: "+63 909 919 9236",
+    href: "tel:+639099199236",
     icon: "phone" as const,
   },
 ];
@@ -36,9 +39,12 @@ export function FooterSection() {
         </p>
         <div className="flex flex-col gap-2 md:ml-auto">
           {footerItems.map((item) => (
-            <div
+            <a
               key={item.id}
-              className="flex flex-row items-center gap-3 text-nowrap"
+              href={item.href}
+              target={item.id === "facebook" ? "_blank" : undefined}
+              rel={item.id === "facebook" ? "noopener noreferrer" : undefined}
+              className="flex flex-row items-center gap-3 text-nowrap hover:underline"
             >
               {item.icon === "phone" ? (
                 <Phone className="size-4 shrink-0" />
@@ -46,7 +52,7 @@ export function FooterSection() {
                 <img src={item.icon} alt={item.label} className="size-4" />
               )}
               <span>{item.label}</span>
-            </div>
+            </a>
           ))}
         </div>
       </div>
