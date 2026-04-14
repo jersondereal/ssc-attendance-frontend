@@ -1,5 +1,6 @@
 import axios from "axios";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { useLocation, useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { AttendanceBulkActionsBar } from "../components/attendance/AttendanceBulkActionsBar";
@@ -51,11 +52,17 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   const updateEventInStore = useEventsStore((s) => s.updateEvent);
   const removeEventFromStore = useEventsStore((s) => s.removeEvent);
 
-  const students = useStudentsStore((s) => s.students);
-  const fetchStudents = useStudentsStore((s) => s.fetchStudents);
+  const students = useStudentsStore((s) => s.pagedStudents);
+  const pagedStudents = useStudentsStore((s) => s.pagedStudents);
+  const hasMore = useStudentsStore((s) => s.hasMore);
+  const isFetchingPage = useStudentsStore((s) => s.isFetchingPage);
+  const fetchStudentsPage = useStudentsStore((s) => s.fetchStudentsPage);
   const addStudentToStore = useStudentsStore((s) => s.addStudent);
   const updateStudentInStore = useStudentsStore((s) => s.updateStudent);
   const removeStudentsFromStore = useStudentsStore((s) => s.removeStudents);
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const collegeOptions = useCollegesStore((s) => s.collegeOptions);
   const fetchColleges = useCollegesStore((s) => s.fetchColleges);
@@ -70,6 +77,9 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     (s) => s.selectedStudentForProfile
   );
   const editingStudent = useAttendanceStore((s) => s.editingStudent);
+  const attendanceHasMore = useAttendanceStore((s) => s.attendanceHasMore);
+  const isFetchingAttendancePage = useAttendanceStore((s) => s.isFetchingAttendancePage);
+  const fetchAttendancePage = useAttendanceStore((s) => s.fetchAttendancePage);
   const setSelectedEvent = useAttendanceStore((s) => s.setSelectedEvent);
   const setAttendanceForEvent = useAttendanceStore((s) => s.setAttendanceForEvent);
   const updateAttendanceRecord = useAttendanceStore(
@@ -155,19 +165,43 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     if (events.length === 0) fetchEvents();
   }, [events.length, fetchEvents]);
 
+  // Initial page load for students table
   useEffect(() => {
-    if (students.length === 0) fetchStudents();
-  }, [students.length, fetchStudents]);
+    if (tableType !== "students") return;
+    fetchStudentsPage({ page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tableType]);
+
+  // Re-fetch page 1 when filters, debounced search, or sort change
+  useEffect(() => {
+    if (tableType !== "students") return;
+    fetchStudentsPage({ page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
+  }, [tableType, debouncedSearch, selectedFilters.college, selectedFilters.year, selectedFilters.section, sortConfig.key, sortConfig.direction, fetchStudentsPage]);
+
+  const handleNearBottom = useCallback(() => {
+    if (tableType !== "students" || !hasMore || isFetchingPage) return;
+    const nextPage = Math.floor(pagedStudents.length / 50) + 1;
+    fetchStudentsPage({ page: nextPage, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction });
+  }, [tableType, hasMore, isFetchingPage, pagedStudents.length, debouncedSearch, selectedFilters, sortConfig, fetchStudentsPage]);
+
+  const handleNearBottomAttendance = useCallback(() => {
+    if (!selectedEvent || tableType !== "attendance") return;
+    const eventId = selectedEvent.id;
+    if (!attendanceHasMore[eventId] || isFetchingAttendancePage) return;
+    const loaded = attendanceByEventId[eventId]?.length ?? 0;
+    const nextPage = Math.floor(loaded / 50) + 1;
+    fetchAttendancePage(eventId, { page: nextPage, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction });
+  }, [selectedEvent, tableType, attendanceHasMore, isFetchingAttendancePage, attendanceByEventId, debouncedSearch, selectedFilters, sortConfig, fetchAttendancePage]);
 
   // Open profile card from URL param ?student=<id> (on students page only)
   useEffect(() => {
-    if (tableType !== "students" || students.length === 0) return;
+    if (tableType !== "students" || pagedStudents.length === 0) return;
     const params = new URLSearchParams(location.search);
     const studentId = params.get("student");
     if (!studentId) return;
-    const match = students.find((s) => s.studentId === studentId);
+    const match = pagedStudents.find((s) => s.studentId === studentId);
     if (match) setSelectedStudentForProfile(match);
-  }, [tableType, students, location.search, setSelectedStudentForProfile]);
+  }, [tableType, pagedStudents, location.search, setSelectedStudentForProfile]);
 
   useEffect(() => {
     if (collegeOptions.length <= 1) fetchColleges();
@@ -192,18 +226,18 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     navigate("/attendance", { replace: true, state: {} });
   }, [events, location.state, navigate, setSelectedEvent]);
 
+  // Fetch page 1 when a new event is selected
   useEffect(() => {
-    if (!selectedEvent) return;
-    const cached = attendanceByEventId[selectedEvent.id];
-    if (cached !== undefined) return;
-    axios
-      .get(`${config.API_BASE_URL}/attendance/event/${selectedEvent.id}`)
-      .then((res) => {
-        const mapped = mapAttendanceRows(res.data as DBAttendance[]);
-        setAttendanceForEvent(selectedEvent.id, mapped);
-      })
-      .catch((err) => console.error(err));
-  }, [selectedEvent, attendanceByEventId, setAttendanceForEvent, mapAttendanceRows]);
+    if (!selectedEvent || tableType !== "attendance") return;
+    fetchAttendancePage(selectedEvent.id, { page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEvent?.id, tableType]);
+
+  // Re-fetch page 1 when filters, search, or sort change (attendance)
+  useEffect(() => {
+    if (!selectedEvent || tableType !== "attendance") return;
+    fetchAttendancePage(selectedEvent.id, { page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
+  }, [tableType, debouncedSearch, selectedFilters.college, selectedFilters.year, selectedFilters.section, sortConfig.key, sortConfig.direction, fetchAttendancePage]);
 
   const handleTableAction = (action: string, row: TableRecord) => {
     switch (action) {
@@ -610,6 +644,8 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
   };
 
   const handleDownload = () => {
@@ -657,9 +693,10 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   };
 
   const getFilteredData = useCallback(() => {
-    const data = tableType === "attendance" ? attendanceData : students;
+    // Students: filtering/sorting is handled server-side, return loaded pages as-is
+    if (tableType === "students") return students;
 
-    return data.filter((item) => {
+    return attendanceData.filter((item) => {
       const searchMatch =
         searchQuery === "" ||
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -680,14 +717,15 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   }, [tableType, attendanceData, students, selectedFilters, searchQuery]);
 
   const filteredData = getFilteredData();
-  const sortedData = [...filteredData].sort((a, b) => {
-    const aValue = a[sortConfig.key as keyof TableRecord];
-    const bValue = b[sortConfig.key as keyof TableRecord];
-
-    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-    return 0;
-  });
+  const sortedData = tableType === "students"
+    ? filteredData
+    : [...filteredData].sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof TableRecord];
+        const bValue = b[sortConfig.key as keyof TableRecord];
+        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+        return 0;
+      });
 
   const currentData = sortedData;
 
@@ -820,8 +858,10 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     [events]
   );
 
-  const isAllSelected =
-    filteredData.length > 0 && selectedRows.length === filteredData.length;
+  const { total } = useStudentsStore.getState();
+  const isAllSelected = tableType === "students"
+    ? selectedRows.length > 0 && selectedRows.length === total
+    : filteredData.length > 0 && selectedRows.length === filteredData.length;
 
   const role = currentUser?.role?.toLowerCase();
   const isViewer = role === "viewer";
@@ -852,9 +892,22 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
               setBulkAttendanceStatus(status);
               setIsBulkAttendanceModalOpen(true);
             }}
-            onToggleSelectAll={() => {
+            onToggleSelectAll={async () => {
               if (isAllSelected) {
                 setSelectedRows([]);
+              } else if (tableType === "students") {
+                // Fetch all matching IDs from server respecting current filters
+                try {
+                  const res = await axios.get<{ ids: string[] }>(`${config.API_BASE_URL}/students/ids`, {
+                    params: { search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section },
+                  });
+                  // Map IDs to indices in the loaded pages; unloaded rows get virtual indices
+                  const idToIndex = new Map(pagedStudents.map((s, i) => [s.studentId, i]));
+                  const indices = res.data.ids.map((id, fallbackIdx) => idToIndex.get(id) ?? pagedStudents.length + fallbackIdx);
+                  setSelectedRows(indices);
+                } catch {
+                  showToast("Failed to select all students", "error");
+                }
               } else {
                 const allIndices = filteredData.map((_, index) => index);
                 setSelectedRows(allIndices);
@@ -899,6 +952,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
           onSelectedRowsChange={setSelectedRows}
           currentUserRole={currentUser?.role}
           tableType="attendance"
+          onNearBottom={handleNearBottomAttendance}
         />
       ) : (
         <Table
@@ -917,6 +971,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
           onSelectedRowsChange={setSelectedRows}
           currentUserRole={currentUser?.role}
           tableType="students"
+          onNearBottom={handleNearBottom}
         />
       )}
 

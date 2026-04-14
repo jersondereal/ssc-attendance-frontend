@@ -1,5 +1,7 @@
+import axios from "axios";
 import { create } from "zustand";
-import type { AttendanceRecord, StudentRecord } from "./types";
+import config from "../config";
+import type { AttendanceRecord, DBAttendance, StudentRecord } from "./types";
 import type { Event } from "../components/common/EventSelector/types";
 
 interface SelectedFilters {
@@ -13,9 +15,25 @@ interface SortConfig {
   direction: "asc" | "desc";
 }
 
+export interface AttendanceFetchParams {
+  page: number;
+  limit?: number;
+  search?: string;
+  college?: string;
+  year?: string;
+  section?: string;
+  status?: string;
+  sortKey?: string;
+  sortDir?: "asc" | "desc";
+}
+
 interface AttendanceState {
   selectedEvent: Event | undefined;
   attendanceByEventId: Record<string, AttendanceRecord[]>;
+  attendanceHasMore: Record<string, boolean>;
+  attendanceTotal: Record<string, number>;
+  isFetchingAttendancePage: boolean;
+  fetchAttendancePage: (eventId: string, params: AttendanceFetchParams, reset?: boolean) => Promise<void>;
   selectedFilters: SelectedFilters;
   searchQuery: string;
   sortConfig: SortConfig;
@@ -62,9 +80,44 @@ const defaultFilters: SelectedFilters = {
 
 const defaultSort: SortConfig = { key: "name", direction: "asc" };
 
-export const useAttendanceStore = create<AttendanceState>((set) => ({
+export const useAttendanceStore = create<AttendanceState>((set, get) => ({
   selectedEvent: undefined,
   attendanceByEventId: {},
+  attendanceHasMore: {},
+  attendanceTotal: {},
+  isFetchingAttendancePage: false,
+
+  fetchAttendancePage: async (eventId, params, reset = false) => {
+    if (get().isFetchingAttendancePage) return;
+    set({ isFetchingAttendancePage: true });
+    try {
+      const { page, limit = 50, search = "", college = "all", year = "all", section = "all", status = "all", sortKey = "name", sortDir = "asc" } = params;
+      const res = await axios.get<{ data: DBAttendance[]; total: number }>(
+        `${config.API_BASE_URL}/attendance/event/${eventId}/paginated`,
+        { params: { page, limit, search, college, year, section, status, sortKey, sortDir } }
+      );
+      const mapped: AttendanceRecord[] = res.data.data.map((r) => ({
+        studentId: r.student_id,
+        name: r.name,
+        college: (r.college ?? r.course ?? "").toUpperCase(),
+        year: r.year,
+        section: r.section.toUpperCase(),
+        status: r.status,
+      }));
+      const existing = reset ? [] : (get().attendanceByEventId[eventId] ?? []);
+      const merged = [...existing, ...mapped];
+      set((state) => ({
+        attendanceByEventId: { ...state.attendanceByEventId, [eventId]: merged },
+        attendanceHasMore: { ...state.attendanceHasMore, [eventId]: merged.length < res.data.total },
+        attendanceTotal: { ...state.attendanceTotal, [eventId]: res.data.total },
+        isFetchingAttendancePage: false,
+      }));
+    } catch (err) {
+      console.error(err);
+      set({ isFetchingAttendancePage: false });
+    }
+  },
+
   selectedFilters: defaultFilters,
   searchQuery: "",
   sortConfig: defaultSort,
@@ -84,10 +137,8 @@ export const useAttendanceStore = create<AttendanceState>((set) => ({
 
   setAttendanceForEvent: (eventId, data) =>
     set((state) => ({
-      attendanceByEventId: {
-        ...state.attendanceByEventId,
-        [eventId]: data,
-      },
+      attendanceByEventId: { ...state.attendanceByEventId, [eventId]: data },
+      attendanceHasMore: { ...state.attendanceHasMore, [eventId]: false },
     })),
 
   updateAttendanceRecord: (eventId, studentId, record) =>

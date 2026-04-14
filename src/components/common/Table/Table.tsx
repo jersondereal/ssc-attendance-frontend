@@ -49,6 +49,7 @@ interface TableProps {
   onSelectedRowsChange: (selectedRows: number[]) => void;
   currentUserRole?: string;
   tableType?: "attendance" | "students";
+  onNearBottom?: () => void;
 }
 
 export const Table = ({
@@ -63,6 +64,7 @@ export const Table = ({
   onSelectedRowsChange,
   currentUserRole,
   tableType,
+  onNearBottom,
 }: TableProps) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -77,7 +79,15 @@ export const Table = ({
       }
     };
 
-    const handleScroll = () => setActiveMenu(null);
+    const handleScroll = () => {
+      setActiveMenu(null);
+      if (onNearBottom && table) {
+        const { scrollTop, scrollHeight, clientHeight } = table;
+        if (scrollHeight - scrollTop - clientHeight < 200) {
+          onNearBottom();
+        }
+      }
+    };
 
     document.addEventListener("mousedown", handleClickOutside);
     table?.addEventListener("scroll", handleScroll);
@@ -86,7 +96,7 @@ export const Table = ({
       document.removeEventListener("mousedown", handleClickOutside);
       table?.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [onNearBottom]);
 
   const handleActionClick = (action: string, row: TableRecord) => {
     onActionClick?.(action, row);
