@@ -17,6 +17,7 @@ import { StudentPage } from "./pages/StudentPage";
 import { StudentRegistrationPage } from "./pages/StudentRegistrationPage";
 import { WelcomePage } from "./pages/WelcomePage";
 import { UserGuide } from "./pages/UserGuide";
+import { AIChatPage } from "./pages/AIChatPage";
 
 function MaintenanceNotice() {
   return (
@@ -89,15 +90,17 @@ function AppContent() {
     navigate("/user-guide");
   };
 
+  const isAiChat = pathname === "/ai-chat";
+
   return (
-    <div className="app bg-white min-h-screen flex flex-col">
+    <div className={`app bg-white flex flex-col ${isAiChat ? "h-screen overflow-hidden" : "min-h-screen"}`}>
       <Analytics />
       {!isStandalonePage && (
         <>
           {/* Header */}
           <div
             className={`w-full h-fit flex flex-col border-b border-border-dark bg-white z-20 ${
-              !isSettings ? "mb-5" : ""
+              !isSettings && !isAiChat ? "mb-5" : ""
             }`}
           >
             {/* Header row */}
@@ -151,7 +154,7 @@ function AppContent() {
       )}
 
       {/* Main Content (Routes) */}
-      <div className="flex-1 flex flex-col min-h-full">
+      <div className={`flex-1 flex flex-col ${isAiChat ? "overflow-hidden min-h-0" : "min-h-full"}`}>
         {showMaintenanceNotice ? (
           <MaintenanceNotice />
         ) : (
@@ -208,12 +211,13 @@ function AppContent() {
             />
             <Route path="/register" element={<StudentRegistrationPage />} />
             <Route path="/user-guide" element={<UserGuide />} />
+            <Route path="/ai-chat" element={<AIChatPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}
       </div>
-      {/* Footer is now rendered on all pages */}
-      <FooterSection />
+      {/* Footer hidden on AI Chat page */}
+      {pathname !== "/ai-chat" && <FooterSection />}
     </div>
   );
 }

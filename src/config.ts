@@ -7,6 +7,11 @@ const frontendURL = 'essu-ssc.vercel.app';
 
 // Get the current hostname and protocol
 const getBaseUrl = () => {
+  // Env override — set VITE_API_BASE_URL in frontend/.env.local to use local backend via tunnel
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL as string;
+  }
+
   const hostname = window.location.hostname;
   const protocol = window.location.protocol;
 

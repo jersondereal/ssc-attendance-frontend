@@ -28,6 +28,12 @@ const NAV_ITEMS = [
     hiddenForViewer: false,
   },
   {
+    id: "ai-chat",
+    label: "AI Chat",
+    path: "/ai-chat",
+    hiddenForViewer: true,
+  },
+  {
     id: "settings",
     label: "Settings",
     path: "/settings",
