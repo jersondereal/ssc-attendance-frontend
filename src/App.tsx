@@ -45,7 +45,6 @@ function AppContent() {
 
   const standalonePages = ["/register"];
 
-  const isSettings = pathname === "/settings";
   const isStandalonePage = standalonePages.includes(pathname);
 
   useEffect(() => {
@@ -99,9 +98,7 @@ function AppContent() {
         <>
           {/* Header */}
           <div
-            className={`w-full h-fit flex flex-col border-b border-border-dark bg-white z-20 ${
-              !isSettings && !isAiChat ? "mb-5" : ""
-            }`}
+            className="fixed top-0 left-0 right-0 w-full h-fit flex flex-col border-b border-border-dark bg-white z-20"
           >
             {/* Header row */}
             <div className="flex flex-row items-center w-full pt-3 md:pt-0 px-4 flex-wrap gap-y-2">
@@ -154,7 +151,7 @@ function AppContent() {
       )}
 
       {/* Main Content (Routes) */}
-      <div className={`flex-1 flex flex-col ${isAiChat ? "overflow-hidden min-h-0" : "min-h-full"}`}>
+      <div className={`flex-1 flex flex-col ${isAiChat ? "overflow-hidden min-h-0" : "min-h-full"} ${!isStandalonePage ? "pt-[105px] md:pt-14" : ""}`}>
         {showMaintenanceNotice ? (
           <MaintenanceNotice />
         ) : (
