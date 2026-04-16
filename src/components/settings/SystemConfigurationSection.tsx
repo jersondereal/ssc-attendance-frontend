@@ -191,6 +191,7 @@ export function SystemConfigurationSection() {
           )}
         </SettingCard>
 
+        <div className="hidden">
         <SettingCard
           title="Backup & Restore"
           disabled
@@ -260,6 +261,7 @@ export function SystemConfigurationSection() {
             />
           </div>
         </SettingCard>
+        </div>
 
         <SettingCard
           title="Maintenance Mode"

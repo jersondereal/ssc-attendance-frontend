@@ -56,6 +56,7 @@ export function GeneralSettingsSection() {
         General Settings
       </h1>
       <div className="space-y-6">
+        <div className="hidden">
         <SettingCard
           title="App Name"
           disabled
@@ -208,6 +209,7 @@ export function GeneralSettingsSection() {
             </div>
           )}
         </SettingCard>
+        </div>
 
         <CollegesSection />
       </div>
