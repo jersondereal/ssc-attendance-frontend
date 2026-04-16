@@ -88,7 +88,19 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
       }
     };
 
+    // Scroll active item to center of the nav container
+    const scrollActiveIntoCenter = () => {
+      const nav = navRef.current;
+      const activeEl = nav?.querySelector(`[data-nav-item="${activeItem}"]`) as HTMLElement;
+      if (!nav || !activeEl) return;
+      const navWidth = nav.clientWidth;
+      const itemLeft = activeEl.offsetLeft;
+      const itemWidth = activeEl.offsetWidth;
+      nav.scrollTo({ left: itemLeft - navWidth / 2 + itemWidth / 2, behavior: "smooth" });
+    };
+
     updateIndicator();
+    scrollActiveIntoCenter();
     const nav = navRef.current;
     const wrapper = wrapperRef.current;
     if (nav) nav.addEventListener("scroll", updateIndicator);
