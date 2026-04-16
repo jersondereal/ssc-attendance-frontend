@@ -6,7 +6,6 @@ import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-
 import "./App.css";
 import NavigationMenu from "./components/common/NavigationMenu/NavigationMenu";
 import { UserMenu } from "./components/common/UserMenu/UserMenu";
-import { FooterSection } from "./components/shared";
 import { ToastProvider } from "./contexts/ToastContext";
 import { useAuthStore } from "./stores/useAuthStore";
 import { useSettingsStore } from "./stores/useSettingsStore";
@@ -151,7 +150,7 @@ function AppContent() {
       )}
 
       {/* Main Content (Routes) */}
-      <div className={`flex-1 flex flex-col ${isAiChat ? "overflow-hidden min-h-0" : "min-h-full"} ${!isStandalonePage ? "pt-[105px] md:pt-14" : ""}`}>
+      <div className={`flex-1 flex flex-col ${isAiChat ? "overflow-hidden min-h-0" : "min-h-full"} ${!isStandalonePage ? "pt-[115px] md:pt-20 pb-20" : ""}`}>
         {showMaintenanceNotice ? (
           <MaintenanceNotice />
         ) : (
@@ -214,7 +213,7 @@ function AppContent() {
         )}
       </div>
       {/* Footer hidden on AI Chat page */}
-      {pathname !== "/ai-chat" && <FooterSection />}
+      {/* <FooterSection /> */}
     </div>
   );
 }
