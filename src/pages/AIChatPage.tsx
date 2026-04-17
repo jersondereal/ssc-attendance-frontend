@@ -139,7 +139,42 @@ function MarkdownContent({ text }: { text: string }) {
   while (i < lines.length) {
     const line = lines[i];
 
-    if (line.startsWith("```")) {
+    if (/^\|/.test(line)) {
+      const rows: string[][] = [];
+      while (i < lines.length && /^\|/.test(lines[i])) {
+        const cells = lines[i].split("|").slice(1, -1).map(c => c.trim());
+        rows.push(cells);
+        i++;
+      }
+      // Filter out separator rows (cells like ---, :---:, etc.)
+      const isSeparator = (row: string[]) => row.every(c => /^:?-+:?$/.test(c));
+      const headerRow = rows[0];
+      const dataRows = rows.filter((_, idx) => idx !== 0 && !isSeparator(rows[idx]));
+      elements.push(
+        <div key={`tbl-${i}`} className="overflow-x-auto my-2">
+          <table className="text-sm text-gray-800 border-collapse w-full">
+            <thead>
+              <tr>
+                {headerRow.map((cell, j) => (
+                  <th key={j} className="border border-border-dark px-3 py-1.5 text-left font-semibold bg-gray-50 whitespace-nowrap">{renderInline(cell)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {dataRows.map((row, j) => (
+                <tr key={j} className="even:bg-gray-50">
+                  {row.map((cell, k) => (
+                    <td key={k} className="border border-border-dark px-3 py-1.5">{renderInline(cell)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
+    else if (line.startsWith("```")) {
       const codeLines: string[] = [];
       i++;
       while (i < lines.length && !lines[i].startsWith("```")) {
