@@ -39,7 +39,7 @@ const CATEGORIES = [
     prompts: [
       "Give me the info of ____",
       "List all students from the ____ college",
-      "How many students are enrolled in total?",
+      "How many students are in each year level?",
       "How many students are there in each college?",
       "How many students have never attended any event?",
     ],
@@ -49,10 +49,10 @@ const CATEGORIES = [
     label: "Events & Fines",
     icon: <Calendar className="w-4 h-4" />,
     prompts: [
-      "What are the 5 most recent events?",
+      "How many students per college attended the most recent event?",
       "Show me the details of the ____ event",
-      "What is the total amount of unpaid fines?",
-      "How much in fines has been collected in total?",
+      "List students with unpaid fines from the ____ event",
+      "What is the attendance breakdown by college for the ____ event?",
       "Which event had the lowest attendance rate?",
     ],
   },
