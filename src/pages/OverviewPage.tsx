@@ -302,7 +302,7 @@ export const OverviewPage = () => {
   );
 
   return (
-    <div className="w-full max-w-[70rem] mx-auto px-5 pb-10 flex flex-col gap-6">
+    <div className="w-full max-w-[70rem] mx-auto px-5 pt-5 pb-10 flex flex-col gap-6">
       {!isViewer && (
         <>
           <div className="flex flex-wrap justify-between gap-3 items-center">

@@ -150,7 +150,7 @@ function AppContent() {
       )}
 
       {/* Main Content (Routes) */}
-      <div className={`flex-1 flex flex-col ${isAiChat ? "overflow-hidden min-h-0" : "min-h-full"} ${!isStandalonePage ? "pt-[115px] md:pt-20 pb-20" : ""}`}>
+      <div className={`flex-1 flex flex-col ${isAiChat ? "overflow-hidden min-h-0" : "min-h-full"} ${!isStandalonePage ? "pt-[115px] md:pt-14 pb-20" : ""}`}>
         {showMaintenanceNotice ? (
           <MaintenanceNotice />
         ) : (
