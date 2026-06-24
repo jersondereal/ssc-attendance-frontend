@@ -164,7 +164,7 @@ function MarkdownContent({ text }: { text: string }) {
               {dataRows.map((row, j) => (
                 <tr key={j} className="even:bg-gray-50">
                   {row.map((cell, k) => (
-                    <td key={k} className="border border-border-dark px-3 py-1.5">{renderInline(cell)}</td>
+                    <td key={k} className="border border-border-dark px-3 py-1.5">{renderLineWithImages(cell)}</td>
                   ))}
                 </tr>
               ))}

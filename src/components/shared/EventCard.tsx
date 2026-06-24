@@ -1,6 +1,7 @@
 import { Ellipsis } from "lucide-react";
 import { EventBadges } from "../common/EventSelector/EventBadges";
 import type { Event } from "../common/EventSelector/types";
+import { useAuthStore } from "../../stores/useAuthStore";
 
 interface EventCardProps {
   event: Event;
@@ -27,6 +28,8 @@ export function EventCard({
   canEdit = true,
   canDelete = true,
 }: EventCardProps) {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const isViewer = currentUser?.rawRole === "viewer";
   const hasActions = Boolean(onMenuClick || onEditClick || onDeleteClick);
   const canShowMenu = hasActions && (canEdit || canDelete);
 
@@ -60,7 +63,7 @@ export function EventCard({
               year: "numeric",
             })}
           </span>
-          <span>₱{event.fine}</span>
+          {!isViewer && <span>₱{event.fine}</span>}
           <div className="flex flex-wrap gap-1 mt-2">
             <EventBadges event={event} />
           </div>
