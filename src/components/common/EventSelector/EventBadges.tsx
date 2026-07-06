@@ -1,7 +1,7 @@
 import type { Event } from "./types";
 
 const badgeClass = (hoverEffect: boolean) =>
-  `inline-flex items-center justify-center rounded-[8px] border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden border-gray-400 bg-transparent text-gray-700 ${
+  `inline-flex items-center justify-center rounded-[8px] px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 transition-colors overflow-hidden bg-gray-100 text-gray-600 ${
     hoverEffect ? "hover:bg-gray-200" : ""
   }`;
 

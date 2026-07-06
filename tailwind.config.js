@@ -8,6 +8,8 @@ export default {
       },
       colors: {
         sscTheme: "#006B65",
+        sscThemeLight: "var(--color-ssc-light)",
+        sscThemeIcon: "var(--color-ssc-icon)",
         border: {
           light: "#E5E5E5",
           dark: "#BBBBBB",

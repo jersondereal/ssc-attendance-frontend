@@ -4,6 +4,7 @@ import { getColleges, collegesToOptions, type College } from "../api/colleges";
 export interface CollegeOption {
   value: string;
   label: string;
+  shortLabel?: string;
 }
 
 interface CollegesState {
@@ -15,7 +16,7 @@ interface CollegesState {
 
 export const useCollegesStore = create<CollegesState>((set) => ({
   colleges: [],
-  collegeOptions: [{ value: "all", label: "All Colleges" }],
+  collegeOptions: [{ value: "all", label: "All Colleges", shortLabel: "College" }],
   loading: false,
 
   fetchColleges: async () => {
@@ -25,7 +26,7 @@ export const useCollegesStore = create<CollegesState>((set) => ({
       set({
         colleges: list,
         collegeOptions: [
-          { value: "all", label: "All Colleges" },
+          { value: "all", label: "All Colleges", shortLabel: "College" },
           ...collegesToOptions(list),
         ],
         loading: false,
@@ -33,7 +34,7 @@ export const useCollegesStore = create<CollegesState>((set) => ({
     } catch {
       set({
         colleges: [],
-        collegeOptions: [{ value: "all", label: "All Colleges" }],
+        collegeOptions: [{ value: "all", label: "All Colleges", shortLabel: "College" }],
         loading: false,
       });
     }

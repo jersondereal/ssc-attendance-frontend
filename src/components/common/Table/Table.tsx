@@ -110,13 +110,13 @@ export const Table = ({
   const getStatusClass = (status: string) => {
     switch (status.toLowerCase()) {
       case "present":
-        return "text-green-700 bg-green-50 border-green-200";
+        return "text-sscThemeIcon bg-sscThemeLight";
       case "absent":
-        return "text-gray-600 bg-gray-100 border-gray-200";
+        return "text-gray-600 bg-gray-100";
       case "excused":
-        return "text-orange-700 bg-orange-50 border-orange-200";
+        return "text-orange-700 bg-orange-50";
       default:
-        return "text-gray-700 bg-gray-50 border-gray-200";
+        return "text-gray-700 bg-gray-50";
     }
   };
 
@@ -318,7 +318,7 @@ export const Table = ({
                     >
                       {column.key === "status" && isAttendanceRecord(row) ? (
                         <span
-                          className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${getStatusClass(
+                          className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${getStatusClass(
                             row.status
                           )}`}
                         >

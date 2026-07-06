@@ -3,6 +3,7 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "../common/Button/Button";
 import { Modal } from "../common/Modal/Modal";
 import { Loader } from "lucide-react";
+import "./QrCheckInModal.css";
 
 interface QrCheckInModalProps {
   isOpen: boolean;
@@ -87,17 +88,17 @@ export function QrCheckInModal({
   }, [isOpen, isReaderReady]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="p-6 text-center !rounded-[20px]">
-        <h2 className="font-bold mt-2">QR Code Scanner</h2>
+    <Modal isOpen={isOpen} onClose={onClose} modalClassName="!rounded-[20px] overflow-hidden">
+      <div className="p-6 text-center">
+        <h2 className="font-bold text-gray-900">QR Code Scanner</h2>
 
-        <p className="text-xs mt-1">
+        <p className="text-xs mt-1 text-gray-500">
           Align the QR code within the frame to record attendance.
         </p>
 
-        <div className="mt-5 mx-auto max-w-sm overflow-hidden">
+        <div className="qr-reader mt-5 mx-auto max-w-sm overflow-hidden rounded-2xl border border-gray-200">
           {isLoading && (
-            <div className="items-center justify-center w-full h-32 grid place-items-center">
+            <div className="items-center justify-center w-full h-32 grid place-items-center bg-gray-950 text-white">
               <Loader className="size-6 animate-spin" />
             </div>
           )}

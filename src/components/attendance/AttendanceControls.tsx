@@ -1,31 +1,10 @@
 import { Button } from "../common/Button/Button";
 import { DropdownSelector } from "../common/DropdownSelector/DropdownSelector";
-import {
-  EventSelector,
-  type Event,
-} from "../common/EventSelector/EventSelector";
 import { SearchBar } from "../common/SearchBar/SearchBar";
 
 interface AttendanceControlsProps {
   tableType: "attendance" | "students";
-  selectedEvent?: Event;
-  events: Event[];
-  onEventChange: (event: Event) => void;
-  onAddEvent: (data: {
-    title: string;
-    event_date: string;
-    location: string;
-    fine: number;
-    colleges?: Event["colleges"];
-    sections?: Event["sections"];
-    schoolYears?: Event["schoolYears"];
-  }) => void;
-  onEditEvent: (event: Event) => void;
-  onDeleteEvent: (eventId: string) => void;
   currentUserRole?: string;
-  canAddEvent?: boolean;
-  canEditEvent?: boolean;
-  canDeleteEvent?: boolean;
   onQRScanClick: () => void;
   onAddStudent: () => void;
   selectedFilters: {
@@ -41,21 +20,11 @@ interface AttendanceControlsProps {
   collegeOptions: { value: string; label: string }[];
   yearOptions: { value: string; label: string }[];
   sectionOptions: { value: string; label: string }[];
-  hasAttendanceTableData: boolean;
 }
 
 export function AttendanceControls({
   tableType,
-  selectedEvent,
-  events,
-  onEventChange,
-  onAddEvent,
-  onEditEvent,
-  onDeleteEvent,
   currentUserRole,
-  canAddEvent = true,
-  canEditEvent = true,
-  canDeleteEvent = true,
   onQRScanClick,
   onAddStudent,
   selectedFilters,
@@ -64,46 +33,20 @@ export function AttendanceControls({
   collegeOptions,
   yearOptions,
   sectionOptions,
-  hasAttendanceTableData,
 }: AttendanceControlsProps) {
   return (
     <div className="flex md:flex-row flex-col mr-0 sm:mr-3 gap-3 min-w-full md:min-w-auto">
-      {/* Date and Event Group */}
-      {tableType === "attendance" && (
+      {tableType === "attendance" && currentUserRole !== "Viewer" && (
         <div className="flex flex-row gap-3 items-center">
-          <EventSelector
-            value={selectedEvent}
-            onChange={onEventChange}
-            placeholder="Select event"
-            events={events}
-            onAddEvent={onAddEvent}
-            onEditEvent={onEditEvent}
-            onDeleteEvent={onDeleteEvent}
-            currentUserRole={currentUserRole}
-            canAddEvent={canAddEvent}
-            canEditEvent={canEditEvent}
-            canDeleteEvent={canDeleteEvent}
-            hasTableData={hasAttendanceTableData}
+          <Button
+            label="QR Scan"
+            variant="primary"
+            onClick={onQRScanClick}
           />
-          {currentUserRole !== "Viewer" && (
-            <Button
-              label="QR Scan"
-              variant="primary"
-              onClick={onQRScanClick}
-            />
-          )}
-          {/* {currentUserRole !== "Viewer" && (
-            <Button
-              label="RFID Scan"
-              variant="primary"
-              onClick={onRfidClick}
-            />
-          )} */}
         </div>
       )}
       {tableType === "students" && (
         <Button
-          className="mr-3"
           onClick={onAddStudent}
           label="Student Registration"
           variant="primary"

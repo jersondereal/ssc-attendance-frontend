@@ -494,7 +494,7 @@ export function StudentProfileCard({
                         <span
                           className={`shrink-0 px-2 py-0.5 rounded text-xs font-medium ${
                             record.status === "Present"
-                              ? "text-green-700 bg-green-50"
+                              ? "text-sscThemeIcon bg-sscThemeLight"
                               : record.status === "Absent"
                               ? "text-red-700 bg-red-50"
                               : record.status === "Excused"
@@ -576,7 +576,7 @@ export function StudentProfileCard({
             Are you sure you want to mark all fines as paid? This cannot be
             undone.
           </p>
-          <div className="flex items-start gap-2 mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-start gap-2 mb-6 p-3 bg-sscThemeLight border border-[#C8E6C9] rounded-lg">
             <input
               type="checkbox"
               id="profile-fines-confirm"
@@ -586,7 +586,7 @@ export function StudentProfileCard({
             />
             <label
               htmlFor="profile-fines-confirm"
-              className="text-sm text-green-700"
+              className="text-sm text-sscThemeIcon"
             >
               I confirm I have verified and take responsibility for this action.
             </label>
@@ -631,7 +631,7 @@ export function StudentProfileCard({
             Mark the fine for &quot;{pendingFine?.eventTitle}&quot; as paid?
             This cannot be undone.
           </p>
-          <div className="flex items-start gap-2 mb-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-start gap-2 mb-6 p-3 bg-sscThemeLight border border-[#C8E6C9] rounded-lg">
             <input
               type="checkbox"
               id="profile-individual-confirm"
@@ -641,7 +641,7 @@ export function StudentProfileCard({
             />
             <label
               htmlFor="profile-individual-confirm"
-              className="text-sm text-green-700"
+              className="text-sm text-sscThemeIcon"
             >
               I confirm this payment.
             </label>

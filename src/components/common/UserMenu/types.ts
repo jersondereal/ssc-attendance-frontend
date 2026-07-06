@@ -7,6 +7,7 @@ export interface User {
 export interface UserFormData {
   username: string;
   password: string;
+  confirmPassword: string;
   role: User["role"];
 }
 

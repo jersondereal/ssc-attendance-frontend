@@ -10,15 +10,15 @@ interface NavigationMenuProps {
 // 'hiddenForViewer' property drives show/hide logic for viewer role
 const NAV_ITEMS = [
   {
-    id: "overview",
-    label: "Overview",
-    path: "/overview",
-    hiddenForViewer: false,
+    id: "dashboard",
+    label: "Dashboard",
+    path: "/dashboard",
+    hiddenForViewer: true,
   },
   {
-    id: "attendance",
-    label: "Attendance",
-    path: "/attendance",
+    id: "events",
+    label: "Events",
+    path: "/events",
     hiddenForViewer: false,
   },
   {
@@ -51,7 +51,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const activeItem =
-    pathname === "/" ? "overview" : pathname.replace(/^\//, "");
+    pathname === "/" ? "dashboard" : pathname.replace(/^\//, "");
 
   const isViewer = currentUserRole?.toLowerCase() === "viewer";
   const navItems = useMemo(() => {

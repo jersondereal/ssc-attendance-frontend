@@ -16,9 +16,14 @@ import { getRoleLabel } from "./types";
 import { UserFormModal } from "./UserFormModal";
 import { UserMenuDropdown } from "./UserMenuDropdown";
 
-export const UserMenu = () => {
+export const UserMenu = ({
+  direction = "down",
+}: {
+  direction?: "up" | "down";
+}) => {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
   const isLoginModalOpen = useAuthStore((s) => s.isLoginModalOpen);
   const setUser = useAuthStore((s) => s.setUser);
   const logout: () => void = useAuthStore((s) => s.logout);
@@ -37,6 +42,7 @@ export const UserMenu = () => {
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
     password: "",
+    confirmPassword: "",
     role: "administrator",
   });
   const [loginFormData, setLoginFormData] = useState<LoginFormData>({
@@ -193,10 +199,10 @@ export const UserMenu = () => {
   }, [setUser]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isInitialized && !isAuthenticated) {
       autoLoginAsStudent();
     }
-  }, [isAuthenticated, autoLoginAsStudent]);
+  }, [isInitialized, isAuthenticated, autoLoginAsStudent]);
 
   const handleLogout = useCallback(async () => {
     logout();
@@ -207,7 +213,12 @@ export const UserMenu = () => {
 
   const handleAddUser = useCallback(() => {
     setSelectedUser(null);
-    setFormData({ username: "", password: "", role: "administrator" });
+    setFormData({
+      username: "",
+      password: "",
+      confirmPassword: "",
+      role: "administrator",
+    });
     setIsUserFormModalOpen(true);
     setIsAdminModalOpen(false);
   }, []);
@@ -217,6 +228,7 @@ export const UserMenu = () => {
     setFormData({
       username: user.username,
       password: "",
+      confirmPassword: "",
       role: user.role,
     });
     setIsUserFormModalOpen(true);
@@ -231,15 +243,22 @@ export const UserMenu = () => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate password confirmation. On edit, a blank password means "keep
+    // current", so only validate when a password was actually entered.
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      setToast({ message: "Passwords do not match", variant: "error" });
+      return;
+    }
     try {
+      const { confirmPassword: _confirmPassword, ...payload } = formData;
       if (selectedUser) {
         await axios.put(
           `${config.API_BASE_URL}/users/${selectedUser.id}`,
-          formData
+          payload
         );
         setToast({ message: "User updated successfully", variant: "success" });
       } else {
-        await axios.post(`${config.API_BASE_URL}/users`, formData);
+        await axios.post(`${config.API_BASE_URL}/users`, payload);
         setToast({ message: "User created successfully", variant: "success" });
       }
       await fetchAdminAccounts();
@@ -314,6 +333,7 @@ export const UserMenu = () => {
           setIsOpen(false);
         }}
         onLogout={handleLogout}
+        direction={direction}
       />
 
       <AdminAccountsModal

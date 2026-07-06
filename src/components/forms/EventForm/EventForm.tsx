@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "../../common/Button/Button";
 import { useCollegesStore } from "../../../stores/useCollegesStore";
+import { Button } from "../../common/Button/Button";
 import Checkbox from "../../common/Checkbox/Checkbox";
 import { Textbox } from "../../common/Textbox/Textbox";
 
@@ -59,9 +59,8 @@ const buildSectionsState = (data?: Partial<SectionsState>): SectionsState => ({
 });
 
 // Always return all years as selected by default
-const buildSchoolYearsState = (
-  // data?: Partial<SchoolYearsState>
-): SchoolYearsState => ({
+const buildSchoolYearsState = () // data?: Partial<SchoolYearsState>
+: SchoolYearsState => ({
   all: true,
   1: true,
   2: true,
@@ -86,11 +85,11 @@ export const EventForm = ({
   const fetchColleges = useCollegesStore((s) => s.fetchColleges);
   const [colleges, setColleges] = useState<CollegesState>({ all: false });
   const [sections, setSections] = useState<SectionsState>(
-    buildSectionsState(initialSections)
+    buildSectionsState(initialSections),
   );
   // Always set all school years as true by default
   const [schoolYears, setSchoolYears] = useState<SchoolYearsState>(
-    buildSchoolYearsState()
+    buildSchoolYearsState(),
   );
 
   useEffect(() => {
@@ -113,7 +112,7 @@ export const EventForm = ({
   useEffect(() => {
     const initial: CollegesState = { all: initialColleges?.all ?? false };
     collegeList.forEach(
-      (c) => (initial[c.code] = initialColleges?.[c.code] ?? false)
+      (c) => (initial[c.code] = initialColleges?.[c.code] ?? false),
     );
     if (collegeList.length > 0) {
       initial.all =
@@ -123,7 +122,7 @@ export const EventForm = ({
   }, [collegeList, initialColleges]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -168,7 +167,7 @@ export const EventForm = ({
 
   const handleSchoolYearChange = (
     key: keyof SchoolYearsState,
-    checked: boolean
+    checked: boolean,
   ) => {
     if (key === "all") {
       setSchoolYears({
@@ -209,7 +208,7 @@ export const EventForm = ({
 
   return (
     <form onSubmit={handleSubmit} className={className}>
-      <h2 className="text-sm font-semibold mb-6">{headerText}</h2>
+      <h2 className="text-base font-semibold mb-6">{headerText}</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="flex flex-col gap-4">

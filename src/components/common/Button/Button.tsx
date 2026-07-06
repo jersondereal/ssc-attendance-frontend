@@ -23,8 +23,8 @@ export const Button = ({
 }: ButtonProps) => {
   const variantStyles = {
     primary:
-      "text-gray-800 bg-white hover:bg-gray-100 border border-border-dark hover:border-gray-400",
-    secondary: "bg-zinc-100 text-zinc-800 hover:bg-zinc-200",
+      "text-gray-800 bg-white hover:bg-gray-50 border border-gray-300 hover:border-gray-400",
+    secondary: "bg-gray-200 text-zinc-800 hover:bg-zinc-200",
     danger:
       "text-red-500 hover:bg-red-50 hover:border-red-400 border border-red-300",
   };
@@ -36,7 +36,7 @@ export const Button = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`relative rounded-[8px] focus:outline-none transition-colors h-fit w-fit text-nowrap text-sm flex flex-row items-center justify-center gap-2 ${
+      className={`relative rounded-[8px] focus:outline-none transition-colors font-semibold h-fit w-fit text-nowrap text-sm flex flex-row items-center justify-center gap-2 ${
         variantStyles[variant]
       } ${paddingStyles} ${className} ${
         disabled ? "opacity-50 cursor-not-allowed" : ""

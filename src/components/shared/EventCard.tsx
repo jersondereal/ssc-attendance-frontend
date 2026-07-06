@@ -1,4 +1,4 @@
-import { Ellipsis } from "lucide-react";
+import { CalendarDays, Ellipsis, MapPin, PhilippinePeso } from "lucide-react";
 import { EventBadges } from "../common/EventSelector/EventBadges";
 import type { Event } from "../common/EventSelector/types";
 import { useAuthStore } from "../../stores/useAuthStore";
@@ -35,10 +35,10 @@ export function EventCard({
 
   return (
     <div
-      className={`relative w-full border border-border-dark rounded-[10px] p-4 transition-colors ${
+      className={`relative w-full rounded-[10px] p-4 transition-all border-gray-150 bg-white border ${
         isSelected
-          ? "bg-emerald-100/60 border border-emerald-400/60"
-          : "bg-gray-50 hover:bg-gray-100/80"
+          ? "border border-gray-300 bg-gray-300"
+          : " hover:border-zinc-400"
       }`}
     >
       <div
@@ -54,33 +54,42 @@ export function EventCard({
         tabIndex={onCardClick ? 0 : undefined}
       >
         <div className="font-semibold text-gray-900">{event.name}</div>
-        <div className="mt-2 flex flex-col gap-1 text-sm text-gray-600">
-          <span>{event.location}</span>
-          <span>
+        <div className="mt-3 flex flex-col gap-2 text-xs text-gray-500">
+          <span className="flex items-center gap-1.5">
+            <MapPin className="size-3.5 shrink-0 text-gray-400" />
+            {event.location}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <CalendarDays className="size-3.5 shrink-0 text-gray-400" />
             {new Date(event.date).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
               year: "numeric",
             })}
           </span>
-          {!isViewer && <span>₱{event.fine}</span>}
-          <div className="flex flex-wrap gap-1 mt-2">
+          {!isViewer && (
+            <span className="flex items-center gap-1.5">
+              <PhilippinePeso className="size-3.5 shrink-0 text-gray-400" />
+              {event.fine}
+            </span>
+          )}
+          <div className="flex flex-wrap gap-1 mt-3">
             <EventBadges event={event} />
           </div>
         </div>
       </div>
       <div
         ref={isMenuOpen ? menuRef : undefined}
-        className="absolute right-2 top-4 z-10"
+        className="absolute right-3 top-3 z-10"
       >
         {canShowMenu && (
           <button
             type="button"
             onClick={onMenuClick}
-            className="p-1.5 rounded-[8px] hover:bg-gray-200"
+            className="p-1.5 rounded-[8px] transition-all hover:bg-gray-100"
             aria-label="Event actions"
           >
-            <Ellipsis size={20} />
+            <Ellipsis size={16} className="text-gray-500 hover:text-gray-600 transitiona-all" />
           </button>
         )}
         {isMenuOpen && canShowMenu && (

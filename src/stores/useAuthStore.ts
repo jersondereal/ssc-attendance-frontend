@@ -5,6 +5,7 @@ import type { AuthUser } from "./types";
 interface AuthState {
   currentUser: AuthUser | null;
   isAuthenticated: boolean;
+  isInitialized: boolean;
   isLoginModalOpen: boolean;
   setUser: (user: AuthUser, token: string) => void;
   logout: () => void;
@@ -15,6 +16,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   currentUser: null,
   isAuthenticated: false,
+  isInitialized: false,
   isLoginModalOpen: false,
 
   setUser: (user, token) => {
@@ -68,6 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
               rawRole: raw as "administrator" | "moderator" | "viewer",
             },
             isAuthenticated: true,
+            isInitialized: true,
             isLoginModalOpen: false,
           });
           return;
@@ -80,6 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       currentUser: null,
       isAuthenticated: false,
+      isInitialized: true,
       isLoginModalOpen: false,
     });
   },

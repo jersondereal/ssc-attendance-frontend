@@ -1,8 +1,8 @@
 import axios from "axios";
-import { useEffect, useMemo, useRef } from "react";
+import { Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/common/Button/Button";
-import { DropdownSelector } from "../components/common/DropdownSelector/DropdownSelector";
 import { DeleteEventModal } from "../components/common/EventSelector/DeleteEventModal";
 import type {
   AddEventData,
@@ -11,19 +11,15 @@ import type {
 import { Modal } from "../components/common/Modal/Modal";
 import { AddEventForm } from "../components/forms/AddEventForm/AddEventForm";
 import { EditEventForm } from "../components/forms/EditEventForm/EditEventForm";
-import {
-  MetricsSection,
-  type RangeValue,
-} from "../components/overview/MetricsSection";
-import { EventCard, MetricCard } from "../components/shared";
+import { MetricsSection } from "../components/overview/MetricsSection";
+import { EventCard } from "../components/shared";
 import config from "../config";
-import { RANGE_OPTIONS } from "../constants/metrics";
-import { useSettingsStore } from "../stores/useSettingsStore";
 import { useToast } from "../contexts/ToastContext";
 import type { DBEvent } from "../stores/types";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useEventsStore } from "../stores/useEventsStore";
 import { useOverviewStore } from "../stores/useOverviewStore";
+import { useSettingsStore } from "../stores/useSettingsStore";
 
 function mapDbEventToEvent(e: DBEvent): Event {
   return {
@@ -38,10 +34,10 @@ function mapDbEventToEvent(e: DBEvent): Event {
   };
 }
 
-// Simple event card skeleton (2 column grid card placeholder)
+// Simple event card skeleton (grid card placeholder)
 function EventCardSkeleton() {
   return (
-    <div className="relative w-full border border-border-dark rounded-[10px] p-4 bg-gray-50 animate-pulse flex flex-col gap-2 min-h-[125px]">
+    <div className="relative w-full border border-border-dark rounded-[10px] p-4 bg-white animate-pulse flex flex-col gap-2 min-h-[125px]">
       <div className="h-4 w-2/3 bg-gray-200 rounded"></div>
       <div className="h-3 w-1/3 bg-gray-200 rounded mt-2"></div>
       <div className="h-3 w-1/2 bg-gray-200 rounded"></div>
@@ -54,7 +50,7 @@ function EventCardSkeleton() {
   );
 }
 
-export const OverviewPage = () => {
+export const EventsPage = () => {
   const { showToast } = useToast();
   const systemSettings = useSettingsStore((s) => s.systemSettings);
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -67,16 +63,6 @@ export const OverviewPage = () => {
   const removeEventFromStore = useEventsStore((s) => s.removeEvent);
   const addEventToStore = useEventsStore((s) => s.addEvent);
 
-  const totalStudents = useOverviewStore((s) => s.totalStudents);
-  const averageAttendanceRate = useOverviewStore(
-    (s) => s.averageAttendanceRate
-  );
-  const totalFinesOutstanding = useOverviewStore(
-    (s) => s.totalFinesOutstanding
-  );
-  const totalFinesCollected = useOverviewStore((s) => s.totalFinesCollected);
-  const range = useOverviewStore((s) => s.range);
-  const setRange = useOverviewStore((s) => s.setRange);
   const visibleEventCount = useOverviewStore((s) => s.visibleEventCount);
   const setVisibleEventCount = useOverviewStore((s) => s.setVisibleEventCount);
   const eventToEdit = useOverviewStore((s) => s.eventToEdit);
@@ -88,47 +74,63 @@ export const OverviewPage = () => {
   );
   const menuOpenFor = useOverviewStore((s) => s.menuOpenFor);
   const setMenuOpenFor = useOverviewStore((s) => s.setMenuOpenFor);
-  const isAddEventModalOpen = useOverviewStore(
-    (s) => s.isAddEventModalOpen
-  );
+  const isAddEventModalOpen = useOverviewStore((s) => s.isAddEventModalOpen);
   const setIsAddEventModalOpen = useOverviewStore(
     (s) => s.setIsAddEventModalOpen
   );
   const deleteEventConfirmChecked = useOverviewStore(
     (s) => s.deleteEventConfirmChecked
   );
-  const fetchOverviewMetrics = useOverviewStore(
-    (s) => s.fetchOverviewMetrics
-  );
+
+  const [eventSearch, setEventSearch] = useState("");
 
   const events = useMemo(
     () =>
       [...eventsRaw]
         .map(mapDbEventToEvent)
         .sort(
-          (a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         ),
     [eventsRaw]
   );
 
-  const currencyFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-        maximumFractionDigits: 0,
-      }),
-    []
-  );
+  // Filter events by the search query (matches title or location).
+  const filteredEvents = useMemo(() => {
+    const q = eventSearch.trim().toLowerCase();
+    if (!q) return events;
+    return events.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        (e.location ?? "").toLowerCase().includes(q)
+    );
+  }, [events, eventSearch]);
+
+  // Group the currently visible events (already sorted newest-first) into
+  // month buckets so the grid can show a label per month.
+  const eventsByMonth = useMemo(() => {
+    const groups: { key: string; label: string; events: Event[] }[] = [];
+    const indexByKey = new Map<string, number>();
+    for (const event of filteredEvents.slice(0, visibleEventCount)) {
+      const date = new Date(event.date);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      const label = date.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      });
+      let idx = indexByKey.get(key);
+      if (idx === undefined) {
+        idx = groups.length;
+        indexByKey.set(key, idx);
+        groups.push({ key, label, events: [] });
+      }
+      groups[idx].events.push(event);
+    }
+    return groups;
+  }, [filteredEvents, visibleEventCount]);
 
   useEffect(() => {
     if (eventsRaw.length === 0) fetchEvents();
   }, [eventsRaw.length, fetchEvents]);
-
-  useEffect(() => {
-    fetchOverviewMetrics();
-  }, [fetchOverviewMetrics, range]);
 
   useEffect(() => {
     setVisibleEventCount(6);
@@ -231,15 +233,6 @@ export const OverviewPage = () => {
       .catch(() => showToast("Failed to delete event", "error"));
   };
 
-  const formatNumber = (value: number | null) =>
-    value === null ? "--" : value.toLocaleString();
-
-  const formatRate = (value: number | null) =>
-    value === null ? "--%" : `${value.toFixed(1)}%`;
-
-  const formatCurrency = (value: number | null) =>
-    value === null ? "--" : currencyFormatter.format(value);
-
   const role = currentUser?.role?.toLowerCase();
   const isViewer = role === "viewer";
   const isAdmin = role === "administrator";
@@ -253,131 +246,92 @@ export const OverviewPage = () => {
     ? true
     : !isViewer && systemSettings.featureAccess.moderator.deleteEvent;
 
-  const eventsSection = (
-    <div className="flex flex-col w-full">
-      <div className="w-full">
-        <MetricsSection title="Events" containerClassName="min-w-full">
-          <div className="w-full grid gap-4 grid-cols-1 md:grid-cols-2">
-            {eventsLoading
-              ? Array.from({ length: 6 }).map((_, idx) => (
-                  <EventCardSkeleton key={idx} />
-                ))
-              : events.slice(0, visibleEventCount).map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    isMenuOpen={menuOpenFor === event.id}
-                    onMenuClick={(e) => handleMenuClick(event.id, e)}
-                    onEditClick={(e) => handleEditClick(event, e)}
-                    onDeleteClick={(e) => handleDeleteClick(event.id, e)}
-                    onCardClick={() => {
-                      navigate("/attendance", {
-                        state: { eventId: event.id },
-                      });
-                      window.scrollTo(0, 0);
-                    }}
-                    menuRef={menuRef}
-                    canEdit={canEditEvent}
-                    canDelete={canDeleteEvent}
-                  />
-                ))}
-          </div>
-        </MetricsSection>
-      </div>
-      {!eventsLoading && events.length === 0 && (
-        <p className="text-sm text-gray-500 py-4">No events yet.</p>
-      )}
-      {!eventsLoading && events.length > visibleEventCount && (
-        <button
-          type="button"
-          onClick={() =>
-            setVisibleEventCount((prev) => Math.min(prev + 6, events.length))
-          }
-          className="w-full mt-4 rounded-[10px] border border-border-dark bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Show more
-        </button>
-      )}
-    </div>
-  );
-
   return (
-    <div className="w-full max-w-[70rem] mx-auto px-5 pt-5 pb-10 flex flex-col gap-6">
-      {!isViewer && (
-        <>
-          <div className="flex flex-wrap justify-between gap-3 items-center">
-            <div className="space-y-1">
-              <h1 className="text-lg font-semibold text-gray-900">Overview</h1>
-              <p className="text-sm text-gray-500">
-                Operational insights across students, events, attendance, and
-                fines.
-              </p>
+    <div className="w-full max-w-[70rem] mx-auto px-5 md:px-10 pt-10 pb-10 flex flex-col gap-6">
+      <div className="flex flex-wrap justify-between gap-3">
+        <h1 className="text-lg font-semibold text-gray-900">Events</h1>
+        {!isViewer && (
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={eventSearch}
+                onChange={(e) => setEventSearch(e.target.value)}
+                placeholder="Search events"
+                className="w-40 rounded-[8px] border border-border-dark bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-gray-400 focus:outline-none sm:w-56"
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <div className="min-w-[170px]">
-                <DropdownSelector
-                  className="text-sm min-w-[180px]"
-                  value={range}
-                  onChange={(v) => setRange(v as RangeValue)}
-                  options={RANGE_OPTIONS.map((option) => ({
-                    value: option.value,
-                    label: option.label,
-                  }))}
-                  placeholder="Select range"
-                  name="overview-range"
-                  disabled={false}
-                />
-              </div>
-              {canAddEvent && (
-                <Button
-                  type="button"
-                  label="Add Event"
-                  variant="primary"
-                  className="py-2 px-4 text-sm"
-                  onClick={() => setIsAddEventModalOpen(true)}
-                />
-              )}
-            </div>
+            {canAddEvent && (
+              <Button
+                type="button"
+                label="Add Event"
+                variant="primary"
+                className="py-2 px-4 text-sm"
+                onClick={() => setIsAddEventModalOpen(true)}
+              />
+            )}
           </div>
-
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex flex-row md:flex-col gap-6 px-0! w-full md:w-fit">
-              <div className="flex flex-col gap-6 w-full md:w-fit">
-                <MetricsSection
-                  title="Students"
-                  containerClassName="w-full min-w-full"
-                >
-                  <MetricCard
-                    label="Total students"
-                    value={formatNumber(totalStudents)}
-                  />
-                </MetricsSection>
-
-                <MetricsSection title="Attendance">
-                  <MetricCard
-                    label="Average attendance rate"
-                    value={formatRate(averageAttendanceRate)}
-                  />
-                </MetricsSection>
+        )}
+      </div>
+      <div className="flex flex-col w-full">
+        <div className="w-full">
+          <MetricsSection title="" containerClassName="min-w-full">
+            {eventsLoading ? (
+              <div className="w-full grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <EventCardSkeleton key={idx} />
+                ))}
               </div>
-              <div className="flex flex-col gap-6 w-full md:w-fit">
-                <MetricsSection title="Fines" direction="column">
-                  <MetricCard
-                    label="Total fines outstanding"
-                    value={formatCurrency(totalFinesOutstanding)}
-                  />
-                  <MetricCard
-                    label="Total fines collected"
-                    value={formatCurrency(totalFinesCollected)}
-                  />
-                </MetricsSection>
+            ) : (
+              <div className="flex flex-col gap-6 w-full">
+                {eventsByMonth.map((group) => (
+                  <div key={group.key} className="flex flex-col gap-3">
+                    <h3 className="text-xs text-gray-400">{group.label}</h3>
+                    <div className="w-full grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      {group.events.map((event) => (
+                        <EventCard
+                          key={event.id}
+                          event={event}
+                          isMenuOpen={menuOpenFor === event.id}
+                          onMenuClick={(e) => handleMenuClick(event.id, e)}
+                          onEditClick={(e) => handleEditClick(event, e)}
+                          onDeleteClick={(e) => handleDeleteClick(event.id, e)}
+                          onCardClick={() => {
+                            navigate(`/events/${event.id}`);
+                            window.scrollTo(0, 0);
+                          }}
+                          menuRef={menuRef}
+                          canEdit={canEditEvent}
+                          canDelete={canDeleteEvent}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            <div className="min-h-full w-full">{eventsSection}</div>
-          </div>
-        </>
-      )}
-      {isViewer && eventsSection}
+            )}
+          </MetricsSection>
+        </div>
+        {!eventsLoading && filteredEvents.length === 0 && (
+          <p className="text-sm text-gray-500 py-4">
+            {eventSearch.trim() ? "No events found." : "No events yet."}
+          </p>
+        )}
+        {!eventsLoading && filteredEvents.length > visibleEventCount && (
+          <button
+            type="button"
+            onClick={() =>
+              setVisibleEventCount((prev) =>
+                Math.min(prev + 6, filteredEvents.length)
+              )
+            }
+            className="w-fit px-6 mx-auto mt-8 rounded-[10px] border border-border-dark bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Show more
+          </button>
+        )}
+      </div>
 
       <Modal
         isOpen={isAddEventModalOpen}

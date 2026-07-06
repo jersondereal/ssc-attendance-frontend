@@ -402,7 +402,7 @@ export const StudentFines = ({
             be undone.
           </p>
 
-          <div className="flex items-start gap-2 mb-6 p-3 bg-green-50 border border-green-200 rounded-[8px]">
+          <div className="flex items-start gap-2 mb-6 p-3 bg-sscThemeLight border border-[#C8E6C9] rounded-[8px]">
             <input
               type="checkbox"
               id="fines-confirm"
@@ -410,7 +410,7 @@ export const StudentFines = ({
               onChange={(e) => setFinesConfirmChecked(e.target.checked)}
               className="mt-0.5 h-3 w-3 text-green-600 border-gray-300 rounded focus:ring-green-500"
             />
-            <label htmlFor="fines-confirm" className="text-sm text-green-700">
+            <label htmlFor="fines-confirm" className="text-sm text-sscThemeIcon">
               I understand that this action will mark all fines as paid. This
               action cannot be undone. I confirm that I have verified the
               selection and take responsibility for this action.
@@ -446,7 +446,7 @@ export const StudentFines = ({
             {pendingFine?.eventTitle}" as paid? This action cannot be undone.
           </p>
 
-          <div className="flex items-start gap-2 mb-6 p-3 bg-green-50 border border-green-200 rounded-[8px]">
+          <div className="flex items-start gap-2 mb-6 p-3 bg-sscThemeLight border border-[#C8E6C9] rounded-[8px]">
             <input
               type="checkbox"
               id="individual-fine-confirm"
@@ -456,7 +456,7 @@ export const StudentFines = ({
             />
             <label
               htmlFor="individual-fine-confirm"
-              className="text-sm text-green-700"
+              className="text-sm text-sscThemeIcon"
             >
               I understand that this action will mark this fine as paid. This
               action cannot be undone. I confirm that I have verified the

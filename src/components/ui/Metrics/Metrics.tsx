@@ -55,7 +55,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${config.API_BASE_URL}/students/${studentData.studentId}/metrics`
+          `${config.API_BASE_URL}/students/${studentData.studentId}/metrics`,
         );
         setMetrics(response.data);
         setError(null);
@@ -73,7 +73,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
   if (loading) {
     return (
       <div className="p-6">
-        <h2 className="text-sm font-semibold mb-6">Student Metrics</h2>
+        <h2 className="text-base font-semibold mb-6">Student Metrics</h2>
         <div className="flex items-center justify-center h-32">
           <p className="text-gray-500">Loading metrics...</p>
         </div>
@@ -84,7 +84,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
   if (error) {
     return (
       <div className="p-6">
-        <h2 className="text-sm font-semibold mb-6">Student Metrics</h2>
+        <h2 className="text-base font-semibold mb-6">Student Metrics</h2>
         <div className="flex items-center justify-center h-32">
           <p className="text-red-500">{error}</p>
         </div>
@@ -101,7 +101,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
   if (!metrics) {
     return (
       <div className="p-6">
-        <h2 className="text-sm font-semibold mb-6">Student Metrics</h2>
+        <h2 className="text-base font-semibold mb-6">Student Metrics</h2>
         <div className="flex items-center justify-center h-32">
           <p className="text-gray-500">No metrics available</p>
         </div>
@@ -186,12 +186,12 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
                   <span
                     className={`px-2 py-1 rounded-[8px] text-sm ${
                       record.status === "Present"
-                        ? "text-green-600 bg-green-50"
+                        ? "text-green-600 bg-sscThemeLight"
                         : record.status === "Absent"
-                        ? "text-red-600 bg-red-50"
-                        : record.status === "Excused"
-                        ? "text-orange-600 bg-orange-50"
-                        : "text-gray-500 bg-gray-50"
+                          ? "text-red-600 bg-red-50"
+                          : record.status === "Excused"
+                            ? "text-orange-600 bg-orange-50"
+                            : "text-gray-500 bg-gray-50"
                     }`}
                   >
                     {record.status}

@@ -14,6 +14,7 @@ export function SettingsPage() {
   return (
     <div className="w-full h-full overflow-y-auto">
       <div className="max-w-4xl mx-auto px-6 py-6 pb-10">
+        <h1 className="text-lg font-semibold text-gray-900 mb-6">Settings</h1>
         <div className="space-y-8">
           <GeneralSettingsSection />
           <SystemConfigurationSection />

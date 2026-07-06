@@ -12,6 +12,7 @@ interface UserMenuDropdownProps {
   onHelpClick: () => void;
   onLoginAsAdmin: () => void;
   onLogout: () => void;
+  direction?: "up" | "down";
 }
 
 export function UserMenuDropdown({
@@ -22,6 +23,7 @@ export function UserMenuDropdown({
   onHelpClick,
   onLoginAsAdmin,
   onLogout,
+  direction = "down",
 }: UserMenuDropdownProps) {
   const isAdmin = currentUser?.role === "administrator";
   const isStudent = !currentUser || currentUser.role === "viewer";
@@ -51,21 +53,42 @@ export function UserMenuDropdown({
 
   return (
     <>
-      <div
-        className="grid place-items-center border border-gray-800 rounded-full relative p-2 cursor-pointer hover:bg-gray-800 text-gray-300 hover:text-gray-100 transition-colors hover:border-gray-700 focus:ring-2 focus:ring-zinc-200 bg-gray-700"
-        onClick={onToggle}
-      >
-        <UserRound className="text-gray-300 w-4 h-4" />
-      </div>
+      {direction === "up" ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex w-full items-center gap-3 rounded-[8px] p-2 text-left transition-colors hover:bg-gray-100"
+        >
+          <span className="grid shrink-0 place-items-center rounded-full bg-gray-700 p-2">
+            <UserRound className="h-4 w-4 text-gray-300" />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium text-gray-800">
+              @{currentUser?.username ?? "guest"}
+            </span>
+            <span className="truncate text-xs capitalize text-gray-500">
+              {currentUser?.role ?? "viewer"}
+            </span>
+          </span>
+        </button>
+      ) : (
+        <div
+          className="grid place-items-center border border-gray-800 rounded-full relative p-2 cursor-pointer hover:bg-gray-800 text-gray-300 hover:text-gray-100 transition-colors hover:border-gray-700 focus:ring-2 focus:ring-zinc-200 bg-gray-700"
+          onClick={onToggle}
+        >
+          <UserRound className="text-gray-300 w-4 h-4" />
+        </div>
+      )}
 
       {show && (
         <div
           className={`
-            absolute right-0 top-full bg-white border border-border-dark rounded-[8px] shadow-lg z-10 min-w-[14rem] mt-2
+            absolute bg-white border border-border-dark rounded-[8px] shadow-lg z-10 min-w-[14rem]
+            ${direction === "up" ? "left-0 bottom-full mb-2" : "right-0 top-full mt-2"}
             transition-all duration-150
             ${visible
               ? "opacity-100 scale-100 pointer-events-auto translate-y-0"
-              : "opacity-0 scale-95 pointer-events-none -translate-y-2"
+              : `opacity-0 scale-95 pointer-events-none ${direction === "up" ? "translate-y-2" : "-translate-y-2"}`
             }
           `}
           style={{ willChange: "opacity, transform" }}

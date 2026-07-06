@@ -51,9 +51,16 @@ export async function deleteCollege(id: number): Promise<void> {
   await axios.delete(`${config.API_BASE_URL}/colleges/${id}`);
 }
 
-/** Map colleges from API to { value, label } for dropdowns */
+/** Map colleges from API to { value, label } for dropdowns.
+ * `label` drops the "College of " prefix for a cleaner list (e.g. "Criminology"),
+ * while `shortLabel` is just the acronym, shown once the option is selected.
+ */
 export function collegesToOptions(
   colleges: College[]
-): { value: string; label: string }[] {
-  return colleges.map((c) => ({ value: c.code, label: `${c.name} (${c.code.toUpperCase()})` }));
+): { value: string; label: string; shortLabel: string }[] {
+  return colleges.map((c) => ({
+    value: c.code,
+    label: c.name.replace(/^college of\s+/i, ""),
+    shortLabel: c.code.toUpperCase(),
+  }));
 }

@@ -13,7 +13,7 @@ export const EditStudentForm = ({
   initialData,
 }: EditStudentFormProps) => {
   const headerContent = (
-    <h2 className="text-sm font-semibold mb-6">Edit Student</h2>
+    <h2 className="text-base font-semibold mb-6">Edit Student</h2>
   );
 
   const resolvedInitialData = useMemo(
@@ -21,7 +21,7 @@ export const EditStudentForm = ({
       ...initialData,
       rfid: initialData.rfid ?? "",
     }),
-    [initialData]
+    [initialData],
   );
 
   return (

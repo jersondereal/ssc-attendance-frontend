@@ -32,7 +32,7 @@ export const SearchBar = ({ onSearch, className = "" }: SearchBarProps) => {
       }}
       className={`relative w-full md:w-fit ${className}`}
     >
-      <div className="relative flex flex-row items-center border border-gray-300 w-full px-4 py-2 gap-2 rounded-[8px] focus-within:border-gray-400 bg-background-light">
+      <div className="relative flex flex-row items-center border border-gray-300 w-full px-4 py-2 gap-2 rounded-[8px] focus-within:border-gray-400 bg-white">
         <span className="text-textbox-placeholder text-sm md:text-sm absolute left-2 top-1/2 -translate-y-1/2">
           <SearchIcon sx={{ fontSize: "1rem" }} />
         </span>

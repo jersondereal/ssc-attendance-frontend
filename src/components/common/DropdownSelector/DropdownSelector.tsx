@@ -1,11 +1,12 @@
-// import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface Option {
   value: string;
   label: string;
   description?: string;
+  /** Shown instead of `label` in the closed control once this option is selected. */
+  shortLabel?: string;
 }
 
 interface DropdownSelectorProps {
@@ -86,10 +87,10 @@ export const DropdownSelector = ({
     <div className={`relative text-sm ${textClassName} h-fit`} ref={dropdownRef}>
       {name && <input type="hidden" name={name} value={internalValue || ""} />}
       <div
-        className={`w-full flex flex-row h-fit items-center border border-border-dark px-4 py-2 gap-2 rounded-[8px] text-sm ${className} ${textClassName} ${
+        className={`w-full flex flex-row h-fit items-center bg-white border border-gray-300 transition-all pl-4 pr-2 py-2 gap-2 rounded-[8px] text-sm ${className} ${textClassName} ${
           disabled
             ? "opacity-50 cursor-not-allowed bg-gray-50"
-            : "hover:border-gray-400 hover:bg-gray-100 cursor-pointer"
+            : "hover:border-zinc-400 hover:bg-gray-50 cursor-pointer"
         }`}
         onClick={() => !disabled && handleToggleDropdown()}
         tabIndex={0}
@@ -101,9 +102,14 @@ export const DropdownSelector = ({
         <span
           className={`w-full truncate text-sm ${textClassName} ${selectedOption ? "" : "text-gray-400"} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
         >
-          {selectedOption?.label || placeholder}
+          {selectedOption?.shortLabel || selectedOption?.label || placeholder}
         </span>
-        {/* <ExpandMoreIcon sx={{ fontSize: "0.9rem", opacity: "0.3" }} /> */}
+        <ChevronDown
+          size={16}
+          className={`shrink-0 text-gray-500 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
       </div>
 
       {isDropdownVisible && (

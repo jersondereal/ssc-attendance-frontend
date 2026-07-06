@@ -135,7 +135,7 @@ export function CollegesSection() {
           <Button
             label="Add College"
             onClick={openAddModal}
-            className="!bg-zinc-700 !text-white !border-zinc-700 hover:!bg-zinc-600 !px-4 !py-2"
+            className="!px-4 !py-2"
           />
         </div>
         <div className="border border-border-dark rounded-[8px] overflow-auto">

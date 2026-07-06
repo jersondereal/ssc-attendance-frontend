@@ -13,6 +13,7 @@ export type RangeValue =
 
 interface OverviewState {
   totalStudents: number | null;
+  totalEvents: number | null;
   averageAttendanceRate: number | null;
   totalFinesOutstanding: number | null;
   totalFinesCollected: number | null;
@@ -36,6 +37,7 @@ interface OverviewState {
 
 export const useOverviewStore = create<OverviewState>((set, get) => ({
   totalStudents: null,
+  totalEvents: null,
   averageAttendanceRate: null,
   totalFinesOutstanding: null,
   totalFinesCollected: null,
@@ -50,21 +52,27 @@ export const useOverviewStore = create<OverviewState>((set, get) => ({
   fetchOverviewMetrics: async (range) => {
     const r = range ?? get().range;
     try {
-      const [studentsRes, attendanceRes, finesRes] = await Promise.all([
-        axios.get<{ totalStudents: number }>(
-          `${config.API_BASE_URL}/overview/students`
-        ),
-        axios.get<{ averageAttendanceRate: number }>(
-          `${config.API_BASE_URL}/overview/attendance`,
-          { params: { range: r } }
-        ),
-        axios.get<{
-          totalFinesOutstanding: number;
-          totalFinesCollected: number;
-        }>(`${config.API_BASE_URL}/overview/fines`, { params: { range: r } }),
-      ]);
+      const [studentsRes, eventsRes, attendanceRes, finesRes] =
+        await Promise.all([
+          axios.get<{ totalStudents: number }>(
+            `${config.API_BASE_URL}/overview/students`
+          ),
+          axios.get<{ totalEvents: number }>(
+            `${config.API_BASE_URL}/overview/events`,
+            { params: { range: r } }
+          ),
+          axios.get<{ averageAttendanceRate: number }>(
+            `${config.API_BASE_URL}/overview/attendance`,
+            { params: { range: r } }
+          ),
+          axios.get<{
+            totalFinesOutstanding: number;
+            totalFinesCollected: number;
+          }>(`${config.API_BASE_URL}/overview/fines`, { params: { range: r } }),
+        ]);
       set({
         totalStudents: studentsRes.data?.totalStudents ?? null,
+        totalEvents: eventsRes.data?.totalEvents ?? null,
         averageAttendanceRate: attendanceRes.data?.averageAttendanceRate ?? null,
         totalFinesOutstanding: finesRes.data?.totalFinesOutstanding ?? null,
         totalFinesCollected: finesRes.data?.totalFinesCollected ?? null,
@@ -72,6 +80,7 @@ export const useOverviewStore = create<OverviewState>((set, get) => ({
     } catch {
       set({
         totalStudents: null,
+        totalEvents: null,
         averageAttendanceRate: null,
         totalFinesOutstanding: null,
         totalFinesCollected: null,

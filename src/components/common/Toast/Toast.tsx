@@ -13,8 +13,8 @@ interface ToastProps {
 
 const variantStyles = {
   success: {
-    bg: "bg-green-50",
-    border: "border-green-200",
+    bg: "bg-sscThemeLight",
+    border: "border-[#C8E6C9]",
     text: "text-green-800",
     icon: <CheckCircle className="text-green-500" fontSize="small" />,
   },

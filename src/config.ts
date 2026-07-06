@@ -1,6 +1,7 @@
 interface Config {
   API_BASE_URL: string;
   ENV: 'development' | 'production';
+  ENABLE_EASTER_EGG: boolean;
 }
 
 const frontendURL = 'essu-ssc.vercel.app';
@@ -32,6 +33,8 @@ const getBaseUrl = () => {
 const config: Config = {
   API_BASE_URL: getBaseUrl(),
   ENV: window.location.hostname === frontendURL ? 'production' : 'development',
+  // Set VITE_ENABLE_EASTER_EGG=false in frontend/.env.local to hide the Students table easter egg row.
+  ENABLE_EASTER_EGG: import.meta.env.VITE_ENABLE_EASTER_EGG !== 'false',
 };
 
 export default config; 

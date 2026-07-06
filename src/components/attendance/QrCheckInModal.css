@@ -1,0 +1,99 @@
+/* Restyles the default UI injected by the html5-qrcode library so it matches
+   the app's design system. Many of these properties are set inline by the
+   library at render time, so `!important` is required to override them. */
+
+.qr-reader #reader {
+  border: none !important;
+  padding: 0 !important;
+}
+
+.qr-reader #reader__scan_region {
+  background: #09090b;
+}
+
+.qr-reader #reader__scan_region video {
+  width: 100% !important;
+  display: block !important;
+}
+
+.qr-reader #qr-shaded-region {
+  border-color: rgba(0, 0, 0, 0.55) !important;
+}
+
+.qr-reader img[alt="Info icon"] {
+  display: none !important;
+}
+
+.qr-reader #reader__dashboard {
+  background: #fff;
+  padding: 14px 16px 16px;
+}
+
+.qr-reader #reader__dashboard_section {
+  padding: 0 !important;
+}
+
+.qr-reader #reader__dashboard_section_csr {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.qr-reader #reader__dashboard_section_csr span {
+  margin-right: 0 !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+/* Hides the "Select Camera (N)" label text node, which the library renders
+   with no wrapping element of its own — collapsing the span's font-size to 0
+   hides the text while the select (which sets its own font-size) stays visible. */
+.qr-reader #reader__dashboard_section_csr span:has(select) {
+  font-size: 0;
+}
+
+.qr-reader select#html5-qrcode-select-camera {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #1f2937;
+  background: #fff;
+  outline: none;
+}
+
+.qr-reader select#html5-qrcode-select-camera:focus {
+  border-color: #006b65;
+}
+
+.qr-reader button.html5-qrcode-element {
+  background: #f4f4f5 !important;
+  color: #27272a !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.qr-reader button.html5-qrcode-element:hover {
+  background: #e4e4e7 !important;
+}
+
+.qr-reader input[type="range"].html5-qrcode-element {
+  accent-color: #006b65;
+}
+
+.qr-reader span#html5-qrcode-anchor-scan-type-change {
+  color: #006b65 !important;
+  font-weight: 500;
+  font-size: 12px;
+}

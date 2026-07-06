@@ -1,17 +1,16 @@
 import axios from "axios";
+import { ChevronLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { AttendanceBulkActionsBar } from "../components/attendance/AttendanceBulkActionsBar";
 import { AttendanceControls } from "../components/attendance/AttendanceControls";
+import { AttendanceUpdatePanel } from "../components/attendance/AttendanceUpdatePanel";
 import { BulkAttendanceModal } from "../components/attendance/BulkAttendanceModal";
 import { DeleteConfirmationModal } from "../components/attendance/DeleteConfirmationModal";
 import { QrCheckInModal } from "../components/attendance/QrCheckInModal";
-import type {
-  AddEventData,
-  Event,
-} from "../components/common/EventSelector/types";
+import type { Event } from "../components/common/EventSelector/types";
 import { Modal } from "../components/common/Modal/Modal";
 import type { TableRecord } from "../components/common/Table/Table";
 import { Table } from "../components/common/Table/Table";
@@ -19,12 +18,12 @@ import { AddStudentForm } from "../components/forms/AddStudentForm/AddStudentFor
 import { EditStudentForm } from "../components/forms/EditStudentForm/EditStudentForm";
 import type { StudentFormData } from "../components/forms/StudentForm/StudentForm";
 import { RegistrationSuccessView } from "../components/shared";
+import { EasterEggProfileCard } from "../components/ui/EasterEggProfileCard/EasterEggProfileCard";
 import { StudentProfileCard } from "../components/ui/StudentProfileCard/StudentProfileCard";
 import config from "../config";
 import { useToast } from "../contexts/ToastContext";
 import type {
   AttendanceRecord,
-  DBAttendance,
   DBStudent,
   StudentRecord,
 } from "../stores/types";
@@ -32,25 +31,32 @@ import { useAuthStore } from "../stores/useAuthStore";
 import { useAttendanceStore } from "../stores/useAttendanceStore";
 import { useCollegesStore } from "../stores/useCollegesStore";
 import { useEventsStore } from "../stores/useEventsStore";
-import { useSettingsStore } from "../stores/useSettingsStore";
 import { useStudentsStore } from "../stores/useStudentsStore";
 
 interface AttendancePageProps {
   tableType: "attendance" | "students";
 }
 
+const EASTER_EGG_STUDENT_ID = "22-0224";
+
+const EASTER_EGG_ROW: StudentRecord = {
+  studentId: EASTER_EGG_STUDENT_ID,
+  name: "Jerson De Real Caibog",
+  college: "CICT",
+  year: "2026",
+  section: "A",
+  profileImageUrl: "https://i.ibb.co/Y4ct3NRY/jersondereal.jpg",
+};
+
 export function AttendancePage({ tableType }: AttendancePageProps) {
   const currentUser = useAuthStore((s) => s.currentUser);
   const { showToast } = useToast();
-  const systemSettings = useSettingsStore((s) => s.systemSettings);
   const location = useLocation();
   const navigate = useNavigate();
+  const { eventId: eventIdParam } = useParams<{ eventId: string }>();
 
   const events = useEventsStore((s) => s.events);
   const fetchEvents = useEventsStore((s) => s.fetchEvents);
-  const addEventToStore = useEventsStore((s) => s.addEvent);
-  const updateEventInStore = useEventsStore((s) => s.updateEvent);
-  const removeEventFromStore = useEventsStore((s) => s.removeEvent);
 
   const students = useStudentsStore((s) => s.pagedStudents);
   const pagedStudents = useStudentsStore((s) => s.pagedStudents);
@@ -60,9 +66,23 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   const addStudentToStore = useStudentsStore((s) => s.addStudent);
   const updateStudentInStore = useStudentsStore((s) => s.updateStudent);
   const removeStudentsFromStore = useStudentsStore((s) => s.removeStudents);
+  const totalStudentsCount = useStudentsStore((s) => s.total);
+
+  const [isEasterEggOpen, setIsEasterEggOpen] = useState(false);
+  // `total` from the store reflects the CURRENT search/filter's matching count,
+  // not the grand total of all students — so it drops to 0 while searching for
+  // the easter egg itself. Snapshot the true total whenever no search/filter is
+  // active, and gate the row's visibility on that instead.
+  const [baselineStudentTotal, setBaselineStudentTotal] = useState(0);
 
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [lastStatusChange, setLastStatusChange] = useState<{
+    record: AttendanceRecord;
+    profileImageUrl: string | null;
+    updatedAt: number;
+  } | null>(null);
 
   const collegeOptions = useCollegesStore((s) => s.collegeOptions);
   const fetchColleges = useCollegesStore((s) => s.fetchColleges);
@@ -80,6 +100,8 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   const attendanceHasMore = useAttendanceStore((s) => s.attendanceHasMore);
   const isFetchingAttendancePage = useAttendanceStore((s) => s.isFetchingAttendancePage);
   const fetchAttendancePage = useAttendanceStore((s) => s.fetchAttendancePage);
+  const attendanceHistoryByEventId = useAttendanceStore((s) => s.attendanceHistoryByEventId);
+  const fetchAttendanceHistory = useAttendanceStore((s) => s.fetchAttendanceHistory);
   const setSelectedEvent = useAttendanceStore((s) => s.setSelectedEvent);
   const setAttendanceForEvent = useAttendanceStore((s) => s.setAttendanceForEvent);
   const updateAttendanceRecord = useAttendanceStore(
@@ -148,19 +170,6 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     [selectedEvent, attendanceByEventId]
   );
 
-  const mapAttendanceRows = useCallback(
-    (rows: DBAttendance[]): AttendanceRecord[] =>
-      rows.map((record) => ({
-        studentId: record.student_id,
-        name: record.name,
-        college: (record.college ?? record.course ?? "").toUpperCase(),
-        year: record.year,
-        section: record.section.toUpperCase(),
-        status: record.status,
-      })),
-    []
-  );
-
   useEffect(() => {
     if (events.length === 0) fetchEvents();
   }, [events.length, fetchEvents]);
@@ -177,6 +186,20 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     if (tableType !== "students") return;
     fetchStudentsPage({ page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
   }, [tableType, debouncedSearch, selectedFilters.college, selectedFilters.year, selectedFilters.section, sortConfig.key, sortConfig.direction, fetchStudentsPage]);
+
+  // Snapshot the true (unfiltered) student total whenever no search/filter is
+  // active, since the store's `total` otherwise reflects the filtered count.
+  useEffect(() => {
+    if (
+      tableType === "students" &&
+      debouncedSearch === "" &&
+      selectedFilters.college === "all" &&
+      selectedFilters.year === "all" &&
+      selectedFilters.section === "all"
+    ) {
+      setBaselineStudentTotal(totalStudentsCount);
+    }
+  }, [tableType, debouncedSearch, selectedFilters, totalStudentsCount]);
 
   const handleNearBottom = useCallback(() => {
     if (tableType !== "students" || !hasMore || isFetchingPage) return;
@@ -208,28 +231,37 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   }, [collegeOptions.length, fetchColleges]);
 
   useEffect(() => {
-    const eventId = (location.state as { eventId?: string } | null)?.eventId;
-    if (!eventId || events.length === 0) return;
-    const match = events.find((e) => e.id.toString() === eventId);
-    if (match) {
-      setSelectedEvent({
-        id: match.id.toString(),
-        name: match.title,
-        date: match.event_date,
-        location: match.location,
-        fine: match.fine,
-        colleges: match.colleges ?? match.courses,
-        sections: match.sections as Event["sections"],
-        schoolYears: match.school_years as Event["schoolYears"],
-      });
+    if (tableType !== "attendance") return;
+    if (!eventIdParam || events.length === 0) return;
+    const match = events.find((e) => e.id.toString() === eventIdParam);
+    if (!match) {
+      // Unknown/invalid event id — go back to the Events list.
+      navigate("/events", { replace: true });
+      return;
     }
-    navigate("/attendance", { replace: true, state: {} });
-  }, [events, location.state, navigate, setSelectedEvent]);
+    setSelectedEvent({
+      id: match.id.toString(),
+      name: match.title,
+      date: match.event_date,
+      location: match.location,
+      fine: match.fine,
+      colleges: match.colleges ?? match.courses,
+      sections: match.sections as Event["sections"],
+      schoolYears: match.school_years as Event["schoolYears"],
+    });
+  }, [tableType, eventIdParam, events, navigate, setSelectedEvent]);
 
   // Fetch page 1 when a new event is selected
   useEffect(() => {
     if (!selectedEvent || tableType !== "attendance") return;
     fetchAttendancePage(selectedEvent.id, { page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEvent?.id, tableType]);
+
+  // Fetch attendance history when a new event is selected
+  useEffect(() => {
+    if (!selectedEvent || tableType !== "attendance") return;
+    fetchAttendanceHistory(selectedEvent.id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEvent?.id, tableType]);
 
@@ -248,17 +280,19 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             row.studentId,
             row as AttendanceRecord
           );
+          setLastStatusChange({
+            record: row as AttendanceRecord,
+            profileImageUrl:
+              students.find((s) => s.studentId === row.studentId)
+                ?.profileImageUrl ?? null,
+            updatedAt: Date.now(),
+          });
           axios
             .put(
               `${config.API_BASE_URL}/attendance/${row.studentId}/${selectedEvent.id}`,
               { status: row.status }
             )
-            .then(() => {
-              showToast(
-                `${row.name} (${row.studentId}) is marked as ${row.status.toLowerCase()}`,
-                "success"
-              );
-            })
+            .then(() => fetchAttendanceHistory(selectedEvent.id))
             .catch((err) => {
               console.error(err);
               showToast(
@@ -396,86 +430,6 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     }
   };
 
-  const handleEventChange = (event: Event) => {
-    setSelectedEvent(event);
-    showToast(`Viewing attendance for ${event.name}`, "info");
-  };
-
-  const handleAddEvent = async (eventData: AddEventData) => {
-    try {
-      const response = await axios.post(`${config.API_BASE_URL}/events/`, {
-        ...eventData,
-        colleges: eventData.colleges,
-      });
-      const newEvent = response.data;
-      addEventToStore(newEvent);
-      showToast(`Event "${newEvent.title}" created successfully`);
-    } catch (error) {
-      console.error("Error creating event:", error);
-      showToast("Failed to create event");
-    }
-  };
-
-  const handleEditEvent = async (event: Event) => {
-    try {
-      const response = await axios.put(
-        `${config.API_BASE_URL}/events/${event.id}`,
-        {
-          title: event.name,
-          event_date: event.date,
-          location: event.location,
-          fine: event.fine,
-          colleges: event.colleges,
-          sections: event.sections,
-          schoolYears: event.schoolYears,
-        }
-      );
-      const updatedEvent = response.data;
-      updateEventInStore(event.id, updatedEvent);
-
-      if (selectedEvent?.id === event.id) {
-        const nextSelectedEvent: Event = {
-          id: updatedEvent.id.toString(),
-          name: updatedEvent.title,
-          date: updatedEvent.event_date,
-          location: updatedEvent.location,
-          fine: updatedEvent.fine,
-          colleges: updatedEvent.colleges ?? updatedEvent.courses,
-          sections: updatedEvent.sections as Event["sections"],
-          schoolYears: updatedEvent.school_years as Event["schoolYears"],
-        };
-        setSelectedEvent(nextSelectedEvent);
-
-        const attendanceResponse = await axios.get(
-          `${config.API_BASE_URL}/attendance/event/${event.id}`
-        );
-        setAttendanceForEvent(
-          event.id,
-          mapAttendanceRows(attendanceResponse.data as DBAttendance[])
-        );
-      }
-
-      showToast(`Event "${updatedEvent.title}" updated successfully`);
-    } catch (error) {
-      console.error("Error updating event:", error);
-      showToast("Failed to update event");
-    }
-  };
-
-  const handleDeleteEvent = async (eventId: string) => {
-    try {
-      await axios.delete(`${config.API_BASE_URL}/events/${eventId}`);
-      removeEventFromStore(eventId);
-      if (selectedEvent?.id === eventId) {
-        setSelectedEvent(undefined);
-      }
-      showToast("Event deleted successfully");
-    } catch (error) {
-      console.error("Error deleting event:", error);
-      showToast("Failed to delete event");
-    }
-  };
-
   const handleQrScanSubmit = useCallback(
     async (studentId: string) => {
       if (!selectedEvent) {
@@ -532,7 +486,12 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
           setAttendanceForEvent(selectedEvent.id, next);
         }
 
-        showToast(`${newAttendanceRecord.name} marked as present`, "success");
+        setLastStatusChange({
+          record: newAttendanceRecord,
+          profileImageUrl: student?.profileImageUrl ?? null,
+          updatedAt: Date.now(),
+        });
+        fetchAttendanceHistory(selectedEvent.id);
       } catch (error) {
         console.error("Error updating attendance:", error);
         if (axios.isAxiosError(error)) {
@@ -551,6 +510,8 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
       students,
       attendanceByEventId,
       setAttendanceForEvent,
+      setLastStatusChange,
+      fetchAttendanceHistory,
     ]
   );
 
@@ -574,7 +535,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
 
   const yearOptions = useMemo(
     () => [
-      { value: "all", label: "All Years" },
+      { value: "all", label: "All Years", shortLabel: "Year" },
       { value: "1", label: "Year 1" },
       { value: "2", label: "Year 2" },
       { value: "3", label: "Year 3" },
@@ -636,7 +597,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   }, [scopedCollegeOptions, scopedYearOptions, setSelectedFilters]);
 
   const sectionOptions = [
-    { value: "all", label: "All Sections" },
+    { value: "all", label: "All Sections", shortLabel: "Section" },
     { value: "a", label: "Section A" },
     { value: "b", label: "Section B" },
     { value: "c", label: "Section C" },
@@ -729,6 +690,52 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
 
   const currentData = sortedData;
 
+  // Frontend-only bragging-rights row, never persisted or sent to the backend.
+  // Only shown once search/filters would plausibly match it, and inserted at
+  // the position matching the current sort so it doesn't just sit at the end.
+  let displayData: TableRecord[] = currentData;
+  if (
+    tableType === "students" &&
+    config.ENABLE_EASTER_EGG &&
+    baselineStudentTotal >= 100
+  ) {
+    const searchTerm = debouncedSearch.trim().toLowerCase();
+    const matchesSearch =
+      !searchTerm ||
+      EASTER_EGG_ROW.studentId.toLowerCase().includes(searchTerm) ||
+      EASTER_EGG_ROW.name.toLowerCase().includes(searchTerm) ||
+      EASTER_EGG_ROW.college.toLowerCase().includes(searchTerm);
+    const matchesCollege =
+      selectedFilters.college === "all" ||
+      EASTER_EGG_ROW.college.toLowerCase() === selectedFilters.college.toLowerCase();
+    const matchesYear =
+      selectedFilters.year === "all" || EASTER_EGG_ROW.year === selectedFilters.year;
+    const matchesSection =
+      selectedFilters.section === "all" ||
+      EASTER_EGG_ROW.section.toLowerCase() === selectedFilters.section.toLowerCase();
+
+    if (matchesSearch && matchesCollege && matchesYear && matchesSection) {
+      const sortKey = sortConfig.key as keyof StudentRecord;
+      // For these columns, always pin the row to the end instead of sorting it in.
+      const alwaysLastKeys: (keyof StudentRecord)[] = ["studentId", "year", "section"];
+      const eggValue = String(EASTER_EGG_ROW[sortKey] ?? "");
+      const insertIndex = alwaysLastKeys.includes(sortKey)
+        ? -1
+        : currentData.findIndex((row) => {
+            const rowValue = String((row as StudentRecord)[sortKey] ?? "");
+            return sortConfig.direction === "asc"
+              ? rowValue > eggValue
+              : rowValue < eggValue;
+          });
+      displayData = [...currentData];
+      displayData.splice(
+        insertIndex === -1 ? displayData.length : insertIndex,
+        0,
+        EASTER_EGG_ROW
+      );
+    }
+  }
+
   useEffect(() => {
     setSelectedRows([]);
   }, [tableType, setSelectedRows]);
@@ -752,7 +759,9 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
 
     const selectedData = isAllSelected
       ? filteredData
-      : selectedRows.map((index) => currentData[index]);
+      : selectedRows
+          .map((index) => currentData[index])
+          .filter((row): row is TableRecord => row != null);
 
     const studentIds = selectedData.map((student) => student.studentId);
 
@@ -817,6 +826,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             : item
         );
         setAttendanceForEvent(selectedEvent.id, next);
+        fetchAttendanceHistory(selectedEvent.id);
       }
 
       setSelectedRows([]);
@@ -832,52 +842,38 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     }
   };
 
-  // hasTableData logic for EventSelector: If attendance data loaded and not empty, don't auto-open event selector
-  // FIX: Use the same filteredData logic (including filters and search) to determine if user is viewing any rows,
-  // since this is what is shown in the table (not raw attendanceData).
-  const hasAttendanceTableData = useMemo(() => {
-    return (
-      tableType === "attendance" &&
-      Array.isArray(filteredData) &&
-      filteredData.length > 0
-    );
-  }, [tableType, filteredData]);
-
-  const mappedEvents = useMemo(
-    (): Event[] =>
-      events.map((event) => ({
-        id: event.id.toString(),
-        name: event.title,
-        date: event.event_date,
-        location: event.location,
-        fine: event.fine,
-        colleges: event.colleges,
-        sections: event.sections as Event["sections"],
-        schoolYears: event.school_years as Event["schoolYears"],
-      })),
-    [events]
-  );
-
   const { total } = useStudentsStore.getState();
   const isAllSelected = tableType === "students"
     ? selectedRows.length > 0 && selectedRows.length === total
     : filteredData.length > 0 && selectedRows.length === filteredData.length;
 
-  const role = currentUser?.role?.toLowerCase();
-  const isViewer = role === "viewer";
-  const isAdmin = role === "administrator";
-  const canAddEvent = isAdmin
-    ? true
-    : !isViewer && systemSettings.featureAccess.moderator.addEvent;
-  const canEditEvent = isAdmin
-    ? true
-    : !isViewer && systemSettings.featureAccess.moderator.editEvent;
-  const canDeleteEvent = isAdmin
-    ? true
-    : !isViewer && systemSettings.featureAccess.moderator.deleteEvent;
-
   return (
-    <div className="w-full !h-full px-5 pt-5 pb-10">
+    <div
+      className={`w-full !h-full px-5 md:px-10 pt-10 lg:pb-10 ${
+        tableType === "attendance" ? "pb-24" : "pb-10"
+      }`}
+    >
+      <div className="flex items-start gap-6">
+      <div className="min-w-0 flex-1">
+      <div className="w-full max-w-[70rem] mx-auto mb-4">
+        {tableType === "attendance" ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => navigate("/events")}
+              aria-label="Back to Events"
+              className="rounded-[8px] p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {selectedEvent?.name ?? "Attendance"}
+            </h1>
+          </div>
+        ) : (
+          <h1 className="text-lg font-semibold text-gray-900">Students</h1>
+        )}
+      </div>
       {/* Menu bar container  */}
       <div className="flex flex-row w-full max-w-[70rem] mx-auto mb-3 z-100 items-end ">
         {selectedRows.length > 0 ? (
@@ -917,16 +913,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
         ) : (
           <AttendanceControls
             tableType={tableType}
-            selectedEvent={selectedEvent}
-            events={mappedEvents}
-            onEventChange={handleEventChange}
-            onAddEvent={handleAddEvent}
-            onEditEvent={handleEditEvent}
-            onDeleteEvent={handleDeleteEvent}
             currentUserRole={currentUser?.role}
-            canAddEvent={canAddEvent}
-            canEditEvent={canEditEvent}
-            canDeleteEvent={canDeleteEvent}
             onQRScanClick={() => setIsQrModalOpen(true)}
             onAddStudent={handleAddStudent}
             selectedFilters={selectedFilters}
@@ -935,7 +922,6 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             collegeOptions={scopedCollegeOptions}
             yearOptions={scopedYearOptions}
             sectionOptions={sectionOptions}
-            hasAttendanceTableData={hasAttendanceTableData}
           />
         )}
       </div>
@@ -957,13 +943,17 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
       ) : (
         <Table
           columns={studentColumns}
-          data={currentData}
+          data={displayData}
           onActionClick={handleTableAction}
           onRowClick={(row) => {
-            if ("studentId" in row && !("status" in row)) {
-              setSelectedStudentForProfile(row as StudentRecord);
-              navigate(`/students?student=${(row as StudentRecord).studentId}`, { replace: true });
+            if (!("studentId" in row) || "status" in row) return;
+            const studentRow = row as StudentRecord;
+            if (studentRow.studentId === EASTER_EGG_STUDENT_ID) {
+              setIsEasterEggOpen(true);
+              return;
             }
+            setSelectedStudentForProfile(studentRow);
+            navigate(`/students?student=${studentRow.studentId}`, { replace: true });
           }}
           sortConfig={sortConfig}
           onSortChange={setSortConfig}
@@ -974,6 +964,17 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
           onNearBottom={handleNearBottom}
         />
       )}
+      </div>
+
+      {tableType === "attendance" && (
+        <AttendanceUpdatePanel
+          record={lastStatusChange?.record ?? null}
+          profileImageUrl={lastStatusChange?.profileImageUrl ?? null}
+          updatedAt={lastStatusChange?.updatedAt ?? null}
+          history={selectedEvent ? attendanceHistoryByEventId[selectedEvent.id] ?? [] : []}
+        />
+      )}
+      </div>
 
       {/* QR Check-in Modal */}
       <QrCheckInModal
@@ -1049,6 +1050,23 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             currentUserRole={currentUser?.role}
           />
         )}
+      </Modal>
+
+      <Modal
+        modalClassName="!w-fit !max-w-fit !rounded-[20px]"
+        isOpen={isEasterEggOpen}
+        onClose={() => setIsEasterEggOpen(false)}
+      >
+        <EasterEggProfileCard
+          name={EASTER_EGG_ROW.name}
+          studentId={EASTER_EGG_ROW.studentId}
+          college={EASTER_EGG_ROW.college}
+          year={EASTER_EGG_ROW.year}
+          section={EASTER_EGG_ROW.section}
+          instagramHandle="@jersondereal"
+          photoUrl="https://i.ibb.co/Y4ct3NRY/jersondereal.jpg"
+          onClose={() => setIsEasterEggOpen(false)}
+        />
       </Modal>
 
       {/* Delete Confirmation Modal */}

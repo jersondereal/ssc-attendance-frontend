@@ -73,6 +73,16 @@ export interface Event {
   schoolYears?: Record<string, boolean>;
 }
 
+export interface AttendanceHistoryEntry {
+  id: number;
+  studentId: string;
+  studentName: string;
+  previousStatus: string | null;
+  newStatus: string;
+  changedVia: "manual" | "rfid";
+  changedAt: string;
+}
+
 export interface AuthUser {
   id?: string;
   username: string;

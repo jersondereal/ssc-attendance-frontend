@@ -1,8 +1,23 @@
 import axios from "axios";
 import { create } from "zustand";
 import config from "../config";
-import type { AttendanceRecord, DBAttendance, StudentRecord } from "./types";
+import type {
+  AttendanceHistoryEntry,
+  AttendanceRecord,
+  DBAttendance,
+  StudentRecord,
+} from "./types";
 import type { Event } from "../components/common/EventSelector/types";
+
+interface DBAttendanceHistoryEntry {
+  id: number;
+  student_id: string;
+  student_name: string | null;
+  previous_status: string | null;
+  new_status: string;
+  changed_via: "manual" | "rfid";
+  changed_at: string;
+}
 
 interface SelectedFilters {
   college: string;
@@ -34,6 +49,8 @@ interface AttendanceState {
   attendanceTotal: Record<string, number>;
   isFetchingAttendancePage: boolean;
   fetchAttendancePage: (eventId: string, params: AttendanceFetchParams, reset?: boolean) => Promise<void>;
+  attendanceHistoryByEventId: Record<string, AttendanceHistoryEntry[]>;
+  fetchAttendanceHistory: (eventId: string) => Promise<void>;
   selectedFilters: SelectedFilters;
   searchQuery: string;
   sortConfig: SortConfig;
@@ -115,6 +132,33 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
     } catch (err) {
       console.error(err);
       set({ isFetchingAttendancePage: false });
+    }
+  },
+
+  attendanceHistoryByEventId: {},
+
+  fetchAttendanceHistory: async (eventId) => {
+    try {
+      const res = await axios.get<DBAttendanceHistoryEntry[]>(
+        `${config.API_BASE_URL}/attendance/event/${eventId}/history`
+      );
+      const mapped: AttendanceHistoryEntry[] = res.data.map((r) => ({
+        id: r.id,
+        studentId: r.student_id,
+        studentName: r.student_name ?? r.student_id,
+        previousStatus: r.previous_status,
+        newStatus: r.new_status,
+        changedVia: r.changed_via,
+        changedAt: r.changed_at,
+      }));
+      set((state) => ({
+        attendanceHistoryByEventId: {
+          ...state.attendanceHistoryByEventId,
+          [eventId]: mapped,
+        },
+      }));
+    } catch (err) {
+      console.error(err);
     }
   },
 

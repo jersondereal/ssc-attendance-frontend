@@ -343,10 +343,21 @@ export function AIChatPage() {
     <div className="flex flex-col flex-1 min-h-0 h-full bg-white">
 
       {/* ── Chat messages + header (scrollable) ── */}
-      <div className="flex-1 overflow-y-auto min-h-0 px-6 pb-32 mb-6 [scrollbar-gutter:stable]">
+      <div className="flex-1 overflow-y-auto min-h-0 px-5 md:px-10 pt-10 pb-32 mb-6 [scrollbar-gutter:stable]">
         <div className="w-full max-w-4xl mx-auto">
-          <div className="space-y-1 py-5">
-            <h1 className="text-lg font-semibold text-gray-900">AI Assistant</h1>
+          <div className="space-y-1 pb-5">
+            <h1 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              AI Assistant
+              <span
+                className="text-xs font-medium rounded-full px-2 py-0.5 uppercase tracking-wide"
+                style={{
+                  color: "var(--color-ssc-icon)",
+                  backgroundColor: "var(--color-ssc-light)",
+                }}
+              >
+                Beta
+              </span>
+            </h1>
             <p className="text-sm text-gray-500">Ask anything about attendance, events, students and fines</p>
           </div>
           <div className="space-y-6">
@@ -378,8 +389,8 @@ export function AIChatPage() {
         </div>
       </div>
 
-      {/* ── Input bar — fixed to bottom of viewport ── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-transparent border-border-dark pb-6 pl-2 pr-4 z-20">
+      {/* ── Input bar — fixed to bottom of the content area (right of the sidebar) ── */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-60 bg-transparent border-border-dark pb-6 px-5 md:px-10 z-20">
         {/* Single bordered container wrapping textarea + bottom row */}
         <div
           ref={chatboxRef}

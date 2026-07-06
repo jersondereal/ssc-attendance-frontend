@@ -39,7 +39,7 @@ export function UserFormModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <form onSubmit={onSubmit} className="p-6">
-        <h2 className="text-sm font-semibold mb-6">
+        <h2 className="text-base font-semibold mb-6">
           {selectedUser ? "Edit User" : "Add New User"}
         </h2>
         <div className="space-y-4">
@@ -55,6 +55,16 @@ export function UserFormModal({
             type="password"
             value={formData.password}
             onChange={(password) => onFormDataChange({ ...formData, password })}
+            required={!selectedUser}
+            disabled={passwordDisabled}
+          />
+          <LabeledInput
+            label="Confirm Password"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={(confirmPassword) =>
+              onFormDataChange({ ...formData, confirmPassword })
+            }
             required={!selectedUser}
             disabled={passwordDisabled}
           />
