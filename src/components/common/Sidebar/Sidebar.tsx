@@ -142,12 +142,12 @@ export const Sidebar = ({ currentUserRole, hideAll = false }: SidebarProps) => {
 
   if (isDesktop) {
     return (
-      <aside className="sticky top-0 flex h-screen w-65 shrink-0 flex-col border-r border-border-dark bg-white">
-        <div className="flex h-16 items-center border-b border-border-dark px-4">
+      <aside className="sticky top-0 flex h-screen w-65 shrink-0 flex-col border-r border-gray-300 bg-white">
+        <div className="flex h-16 items-center border-b border-gray-300 px-4">
           <Brand />
         </div>
         {navLinks}
-        <div className="border-t border-border-dark p-3">
+        <div className="border-t border-gray-300 p-3">
           <UserMenu direction="up" />
         </div>
       </aside>
@@ -157,7 +157,7 @@ export const Sidebar = ({ currentUserRole, hideAll = false }: SidebarProps) => {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="fixed top-0 left-0 right-0 z-20 flex h-14 items-center justify-between border-b border-border-dark bg-white px-4">
+      <div className="fixed top-0 left-0 right-0 z-20 flex h-14 items-center justify-between border-b border-gray-300 bg-white px-4">
         <Brand />
         <button
           type="button"
