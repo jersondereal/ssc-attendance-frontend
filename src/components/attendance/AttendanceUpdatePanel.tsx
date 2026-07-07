@@ -47,7 +47,7 @@ function getStatusTextColor(status: string) {
   }
 }
 
-function AttendanceHistoryCard({ history }: { history: AttendanceHistoryEntry[] }) {
+export function AttendanceHistoryCard({ history }: { history: AttendanceHistoryEntry[] }) {
   return (
     <div className="flex flex-col gap-3 rounded-[10px] border border-gray-200 bg-white p-5 pr-0">
       <h2 className="text-sm font-semibold text-gray-800">Attendance History</h2>

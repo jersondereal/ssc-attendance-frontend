@@ -3,8 +3,8 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "../common/Button/Button";
 import { Modal } from "../common/Modal/Modal";
 import { Loader } from "lucide-react";
-import type { AttendanceRecord } from "../../stores/types";
-import { LastUpdatedCard } from "./AttendanceUpdatePanel";
+import type { AttendanceHistoryEntry, AttendanceRecord } from "../../stores/types";
+import { AttendanceHistoryCard, LastUpdatedCard } from "./AttendanceUpdatePanel";
 import "./QrCheckInModal.css";
 
 interface QrCheckInModalProps {
@@ -16,6 +16,7 @@ interface QrCheckInModalProps {
     profileImageUrl: string | null;
     updatedAt: number;
   } | null;
+  history?: AttendanceHistoryEntry[];
 }
 
 export function QrCheckInModal({
@@ -23,6 +24,7 @@ export function QrCheckInModal({
   onClose,
   onScan,
   lastStatusChange,
+  history = [],
 }: QrCheckInModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isReaderReady, setIsReaderReady] = useState(false);
@@ -101,12 +103,14 @@ export function QrCheckInModal({
       onClose={onClose}
       modalClassName="!rounded-[20px] overflow-hidden"
       sideContent={
-        <LastUpdatedCard
-          className="w-60"
-          record={lastStatusChange?.record ?? null}
-          profileImageUrl={lastStatusChange?.profileImageUrl ?? null}
-          updatedAt={lastStatusChange?.updatedAt ?? null}
-        />
+        <div className="flex w-60 flex-col gap-4">
+          <LastUpdatedCard
+            record={lastStatusChange?.record ?? null}
+            profileImageUrl={lastStatusChange?.profileImageUrl ?? null}
+            updatedAt={lastStatusChange?.updatedAt ?? null}
+          />
+          <AttendanceHistoryCard history={history} />
+        </div>
       }
     >
       <div className="p-6 text-center">
