@@ -89,7 +89,7 @@ export const EventsPage = () => {
   const events = useMemo(
     () =>
       [...eventsRaw].map(mapDbEventToEvent).sort((a, b) => {
-        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
         if (dateDiff !== 0) return dateDiff;
         return (a.time ?? "").localeCompare(b.time ?? "");
       }),
@@ -107,7 +107,7 @@ export const EventsPage = () => {
     );
   }, [events, eventSearch]);
 
-  // Group the currently visible events (already sorted newest-first) into
+  // Group the currently visible events (already sorted soonest-first) into
   // month buckets so the grid can show a label per month.
   const eventsByMonth = useMemo(() => {
     const groups: { key: string; label: string; events: Event[] }[] = [];

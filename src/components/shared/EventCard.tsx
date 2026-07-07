@@ -41,14 +41,14 @@ export function EventCard({
 
   return (
     <div
-      className={`relative w-full rounded-[10px] p-4 transition-all border-gray-150 bg-white border ${
+      className={`relative w-full h-full flex flex-col rounded-[10px] p-4 transition-all border-gray-150 bg-white border ${
         isSelected
           ? "border border-gray-300 bg-gray-300"
           : " hover:border-zinc-400"
       }`}
     >
       <div
-        className={`pr-8 ${onCardClick ? "cursor-pointer" : ""}`}
+        className={`flex flex-1 flex-col pr-8 ${onCardClick ? "cursor-pointer" : ""}`}
         onClick={() => onCardClick?.(event)}
         onKeyDown={(e) => {
           if (onCardClick && (e.key === "Enter" || e.key === " ")) {
@@ -88,9 +88,9 @@ export function EventCard({
               {event.fine}
             </span>
           )}
-          <div className="flex flex-wrap gap-1 mt-3">
-            <EventBadges event={event} />
-          </div>
+        </div>
+        <div className="flex flex-wrap gap-1 mt-auto pt-3">
+          <EventBadges event={event} />
         </div>
       </div>
       <div
