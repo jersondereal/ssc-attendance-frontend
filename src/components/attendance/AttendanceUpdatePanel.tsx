@@ -13,6 +13,7 @@ interface AttendanceUpdatePanelProps {
   profileImageUrl?: string | null;
   updatedAt: number | null;
   history?: AttendanceHistoryEntry[];
+  hideLastUpdated?: boolean;
 }
 
 const SHEET_PEEK_HEIGHT = 64;
@@ -250,24 +251,29 @@ export function AttendanceUpdatePanel({
   profileImageUrl,
   updatedAt,
   history = [],
+  hideLastUpdated = false,
 }: AttendanceUpdatePanelProps) {
   return (
     <>
       <div className="hidden mt-[46px] lg:flex w-full max-w-60 shrink-0 flex-col gap-4 sticky top-4 self-start">
-        <LastUpdatedCard
-          record={record}
-          profileImageUrl={profileImageUrl}
-          updatedAt={updatedAt}
-        />
+        {!hideLastUpdated && (
+          <LastUpdatedCard
+            record={record}
+            profileImageUrl={profileImageUrl}
+            updatedAt={updatedAt}
+          />
+        )}
 
         <AttendanceHistoryCard history={history} />
       </div>
 
-      <AttendanceUpdateSheet
-        record={record}
-        profileImageUrl={profileImageUrl}
-        updatedAt={updatedAt}
-      />
+      {!hideLastUpdated && (
+        <AttendanceUpdateSheet
+          record={record}
+          profileImageUrl={profileImageUrl}
+          updatedAt={updatedAt}
+        />
+      )}
     </>
   );
 }

@@ -50,6 +50,7 @@ const EASTER_EGG_ROW: StudentRecord = {
 
 export function AttendancePage({ tableType }: AttendancePageProps) {
   const currentUser = useAuthStore((s) => s.currentUser);
+  const isViewer = currentUser?.rawRole === "viewer";
   const { showToast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
@@ -1014,6 +1015,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
           profileImageUrl={lastStatusChange?.profileImageUrl ?? null}
           updatedAt={lastStatusChange?.updatedAt ?? null}
           history={selectedEvent ? attendanceHistoryByEventId[selectedEvent.id] ?? [] : []}
+          hideLastUpdated={isViewer}
         />
       )}
       </div>
