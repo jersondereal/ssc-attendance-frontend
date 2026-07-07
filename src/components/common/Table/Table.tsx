@@ -359,12 +359,16 @@ export const Table = ({
                                 <button
                                   key={status}
                                   type="button"
-                                  onClick={() =>
+                                  onClick={() => {
+                                    if (status === row.status) {
+                                      setActiveMenu(null);
+                                      return;
+                                    }
                                     handleActionClick("status", {
                                       ...row,
                                       status,
-                                    })
-                                  }
+                                    });
+                                  }}
                                   className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50 rounded-[6px]"
                                 >
                                   {status}
