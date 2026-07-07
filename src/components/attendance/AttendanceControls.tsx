@@ -89,7 +89,7 @@ export function AttendanceControls({
             disabled={isRefreshing}
             aria-label="Refresh data"
             title="Refresh data"
-            className="flex shrink-0 items-center justify-center rounded-[8px] border border-gray-300 bg-white p-2 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex shrink-0 items-center justify-center rounded-[8px] border border-gray-300 bg-white p-2.5 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <RefreshCw className={`size-4 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
