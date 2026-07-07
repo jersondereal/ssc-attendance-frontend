@@ -233,7 +233,7 @@ export const EventForm = ({
               type="date"
               name="event_date"
               required
-              className="w-full px-3 h-10 border border-border-dark rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200"
+              className="w-full px-3 h-10 border border-gray-300 rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200"
               value={formData.event_date}
               onChange={handleChange}
             />
@@ -276,7 +276,7 @@ export const EventForm = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Attendees Colleges
           </label>
-          <div className="flex flex-col gap-5 w-full h-fit border border-border-dark rounded-[8px] p-4 max-h-40 overflow-y-scroll">
+          <div className="flex flex-col gap-5 w-full h-fit border border-gray-300 rounded-[8px] p-4 max-h-40 overflow-y-scroll">
             <Checkbox
               id="all-colleges"
               label="All"
@@ -300,7 +300,7 @@ export const EventForm = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Attendees Section
             </label>
-            <div className="flex flex-row gap-5 w-full h-fit border border-border-dark rounded-[8px] p-2">
+            <div className="flex flex-row gap-5 w-full h-fit border border-gray-300 rounded-[8px] p-2">
               <Checkbox
                 id="all-sections"
                 label="All"
@@ -340,7 +340,7 @@ export const EventForm = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Attendees School Year
             </label>
-            <div className="flex flex-row gap-5 w-full h-fit border border-border-dark rounded-[8px] p-2">
+            <div className="flex flex-row gap-5 w-full h-fit border border-gray-300 rounded-[8px] p-2">
               <Checkbox
                 id="all-school-years"
                 label="All"

@@ -84,7 +84,10 @@ export const DropdownSelector = ({
   const selectedOption = options.find((opt) => opt.value === internalValue);
 
   return (
-    <div className={`relative text-sm ${textClassName} h-fit`} ref={dropdownRef}>
+    <div
+      className={`relative text-sm ${textClassName} h-fit`}
+      ref={dropdownRef}
+    >
       {name && <input type="hidden" name={name} value={internalValue || ""} />}
       <div
         className={`w-full flex flex-row h-fit items-center bg-white border border-gray-300 transition-all pl-4 pr-2 py-2 gap-2 rounded-[8px] text-sm ${className} ${textClassName} ${
@@ -100,7 +103,7 @@ export const DropdownSelector = ({
       >
         {icon && <span className="text-textbox-placeholder">{icon}</span>}
         <span
-          className={`w-full truncate text-sm ${textClassName} ${selectedOption ? "" : "text-gray-400"} ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          className={`w-full truncate text-sm ${textClassName} ${selectedOption ? "" : "text-gray-400"} ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
           {selectedOption?.shortLabel || selectedOption?.label || placeholder}
         </span>
@@ -115,11 +118,12 @@ export const DropdownSelector = ({
       {isDropdownVisible && (
         <div
           className={`
-            absolute top-full mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg z-[9999] w-full min-w-40 text-sm
+            absolute top-full mt-1 bg-white border border-gray-300 rounded-[8px] shadow-lg z-[9999] w-full min-w-40 text-sm
             transition-all duration-200 ease-in-out ${dropdownClassName || ""}
-            ${isOpen
-              ? "opacity-100 scale-100 pointer-events-auto translate-y-0"
-              : "opacity-0 scale-95 pointer-events-none -translate-y-2"
+            ${
+              isOpen
+                ? "opacity-100 scale-100 pointer-events-auto translate-y-0"
+                : "opacity-0 scale-95 pointer-events-none -translate-y-2"
             }
           `}
           style={{

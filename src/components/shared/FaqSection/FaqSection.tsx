@@ -18,7 +18,7 @@ export function FaqSection({ items }: FaqSectionProps) {
         return (
           <div
             key={item.question}
-            className="w-full border border-border-dark rounded-[12px] bg-white"
+            className="w-full border border-gray-300 rounded-[12px] bg-white"
           >
             <button
               type="button"

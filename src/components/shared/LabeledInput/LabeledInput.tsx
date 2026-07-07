@@ -12,7 +12,7 @@ interface LabeledInputProps {
 }
 
 const inputBaseClass =
-  "w-full px-3 py-2 border border-border-dark rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200";
+  "w-full px-3 py-2 border border-gray-300 rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200";
 const inputDisabledClass = "opacity-50 cursor-not-allowed bg-gray-50";
 
 export function LabeledInput({

@@ -1,8 +1,8 @@
 import html2canvas from "html2canvas";
 import { useRef } from "react";
-import { StudentQRCard } from "../../ui/StudentQRCard/StudentQRCard";
-import type { DBStudent } from "../../../stores/types";
 import { useToast } from "../../../contexts/ToastContext";
+import type { DBStudent } from "../../../stores/types";
+import { StudentQRCard } from "../../ui/StudentQRCard/StudentQRCard";
 
 export interface RegistrationSuccessViewProps {
   student: DBStudent;
@@ -71,7 +71,7 @@ export function RegistrationSuccessView({
           {description}
         </p>
       </div>
-      <div className="border border-border-dark rounded-[10px] w-full max-w-[450px]">
+      <div className="border border-gray-300 rounded-[10px] w-full max-w-[450px]">
         <StudentQRCard
           ref={qrCardRef}
           studentId={student.student_id}
@@ -93,7 +93,7 @@ export function RegistrationSuccessView({
         <button
           type="button"
           onClick={onDone}
-          className="w-full rounded-[10px] border border-border-dark bg-white h-10 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="w-full rounded-[10px] border border-gray-300 bg-white h-10 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           {doneLabel}
         </button>

@@ -1,7 +1,7 @@
 import { CalendarDays, Ellipsis, MapPin, PhilippinePeso } from "lucide-react";
+import { useAuthStore } from "../../stores/useAuthStore";
 import { EventBadges } from "../common/EventSelector/EventBadges";
 import type { Event } from "../common/EventSelector/types";
-import { useAuthStore } from "../../stores/useAuthStore";
 
 interface EventCardProps {
   event: Event;
@@ -89,11 +89,14 @@ export function EventCard({
             className="p-1.5 rounded-[8px] transition-all hover:bg-gray-100"
             aria-label="Event actions"
           >
-            <Ellipsis size={16} className="text-gray-500 hover:text-gray-600 transitiona-all" />
+            <Ellipsis
+              size={16}
+              className="text-gray-500 hover:text-gray-600 transitiona-all"
+            />
           </button>
         )}
         {isMenuOpen && canShowMenu && (
-          <div className="absolute top-full right-0 mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg z-[100] w-28 p-1.5">
+          <div className="absolute top-full right-0 mt-1 bg-white border border-gray-300 rounded-[8px] shadow-lg z-[100] w-28 p-1.5">
             <button
               type="button"
               onClick={canEdit ? onEditClick : undefined}

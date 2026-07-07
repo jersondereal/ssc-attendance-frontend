@@ -1,5 +1,5 @@
-import { forwardRef } from "react";
 import { QRCodeCanvas } from "qrcode.react";
+import { forwardRef } from "react";
 
 export interface StudentQRCardProps {
   studentId: string;
@@ -14,23 +14,15 @@ export interface StudentQRCardProps {
 
 export const StudentQRCard = forwardRef<HTMLDivElement, StudentQRCardProps>(
   (
-    {
-      studentId,
-      name,
-      college,
-      year,
-      section,
-      size = 120,
-      className = "",
-    },
-    ref
+    { studentId, name, college, year, section, size = 120, className = "" },
+    ref,
   ) => {
     return (
       <div
         ref={ref}
         className={`flex flex-col items-center gap-2 w-fit mx-auto p-8 ${className}`}
       >
-        <div className="border border-border-dark rounded-[10px] p-5">
+        <div className="border border-gray-300 rounded-[10px] p-5">
           <QRCodeCanvas value={studentId} size={size} />
         </div>
         <div className="w-full">
@@ -45,7 +37,7 @@ export const StudentQRCard = forwardRef<HTMLDivElement, StudentQRCardProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
 StudentQRCard.displayName = "StudentQRCard";

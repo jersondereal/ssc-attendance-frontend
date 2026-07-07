@@ -3,11 +3,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AddStudentForm } from "../components/forms/AddStudentForm/AddStudentForm";
 import type { StudentFormData } from "../components/forms/StudentForm/StudentForm";
-import { defaultFaqItems, FaqSection, RegistrationSuccessView } from "../components/shared";
+import {
+  defaultFaqItems,
+  FaqSection,
+  RegistrationSuccessView,
+} from "../components/shared";
 import config from "../config";
-import { useSettingsStore } from "../stores/useSettingsStore";
 import { useToast } from "../contexts/ToastContext";
 import type { DBStudent } from "../stores/types";
+import { useSettingsStore } from "../stores/useSettingsStore";
 
 const getFriendlyError = (raw: string | undefined) => {
   if (!raw) return "Registration failed. Please try again.";
@@ -32,8 +36,9 @@ export function StudentRegistrationPage() {
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [formKey, setFormKey] = useState(0);
-  const [registeredStudent, setRegisteredStudent] =
-    useState<DBStudent | null>(null);
+  const [registeredStudent, setRegisteredStudent] = useState<DBStudent | null>(
+    null,
+  );
   const registrationEnabled =
     systemSettings.featureAccess.viewer.studentRegistration;
 
@@ -43,7 +48,7 @@ export function StudentRegistrationPage() {
     formData.append("year", year);
     const response = await axios.post<{ url: string }>(
       `${config.API_BASE_URL}/upload/profile-image`,
-      formData
+      formData,
     );
     const imageUrl = response.data?.url;
     if (!imageUrl) {
@@ -81,7 +86,7 @@ export function StudentRegistrationPage() {
       <h2 className="text-lg font-medium text-center mt-2 text-zinc-500">
         Attendance Monitoring System
       </h2>
-      <div className="border border-border-dark w-full md:p-6 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg bg-white">
+      <div className="border border-gray-300 w-full md:p-6 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg bg-white">
         {submitMessage && registeredStudent ? (
           <RegistrationSuccessView
             student={registeredStudent}
@@ -120,20 +125,20 @@ export function StudentRegistrationPage() {
                   if (data.profileImageFile) {
                     const uploaded = await uploadProfileImage(
                       data.profileImageFile,
-                      data.year
+                      data.year,
                     );
                     profileImageUrl = uploaded.imageUrl;
                   }
                   const createdStudent = (
                     await axios.post(`${config.API_BASE_URL}/students`, {
-                    student_id: data.studentId,
-                    name: data.name,
-                    college: data.college.toLowerCase(),
-                    year: data.year,
-                    section: data.section.toLowerCase(),
-                    rfid: (data.rfid ?? "").trim(),
-                    profile_image_url: profileImageUrl,
-                  })
+                      student_id: data.studentId,
+                      name: data.name,
+                      college: data.college.toLowerCase(),
+                      year: data.year,
+                      section: data.section.toLowerCase(),
+                      rfid: (data.rfid ?? "").trim(),
+                      profile_image_url: profileImageUrl,
+                    })
                   ).data as DBStudent;
                   setRegisteredStudent(createdStudent);
                   setSubmitMessage("Registration submitted successfully.");

@@ -1,8 +1,8 @@
 import HelpIcon from "@mui/icons-material/Help";
 import KeyIcon from "@mui/icons-material/Key";
 import { UserRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "./types";
-import { useRef, useEffect, useState } from "react";
 
 interface UserMenuDropdownProps {
   currentUser: User | null;
@@ -83,12 +83,13 @@ export function UserMenuDropdown({
       {show && (
         <div
           className={`
-            absolute bg-white border border-border-dark rounded-[8px] shadow-lg z-10 min-w-[14rem]
+            absolute bg-white border border-gray-300 rounded-[8px] shadow-lg z-10 min-w-[14rem]
             ${direction === "up" ? "left-0 bottom-full mb-2" : "right-0 top-full mt-2"}
             transition-all duration-150
-            ${visible
-              ? "opacity-100 scale-100 pointer-events-auto translate-y-0"
-              : `opacity-0 scale-95 pointer-events-none ${direction === "up" ? "translate-y-2" : "-translate-y-2"}`
+            ${
+              visible
+                ? "opacity-100 scale-100 pointer-events-auto translate-y-0"
+                : `opacity-0 scale-95 pointer-events-none ${direction === "up" ? "translate-y-2" : "-translate-y-2"}`
             }
           `}
           style={{ willChange: "opacity, transform" }}

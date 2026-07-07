@@ -37,7 +37,7 @@ function mapDbEventToEvent(e: DBEvent): Event {
 // Simple event card skeleton (grid card placeholder)
 function EventCardSkeleton() {
   return (
-    <div className="relative w-full border border-border-dark rounded-[10px] p-4 bg-white animate-pulse flex flex-col gap-2 min-h-[125px]">
+    <div className="relative w-full border border-gray-300 rounded-[10px] p-4 bg-white animate-pulse flex flex-col gap-2 min-h-[125px]">
       <div className="h-4 w-2/3 bg-gray-200 rounded"></div>
       <div className="h-3 w-1/3 bg-gray-200 rounded mt-2"></div>
       <div className="h-3 w-1/2 bg-gray-200 rounded"></div>
@@ -70,16 +70,16 @@ export const EventsPage = () => {
   const eventToDelete = useOverviewStore((s) => s.eventToDelete);
   const setEventToDelete = useOverviewStore((s) => s.setEventToDelete);
   const setDeleteEventConfirmChecked = useOverviewStore(
-    (s) => s.setDeleteEventConfirmChecked
+    (s) => s.setDeleteEventConfirmChecked,
   );
   const menuOpenFor = useOverviewStore((s) => s.menuOpenFor);
   const setMenuOpenFor = useOverviewStore((s) => s.setMenuOpenFor);
   const isAddEventModalOpen = useOverviewStore((s) => s.isAddEventModalOpen);
   const setIsAddEventModalOpen = useOverviewStore(
-    (s) => s.setIsAddEventModalOpen
+    (s) => s.setIsAddEventModalOpen,
   );
   const deleteEventConfirmChecked = useOverviewStore(
-    (s) => s.deleteEventConfirmChecked
+    (s) => s.deleteEventConfirmChecked,
   );
 
   const [eventSearch, setEventSearch] = useState("");
@@ -89,9 +89,9 @@ export const EventsPage = () => {
       [...eventsRaw]
         .map(mapDbEventToEvent)
         .sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
         ),
-    [eventsRaw]
+    [eventsRaw],
   );
 
   // Filter events by the search query (matches title or location).
@@ -101,7 +101,7 @@ export const EventsPage = () => {
     return events.filter(
       (e) =>
         e.name.toLowerCase().includes(q) ||
-        (e.location ?? "").toLowerCase().includes(q)
+        (e.location ?? "").toLowerCase().includes(q),
     );
   }, [events, eventSearch]);
 
@@ -200,7 +200,7 @@ export const EventsPage = () => {
       addEventToStore(newEvent);
       showToast(
         `Event "${mapDbEventToEvent(newEvent).name}" created successfully`,
-        "success"
+        "success",
       );
       setIsAddEventModalOpen(false);
     } catch (error) {
@@ -259,7 +259,7 @@ export const EventsPage = () => {
                 value={eventSearch}
                 onChange={(e) => setEventSearch(e.target.value)}
                 placeholder="Search events"
-                className="w-40 rounded-[8px] border border-border-dark bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-gray-400 focus:outline-none sm:w-56"
+                className="w-40 rounded-[8px] border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-gray-400 focus:outline-none sm:w-56"
               />
             </div>
             {canAddEvent && (
@@ -323,10 +323,10 @@ export const EventsPage = () => {
             type="button"
             onClick={() =>
               setVisibleEventCount((prev) =>
-                Math.min(prev + 6, filteredEvents.length)
+                Math.min(prev + 6, filteredEvents.length),
               )
             }
-            className="w-fit px-6 mx-auto mt-8 rounded-[10px] border border-border-dark bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="w-fit px-6 mx-auto mt-8 rounded-[10px] border border-gray-300 bg-white py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Show more
           </button>

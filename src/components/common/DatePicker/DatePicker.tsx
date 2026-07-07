@@ -1,14 +1,14 @@
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import {
-    eachDayOfInterval,
-    endOfMonth,
-    format,
-    getDay,
-    isSameDay,
-    isSameMonth,
-    isToday,
-    startOfMonth,
-    subDays,
+  eachDayOfInterval,
+  endOfMonth,
+  format,
+  getDay,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  startOfMonth,
+  subDays,
 } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 
@@ -53,7 +53,7 @@ export const DatePicker = ({
   const firstDayOfMonth = startOfMonth(currentMonth);
   const startingDayIndex = getDay(firstDayOfMonth); // 0 = Sunday, 1 = Monday, etc.
   const paddingDays = Array.from({ length: startingDayIndex }, (_, i) =>
-    subDays(firstDayOfMonth, startingDayIndex - i)
+    subDays(firstDayOfMonth, startingDayIndex - i),
   );
 
   const allDays = [...paddingDays, ...days];
@@ -67,7 +67,7 @@ export const DatePicker = ({
   return (
     <div className="relative" ref={datePickerRef}>
       <div
-        className={`${className} w-40 flex flex-row items-center border border-border-dark bg-white px-3 py-1 gap-2 rounded-[8px] hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-sm`}
+        className={`${className} w-40 flex flex-row items-center border border-gray-300 bg-white px-3 py-1 gap-2 rounded-[8px] hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-sm`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-textbox-placeholder">
@@ -83,15 +83,15 @@ export const DatePicker = ({
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg p-2 z-10 w-64">
+        <div className="absolute top-full mt-1 bg-white border border-gray-300 rounded-[8px] shadow-lg p-2 z-10 w-64">
           <div className="flex justify-between items-center mb-2">
             <button
               onClick={() =>
                 setCurrentMonth(
                   new Date(
                     currentMonth.getFullYear(),
-                    currentMonth.getMonth() - 1
-                  )
+                    currentMonth.getMonth() - 1,
+                  ),
                 )
               }
               className="p-1 hover:bg-gray-100 rounded"
@@ -106,8 +106,8 @@ export const DatePicker = ({
                 setCurrentMonth(
                   new Date(
                     currentMonth.getFullYear(),
-                    currentMonth.getMonth() + 1
-                  )
+                    currentMonth.getMonth() + 1,
+                  ),
                 )
               }
               className="p-1 hover:bg-gray-100 rounded"

@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface TableSelectorProps {
@@ -49,7 +49,7 @@ export const TableSelector = ({ value, onChange }: TableSelectorProps) => {
       </div>
 
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg z-10 min-w-[120px] p-1 flex flex-col">
+        <div className="absolute top-full mt-1 bg-white border border-gray-300 rounded-[8px] shadow-lg z-10 min-w-[120px] p-1 flex flex-col">
           {options.map((option) => (
             <button
               key={option.value}

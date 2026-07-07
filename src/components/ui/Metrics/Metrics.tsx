@@ -170,7 +170,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
           <h3 className="text-sm text-gray-700 mb-4">
             Recent Attendance Records
           </h3>
-          <div className="max-h-60 bg-gray-50 border border-border-dark overflow-y-auto rounded-[8px]">
+          <div className="max-h-60 bg-gray-50 border border-gray-300 overflow-y-auto rounded-[8px]">
             {metrics.attendanceRecords.slice(0, 5).map((record, index) => (
               <div
                 key={index}

@@ -33,9 +33,7 @@ export function CollegesSection() {
   const [deleteError, setDeleteError] = useState("");
 
   const loadColleges = () => {
-    fetchColleges().catch(() =>
-      showToast("Failed to load colleges", "error")
-    );
+    fetchColleges().catch(() => showToast("Failed to load colleges", "error"));
   };
 
   useEffect(() => {
@@ -120,7 +118,7 @@ export function CollegesSection() {
       })
       .catch((err: { response?: { data?: { message?: string } } }) => {
         setDeleteError(
-          err.response?.data?.message ?? "Failed to delete college"
+          err.response?.data?.message ?? "Failed to delete college",
         );
       });
   };
@@ -138,7 +136,7 @@ export function CollegesSection() {
             className="!px-4 !py-2"
           />
         </div>
-        <div className="border border-border-dark rounded-[8px] overflow-auto">
+        <div className="border border-gray-300 rounded-[8px] overflow-auto">
           <table className="w-full text-sm text-left">
             <thead className="bg-gray-50 text-gray-700">
               <tr>
@@ -244,7 +242,7 @@ export function CollegesSection() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Code
               </label>
-              <div className="w-full px-3 py-2 border border-border-dark rounded-[8px] bg-gray-100 text-gray-700 text-sm">
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-[8px] bg-gray-100 text-gray-700 text-sm">
                 {formCode}
               </div>
             </div>

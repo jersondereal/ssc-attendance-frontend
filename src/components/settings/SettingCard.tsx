@@ -15,7 +15,7 @@ export function SettingCard({
 }: SettingCardProps) {
   return (
     <div
-      className={`bg-white border border-border-dark rounded-[8px] p-6 ${
+      className={`bg-white border border-gray-300 rounded-[8px] p-6 ${
         disabled ? "opacity-50 pointer-events-none" : ""
       }`}
     >

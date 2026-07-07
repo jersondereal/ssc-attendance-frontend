@@ -73,7 +73,7 @@ export const AddStudentForm = ({
             <Ellipsis className="size-5" />
           </button>
           <div
-            className={`absolute right-0 top-full mt-1 bg-white border border-border-dark rounded-[8px] shadow-lg z-10 w-fit p-1.5 origin-top-right transition-all duration-200 ease-out ${
+            className={`absolute right-0 top-full mt-1 bg-white border border-gray-300 rounded-[8px] shadow-lg z-10 w-fit p-1.5 origin-top-right transition-all duration-200 ease-out ${
               isMenuOpen
                 ? "opacity-100 scale-100 pointer-events-auto"
                 : "opacity-0 scale-95 pointer-events-none"
@@ -106,7 +106,7 @@ export const AddStudentForm = ({
       profileImageFile: null,
       profileImageUrl: "",
     }),
-    []
+    [],
   );
 
   return (
