@@ -63,6 +63,7 @@ export const EventsPage = () => {
   const fetchEvents = useEventsStore((s) => s.fetchEvents);
   const removeEventFromStore = useEventsStore((s) => s.removeEvent);
   const addEventToStore = useEventsStore((s) => s.addEvent);
+  const updateEventInStore = useEventsStore((s) => s.updateEvent);
 
   const visibleEventCount = useOverviewStore((s) => s.visibleEventCount);
   const setVisibleEventCount = useOverviewStore((s) => s.setVisibleEventCount);
@@ -87,11 +88,11 @@ export const EventsPage = () => {
 
   const events = useMemo(
     () =>
-      [...eventsRaw]
-        .map(mapDbEventToEvent)
-        .sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-        ),
+      [...eventsRaw].map(mapDbEventToEvent).sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return (a.time ?? "").localeCompare(b.time ?? "");
+      }),
     [eventsRaw],
   );
 
@@ -159,7 +160,6 @@ export const EventsPage = () => {
     setMenuOpenFor(null);
   };
 
-  // Modified: on event update, reload page.
   const handleEditSubmit = (data: {
     title: string;
     event_date: string;
@@ -182,13 +182,10 @@ export const EventsPage = () => {
         sections: data.sections,
         schoolYears: data.schoolYears,
       })
-      .then(() => {
+      .then((response) => {
+        updateEventInStore(eventToEdit.id, response.data as DBEvent);
         showToast("Event updated successfully", "success");
         setEventToEdit(null);
-        // Instead of updating in store, force page reload
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
       })
       .catch(() => showToast("Failed to update event", "error"));
   };
