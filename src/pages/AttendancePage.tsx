@@ -1023,6 +1023,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
         onScan={handleQrScanSubmit}
+        lastStatusChange={lastStatusChange}
       />
 
       {/* Add Student Modal */}

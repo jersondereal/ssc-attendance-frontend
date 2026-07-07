@@ -3,18 +3,26 @@ import { Html5QrcodeScanner } from "html5-qrcode";
 import { Button } from "../common/Button/Button";
 import { Modal } from "../common/Modal/Modal";
 import { Loader } from "lucide-react";
+import type { AttendanceRecord } from "../../stores/types";
+import { LastUpdatedCard } from "./AttendanceUpdatePanel";
 import "./QrCheckInModal.css";
 
 interface QrCheckInModalProps {
   isOpen: boolean;
   onClose: () => void;
   onScan: (studentId: string) => void;
+  lastStatusChange?: {
+    record: AttendanceRecord;
+    profileImageUrl: string | null;
+    updatedAt: number;
+  } | null;
 }
 
 export function QrCheckInModal({
   isOpen,
   onClose,
   onScan,
+  lastStatusChange,
 }: QrCheckInModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isReaderReady, setIsReaderReady] = useState(false);
@@ -88,7 +96,19 @@ export function QrCheckInModal({
   }, [isOpen, isReaderReady]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} modalClassName="!rounded-[20px] overflow-hidden">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      modalClassName="!rounded-[20px] overflow-hidden"
+      sideContent={
+        <LastUpdatedCard
+          className="w-60"
+          record={lastStatusChange?.record ?? null}
+          profileImageUrl={lastStatusChange?.profileImageUrl ?? null}
+          updatedAt={lastStatusChange?.updatedAt ?? null}
+        />
+      }
+    >
       <div className="p-6 text-center">
         <h2 className="font-bold text-gray-900">QR Code Scanner</h2>
 

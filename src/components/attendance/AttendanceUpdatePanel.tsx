@@ -174,6 +174,67 @@ function ProfilePhoto({
   );
 }
 
+export function LastUpdatedCard({
+  record,
+  profileImageUrl,
+  updatedAt,
+  className = "",
+}: {
+  record: AttendanceRecord | null;
+  profileImageUrl?: string | null;
+  updatedAt: number | null;
+  className?: string;
+}) {
+  return (
+    <aside
+      className={`flex flex-col gap-4 rounded-[10px] border border-gray-200 bg-white p-5 ${className}`}
+    >
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-gray-800">Last Updated</h2>
+        {updatedAt && (
+          <span className="text-xs text-gray-500">
+            {new Date(updatedAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+        )}
+      </div>
+
+      {!record ? (
+        <p className="text-sm text-gray-500">No attendance changes yet.</p>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <ProfilePhoto
+              record={record}
+              profileImageUrl={profileImageUrl}
+              className="size-28"
+              iconClassName="size-10"
+              enablePreview
+            />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-gray-900">
+                {record.name}
+              </div>
+              <div className="text-xs text-gray-500">{record.studentId}</div>
+            </div>
+            <span
+              className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusClass(
+                record.status
+              )}`}
+            >
+              {record.status}
+            </span>
+          </div>
+
+          <StudentInfoGrid record={record} />
+        </div>
+      )}
+    </aside>
+  );
+}
+
 export function AttendanceUpdatePanel({
   record,
   profileImageUrl,
@@ -183,50 +244,11 @@ export function AttendanceUpdatePanel({
   return (
     <>
       <div className="hidden mt-[46px] lg:flex w-full max-w-60 shrink-0 flex-col gap-4 sticky top-4 self-start">
-        <aside className="flex flex-col gap-4 rounded-[10px] border border-gray-200 bg-white p-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-800">Last Updated</h2>
-            {updatedAt && (
-              <span className="text-xs text-gray-500">
-                {new Date(updatedAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            )}
-          </div>
-
-          {!record ? (
-            <p className="text-sm text-gray-500">No attendance changes yet.</p>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col items-center gap-3 text-center">
-                <ProfilePhoto
-                  record={record}
-                  profileImageUrl={profileImageUrl}
-                  className="size-28"
-                  iconClassName="size-10"
-                  enablePreview
-                />
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-gray-900">
-                    {record.name}
-                  </div>
-                  <div className="text-xs text-gray-500">{record.studentId}</div>
-                </div>
-                <span
-                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusClass(
-                    record.status
-                  )}`}
-                >
-                  {record.status}
-                </span>
-              </div>
-
-              <StudentInfoGrid record={record} />
-            </div>
-          )}
-        </aside>
+        <LastUpdatedCard
+          record={record}
+          profileImageUrl={profileImageUrl}
+          updatedAt={updatedAt}
+        />
 
         <AttendanceHistoryCard history={history} />
       </div>

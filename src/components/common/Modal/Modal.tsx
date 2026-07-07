@@ -6,6 +6,7 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   modalClassName?: string;
+  sideContent?: React.ReactNode;
 }
 
 export const Modal = ({
@@ -13,6 +14,7 @@ export const Modal = ({
   onClose,
   children,
   modalClassName,
+  sideContent,
 }: ModalProps) => {
   const [show, setShow] = useState(isOpen);
   const [render, setRender] = useState(isOpen);
@@ -70,6 +72,17 @@ export const Modal = ({
       >
         {children}
       </div>
+
+      {sideContent && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={`relative z-10 ml-4 hidden shrink-0 transition-all duration-200 lg:block ${
+            show ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+          }`}
+        >
+          {sideContent}
+        </div>
+      )}
     </div>,
     document.body // Portal to body
   );
