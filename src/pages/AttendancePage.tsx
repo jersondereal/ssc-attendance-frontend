@@ -290,13 +290,32 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             row.studentId,
             row as AttendanceRecord
           );
+
+          const cachedProfileImageUrl =
+            students.find((s) => s.studentId === row.studentId)
+              ?.profileImageUrl ?? null;
           setLastStatusChange({
             record: row as AttendanceRecord,
-            profileImageUrl:
-              students.find((s) => s.studentId === row.studentId)
-                ?.profileImageUrl ?? null,
+            profileImageUrl: cachedProfileImageUrl,
             updatedAt: Date.now(),
           });
+          if (!cachedProfileImageUrl) {
+            axios
+              .get(`${config.API_BASE_URL}/students/${row.studentId}`)
+              .then((res) => {
+                const fetched = res.data as DBStudent;
+                setLastStatusChange((prev) =>
+                  prev && prev.record.studentId === row.studentId
+                    ? {
+                        ...prev,
+                        profileImageUrl: fetched.profile_image_url ?? null,
+                      }
+                    : prev
+                );
+              })
+              .catch(() => {});
+          }
+
           axios
             .put(
               `${config.API_BASE_URL}/attendance/${row.studentId}/${selectedEvent.id}`,
