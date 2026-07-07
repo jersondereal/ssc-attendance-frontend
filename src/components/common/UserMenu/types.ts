@@ -6,6 +6,7 @@ export interface User {
 
 export interface UserFormData {
   username: string;
+  currentPassword: string;
   password: string;
   confirmPassword: string;
   role: User["role"];

@@ -41,6 +41,7 @@ export const UserMenu = ({
   } | null>(null);
   const [formData, setFormData] = useState<UserFormData>({
     username: "",
+    currentPassword: "",
     password: "",
     confirmPassword: "",
     role: "administrator",
@@ -215,6 +216,7 @@ export const UserMenu = ({
     setSelectedUser(null);
     setFormData({
       username: "",
+      currentPassword: "",
       password: "",
       confirmPassword: "",
       role: "administrator",
@@ -227,6 +229,7 @@ export const UserMenu = ({
     setSelectedUser(user);
     setFormData({
       username: user.username,
+      currentPassword: "",
       password: "",
       confirmPassword: "",
       role: user.role,
@@ -247,6 +250,14 @@ export const UserMenu = ({
     // current", so only validate when a password was actually entered.
     if (formData.password && formData.password !== formData.confirmPassword) {
       setToast({ message: "Passwords do not match", variant: "error" });
+      return;
+    }
+    // On edit, changing the password requires the current password.
+    if (selectedUser && formData.password && !formData.currentPassword) {
+      setToast({
+        message: "Enter the current password to change it",
+        variant: "error",
+      });
       return;
     }
     try {

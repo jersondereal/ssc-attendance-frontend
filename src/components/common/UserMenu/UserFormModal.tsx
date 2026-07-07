@@ -50,6 +50,18 @@ export function UserFormModal({
             required
             disabled={isPresident}
           />
+          {selectedUser && !passwordDisabled && (
+            <LabeledInput
+              label="Current Password"
+              type="password"
+              value={formData.currentPassword}
+              onChange={(currentPassword) =>
+                onFormDataChange({ ...formData, currentPassword })
+              }
+              required={!!formData.password}
+              disabled={passwordDisabled}
+            />
+          )}
           <LabeledInput
             label={passwordLabel}
             type="password"
