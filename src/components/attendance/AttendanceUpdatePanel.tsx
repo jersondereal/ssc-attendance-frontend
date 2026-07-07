@@ -47,14 +47,24 @@ function getStatusTextColor(status: string) {
   }
 }
 
-export function AttendanceHistoryCard({ history }: { history: AttendanceHistoryEntry[] }) {
+export function AttendanceHistoryCard({
+  history,
+  className = "",
+  listClassName = "max-h-[234px]",
+}: {
+  history: AttendanceHistoryEntry[];
+  className?: string;
+  listClassName?: string;
+}) {
   return (
-    <div className="flex flex-col gap-3 rounded-[10px] border border-gray-200 bg-white p-5 pr-0">
+    <div
+      className={`flex flex-col gap-3 rounded-[10px] border border-gray-200 bg-white p-5 pr-0 ${className}`}
+    >
       <h2 className="text-sm font-semibold text-gray-800">Attendance History</h2>
       {history.length === 0 ? (
         <p className="text-sm text-gray-500">No history yet.</p>
       ) : (
-        <div className="flex max-h-[234px] flex-col overflow-y-auto pr-4">
+        <div className={`flex flex-col overflow-y-auto pr-4 ${listClassName}`}>
           {history.map((entry) => (
             <div
               key={entry.id}

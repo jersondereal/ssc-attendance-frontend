@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 interface ModalProps {
@@ -19,6 +19,21 @@ export const Modal = ({
   const [show, setShow] = useState(isOpen);
   const [render, setRender] = useState(isOpen);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [modalHeight, setModalHeight] = useState<number | null>(null);
+
+  // Measure the main modal box's real height so sideContent can match it
+  // exactly — flex "stretch" alone is circular here since the modal box's
+  // own height is content-driven, not fixed.
+  useLayoutEffect(() => {
+    if (!render || !sideContent) return;
+    const el = modalRef.current;
+    if (!el) return;
+    const update = () => setModalHeight(el.getBoundingClientRect().height);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [render, sideContent]);
 
   // Animate in/out
   useEffect(() => {
@@ -59,30 +74,33 @@ export const Modal = ({
         aria-hidden
       />
 
-      {/* Modal content */}
-      <div
-        ref={modalRef}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-        className={`relative z-10 w-full max-w-sm rounded-lg bg-white shadow-xl transition-all duration-200 ${
-          show ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
-        } ${modalClassName ?? ""}`}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-      >
-        {children}
-      </div>
-
-      {sideContent && (
+      {/* Modal content + optional side content, matched to the same height */}
+      <div className="relative z-10 flex items-start">
         <div
-          onClick={(e) => e.stopPropagation()}
-          className={`relative z-10 ml-4 hidden shrink-0 transition-all duration-200 lg:block ${
+          ref={modalRef}
+          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+          className={`relative w-full max-w-sm rounded-lg bg-white shadow-xl transition-all duration-200 ${
             show ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
-          }`}
+          } ${modalClassName ?? ""}`}
+          tabIndex={-1}
+          role="dialog"
+          aria-modal="true"
         >
-          {sideContent}
+          {children}
         </div>
-      )}
+
+        {sideContent && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={modalHeight != null ? { height: modalHeight } : undefined}
+            className={`ml-4 hidden shrink-0 transition-all duration-200 lg:block ${
+              show ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
+            }`}
+          >
+            {sideContent}
+          </div>
+        )}
+      </div>
     </div>,
     document.body // Portal to body
   );

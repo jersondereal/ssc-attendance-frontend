@@ -103,13 +103,17 @@ export function QrCheckInModal({
       onClose={onClose}
       modalClassName="!rounded-[20px] overflow-hidden"
       sideContent={
-        <div className="flex w-60 flex-col gap-4">
+        <div className="flex h-full w-60 flex-col gap-4">
           <LastUpdatedCard
             record={lastStatusChange?.record ?? null}
             profileImageUrl={lastStatusChange?.profileImageUrl ?? null}
             updatedAt={lastStatusChange?.updatedAt ?? null}
           />
-          <AttendanceHistoryCard history={history} />
+          <AttendanceHistoryCard
+            history={history}
+            className="flex-1 min-h-0"
+            listClassName="flex-1 min-h-0"
+          />
         </div>
       }
     >
