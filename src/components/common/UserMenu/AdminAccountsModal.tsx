@@ -22,11 +22,13 @@ export function AdminAccountsModal({
   onEditUser,
   onDeleteUser,
 }: AdminAccountsModalProps) {
-  const sortedAccounts = [...adminAccounts].sort((a, b) => {
-    if (a.username === "president") return -1;
-    if (b.username === "president") return 1;
-    return ROLE_PRIORITY[a.role] - ROLE_PRIORITY[b.role];
-  });
+  const sortedAccounts = adminAccounts
+    .filter((user) => user.username !== "student")
+    .sort((a, b) => {
+      if (a.username === "president") return -1;
+      if (b.username === "president") return 1;
+      return ROLE_PRIORITY[a.role] - ROLE_PRIORITY[b.role];
+    });
 
   const [openMenuIdx, setOpenMenuIdx] = useState<number | null>(null);
   const [menuTransition, setMenuTransition] = useState<{ [k: number]: boolean }>({});

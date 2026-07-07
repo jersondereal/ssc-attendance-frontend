@@ -80,7 +80,7 @@ export function UserFormModal({
                   role: value as User["role"],
                 })
               }
-              options={[...ROLE_OPTIONS]}
+              options={ROLE_OPTIONS.filter((o) => o.value !== "viewer")}
               placeholder="Select role"
               className={`py-1.5 ${
                 isPresident ? "opacity-50 cursor-not-allowed" : ""
