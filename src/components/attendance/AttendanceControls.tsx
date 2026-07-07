@@ -1,3 +1,4 @@
+import { RefreshCw } from "lucide-react";
 import { Button } from "../common/Button/Button";
 import { DropdownSelector } from "../common/DropdownSelector/DropdownSelector";
 import { SearchBar } from "../common/SearchBar/SearchBar";
@@ -20,6 +21,8 @@ interface AttendanceControlsProps {
   collegeOptions: { value: string; label: string }[];
   yearOptions: { value: string; label: string }[];
   sectionOptions: { value: string; label: string }[];
+  onRefresh: () => void;
+  isRefreshing?: boolean;
 }
 
 export function AttendanceControls({
@@ -33,6 +36,8 @@ export function AttendanceControls({
   collegeOptions,
   yearOptions,
   sectionOptions,
+  onRefresh,
+  isRefreshing = false,
 }: AttendanceControlsProps) {
   return (
     <div className="flex md:flex-row flex-col mr-0 sm:mr-3 gap-3 min-w-full md:min-w-auto">
@@ -78,6 +83,16 @@ export function AttendanceControls({
             onChange={(value) => onFilterChange("section", value)}
             className="max-w-32"
           />
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh data"
+            title="Refresh data"
+            className="flex shrink-0 items-center justify-center rounded-[8px] border border-gray-300 bg-white p-2 text-gray-500 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw className={`size-4 ${isRefreshing ? "animate-spin" : ""}`} />
+          </button>
         </div>
         <SearchBar onSearch={onSearch} />
       </div>

@@ -216,6 +216,15 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     fetchAttendancePage(eventId, { page: nextPage, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction });
   }, [selectedEvent, tableType, attendanceHasMore, isFetchingAttendancePage, attendanceByEventId, debouncedSearch, selectedFilters, sortConfig, fetchAttendancePage]);
 
+  const handleRefresh = useCallback(() => {
+    if (tableType === "attendance" && selectedEvent) {
+      fetchAttendancePage(selectedEvent.id, { page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
+      fetchAttendanceHistory(selectedEvent.id);
+    } else if (tableType === "students") {
+      fetchStudentsPage({ page: 1, search: debouncedSearch, college: selectedFilters.college, year: selectedFilters.year, section: selectedFilters.section, sortKey: sortConfig.key, sortDir: sortConfig.direction }, true);
+    }
+  }, [tableType, selectedEvent, debouncedSearch, selectedFilters, sortConfig, fetchAttendancePage, fetchAttendanceHistory, fetchStudentsPage]);
+
   // Open profile card from URL param ?student=<id> (on students page only)
   useEffect(() => {
     if (tableType !== "students" || pagedStudents.length === 0) return;
@@ -930,6 +939,12 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             collegeOptions={scopedCollegeOptions}
             yearOptions={scopedYearOptions}
             sectionOptions={sectionOptions}
+            onRefresh={handleRefresh}
+            isRefreshing={
+              tableType === "attendance"
+                ? isFetchingAttendancePage
+                : isFetchingPage
+            }
           />
         )}
       </div>
