@@ -601,6 +601,13 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
     { value: "a", label: "Section A" },
     { value: "b", label: "Section B" },
     { value: "c", label: "Section C" },
+    { value: "d", label: "Section D" },
+    { value: "e", label: "Section E" },
+    { value: "f", label: "Section F" },
+    { value: "g", label: "Section G" },
+    { value: "h", label: "Section H" },
+    { value: "i", label: "Section I" },
+    { value: "j", label: "Section J" },
   ];
 
   const handleSearch = (value: string) => {

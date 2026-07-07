@@ -67,7 +67,7 @@ export const DatePicker = ({
   return (
     <div className="relative" ref={datePickerRef}>
       <div
-        className={`${className} w-40 flex flex-row items-center border border-border-dark px-3 py-1 gap-2 rounded-[8px] hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-sm`}
+        className={`${className} w-40 flex flex-row items-center border border-border-dark bg-white px-3 py-1 gap-2 rounded-[8px] hover:border-gray-400 hover:bg-gray-100 cursor-pointer text-sm`}
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className="text-textbox-placeholder">

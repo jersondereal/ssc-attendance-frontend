@@ -16,7 +16,7 @@ export const Textbox = React.forwardRef<HTMLInputElement, TextboxProps>(
   ) => {
     return (
       <div
-        className={`${className} w-40 flex flex-row items-center border border-border-dark px-1.5 py-0 h-10 gap-2 rounded-[8px] focus-within:border-border-focus focus-within:ring-2 focus-within:ring-zinc-200 text-sm`}
+        className={`${className} w-40 flex flex-row items-center border border-gray-300 bg-white px-1.5 py-0 h-10 gap-2 rounded-[8px] focus-within:border-border-focus focus-within:ring-2 focus-within:ring-zinc-200 text-sm`}
       >
         <span className="text-textbox-placeholder">{icon && icon}</span>
         <input

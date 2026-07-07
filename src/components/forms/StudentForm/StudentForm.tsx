@@ -73,6 +73,13 @@ export const StudentForm = ({
     { value: "a", label: "Section A" },
     { value: "b", label: "Section B" },
     { value: "c", label: "Section C" },
+    { value: "d", label: "Section D" },
+    { value: "e", label: "Section E" },
+    { value: "f", label: "Section F" },
+    { value: "g", label: "Section G" },
+    { value: "h", label: "Section H" },
+    { value: "i", label: "Section I" },
+    { value: "j", label: "Section J" },
   ];
 
   const collegeValue = useMemo(() => {
@@ -207,7 +214,7 @@ export const StudentForm = ({
             type="file"
             accept="image/*"
             required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white"
             onChange={handleProfileImageChange}
             disabled={isSubmitting}
           />
