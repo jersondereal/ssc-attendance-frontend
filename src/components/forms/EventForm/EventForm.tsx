@@ -35,6 +35,7 @@ interface EventFormProps {
   initialColleges?: Record<string, boolean>;
   initialSections?: Partial<SectionsState>;
   initialSchoolYears?: Partial<SchoolYearsState>;
+  minDate?: string;
   onSubmit: (data: {
     title: string;
     event_date: string;
@@ -75,6 +76,7 @@ export const EventForm = ({
   initialColleges,
   initialSections,
   initialSchoolYears,
+  minDate,
   onSubmit,
   onCancel,
   headerText,
@@ -83,6 +85,7 @@ export const EventForm = ({
 }: EventFormProps) => {
   const [formData, setFormData] = useState<EventFormData>(initialData);
   const [fineError, setFineError] = useState("");
+  const [dateError, setDateError] = useState("");
   const collegeList = useCollegesStore((s) => s.colleges);
   const fetchColleges = useCollegesStore((s) => s.fetchColleges);
   const [colleges, setColleges] = useState<CollegesState>({ all: false });
@@ -134,6 +137,9 @@ export const EventForm = ({
 
     if (name === "fine") {
       setFineError("");
+    }
+    if (name === "event_date") {
+      setDateError("");
     }
   };
 
@@ -199,6 +205,11 @@ export const EventForm = ({
       return;
     }
 
+    if (minDate && formData.event_date < minDate) {
+      setDateError("Event date cannot be in the past");
+      return;
+    }
+
     onSubmit({
       ...formData,
       fine: fineValue,
@@ -235,10 +246,14 @@ export const EventForm = ({
               type="date"
               name="event_date"
               required
+              min={minDate}
               className="w-full px-3 h-10 border border-gray-300 rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200"
               value={formData.event_date}
               onChange={handleChange}
             />
+            {dateError && (
+              <p className="text-red-500 text-sm mt-1">{dateError}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

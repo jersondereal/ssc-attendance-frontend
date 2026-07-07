@@ -30,20 +30,22 @@ interface AddEventFormProps {
 }
 
 export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
+  const today = useMemo(() => new Date().toLocaleDateString("en-CA"), []);
   const initialData = useMemo(
     () => ({
       title: "",
-      event_date: new Date().toLocaleDateString("en-CA"),
+      event_date: today,
       event_time: "09:00",
       location: "",
       fine: "0",
     }),
-    []
+    [today]
   );
 
   return (
     <EventForm
       initialData={initialData}
+      minDate={today}
       onSubmit={onSubmit}
       onCancel={onCancel}
       headerText="Add New Event"
