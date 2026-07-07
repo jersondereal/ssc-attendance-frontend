@@ -1,4 +1,10 @@
-import { CalendarDays, Ellipsis, MapPin, PhilippinePeso } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  Ellipsis,
+  MapPin,
+  PhilippinePeso,
+} from "lucide-react";
 import { useAuthStore } from "../../stores/useAuthStore";
 import { EventBadges } from "../common/EventSelector/EventBadges";
 import type { Event } from "../common/EventSelector/types";
@@ -67,6 +73,15 @@ export function EventCard({
               year: "numeric",
             })}
           </span>
+          {event.time && (
+            <span className="flex items-center gap-1.5">
+              <Clock className="size-3.5 shrink-0 text-gray-400" />
+              {new Date(`1970-01-01T${event.time}`).toLocaleTimeString(
+                "en-US",
+                { hour: "numeric", minute: "2-digit" }
+              )}
+            </span>
+          )}
           {!isViewer && (
             <span className="flex items-center gap-1.5">
               <PhilippinePeso className="size-3.5 shrink-0 text-gray-400" />

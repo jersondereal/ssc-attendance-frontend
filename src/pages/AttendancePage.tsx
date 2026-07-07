@@ -243,6 +243,7 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
       id: match.id.toString(),
       name: match.title,
       date: match.event_date,
+      time: match.event_time,
       location: match.location,
       fine: match.fine,
       colleges: match.colleges ?? match.courses,

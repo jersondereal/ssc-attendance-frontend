@@ -2,6 +2,7 @@ export interface Event {
   id: string;
   name: string;
   date: string;
+  time: string;
   location: string;
   fine: number;
   colleges?: Record<string, boolean>;
@@ -24,6 +25,7 @@ export interface Event {
 export interface AddEventData {
   title: string;
   event_date: string;
+  event_time: string;
   location: string;
   fine: number;
   colleges?: Record<string, boolean>;

@@ -26,6 +26,7 @@ function mapDbEventToEvent(e: DBEvent): Event {
     id: e.id.toString(),
     name: e.title,
     date: e.event_date,
+    time: e.event_time,
     location: e.location,
     fine: e.fine,
     colleges: e.colleges ?? e.courses,
@@ -162,6 +163,7 @@ export const EventsPage = () => {
   const handleEditSubmit = (data: {
     title: string;
     event_date: string;
+    event_time: string;
     location: string;
     fine: number;
     colleges: Event["colleges"];
@@ -173,6 +175,7 @@ export const EventsPage = () => {
       .put(`${config.API_BASE_URL}/events/${eventToEdit.id}`, {
         title: data.title,
         event_date: data.event_date,
+        event_time: data.event_time,
         location: data.location,
         fine: data.fine,
         colleges: data.colleges,

@@ -52,6 +52,7 @@ export interface DBEvent {
   id: number;
   title: string;
   event_date: string;
+  event_time: string;
   location: string;
   fine: number;
   colleges?: Record<string, boolean>;

@@ -5,6 +5,7 @@ interface Event {
   id: string;
   name: string;
   date: string;
+  time: string;
   location: string;
   fine: number;
   colleges?: Record<string, boolean>;
@@ -29,6 +30,7 @@ interface EditEventFormProps {
   onSubmit: (data: {
     title: string;
     event_date: string;
+    event_time: string;
     location: string;
     fine: number;
     colleges: CollegesState;
@@ -61,10 +63,11 @@ export const EditEventForm = ({
       event_date: event.date
         ? new Date(event.date).toLocaleDateString("en-CA")
         : new Date().toLocaleDateString("en-CA"),
+      event_time: event.time ? event.time.slice(0, 5) : "09:00",
       location: event.location || "",
       fine: event.fine?.toString() || "0",
     }),
-    [event.date, event.fine, event.location, event.name]
+    [event.date, event.time, event.fine, event.location, event.name]
   );
 
   return (

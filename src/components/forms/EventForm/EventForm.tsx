@@ -9,6 +9,7 @@ export type CollegesState = { all: boolean; [code: string]: boolean };
 interface EventFormData {
   title: string;
   event_date: string;
+  event_time: string;
   location: string;
   fine: string;
 }
@@ -37,6 +38,7 @@ interface EventFormProps {
   onSubmit: (data: {
     title: string;
     event_date: string;
+    event_time: string;
     location: string;
     fine: number;
     colleges: CollegesState;
@@ -235,6 +237,19 @@ export const EventForm = ({
               required
               className="w-full px-3 h-10 border border-gray-300 rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200"
               value={formData.event_date}
+              onChange={handleChange}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Event Time
+            </label>
+            <input
+              type="time"
+              name="event_time"
+              required
+              className="w-full px-3 h-10 border border-gray-300 rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-zinc-200"
+              value={formData.event_time}
               onChange={handleChange}
             />
           </div>

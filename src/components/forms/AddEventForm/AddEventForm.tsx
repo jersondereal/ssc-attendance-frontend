@@ -7,6 +7,7 @@ interface AddEventFormProps {
   onSubmit: (data: {
     title: string;
     event_date: string;
+    event_time: string;
     location: string;
     fine: number;
     colleges: CollegesState;
@@ -33,6 +34,7 @@ export const AddEventForm = ({ onSubmit, onCancel }: AddEventFormProps) => {
     () => ({
       title: "",
       event_date: new Date().toLocaleDateString("en-CA"),
+      event_time: "09:00",
       location: "",
       fine: "0",
     }),
