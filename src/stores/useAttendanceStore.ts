@@ -9,7 +9,7 @@ import type {
 } from "./types";
 import type { Event } from "../components/common/EventSelector/types";
 
-interface DBAttendanceHistoryEntry {
+export interface DBAttendanceHistoryEntry {
   id: number;
   student_id: string;
   student_name: string | null;
@@ -18,6 +18,18 @@ interface DBAttendanceHistoryEntry {
   changed_via: "manual" | "rfid";
   changed_at: string;
 }
+
+const MAX_HISTORY_ENTRIES = 50;
+
+const mapHistoryEntry = (r: DBAttendanceHistoryEntry): AttendanceHistoryEntry => ({
+  id: r.id,
+  studentId: r.student_id,
+  studentName: r.student_name ?? r.student_id,
+  previousStatus: r.previous_status,
+  newStatus: r.new_status,
+  changedVia: r.changed_via,
+  changedAt: r.changed_at,
+});
 
 interface SelectedFilters {
   college: string;
@@ -51,6 +63,10 @@ interface AttendanceState {
   fetchAttendancePage: (eventId: string, params: AttendanceFetchParams, reset?: boolean) => Promise<void>;
   attendanceHistoryByEventId: Record<string, AttendanceHistoryEntry[]>;
   fetchAttendanceHistory: (eventId: string) => Promise<void>;
+  receiveAttendanceHistoryEvent: (
+    eventId: string,
+    entry: DBAttendanceHistoryEntry
+  ) => void;
   selectedFilters: SelectedFilters;
   searchQuery: string;
   sortConfig: SortConfig;
@@ -142,15 +158,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       const res = await axios.get<DBAttendanceHistoryEntry[]>(
         `${config.API_BASE_URL}/attendance/event/${eventId}/history`
       );
-      const mapped: AttendanceHistoryEntry[] = res.data.map((r) => ({
-        id: r.id,
-        studentId: r.student_id,
-        studentName: r.student_name ?? r.student_id,
-        previousStatus: r.previous_status,
-        newStatus: r.new_status,
-        changedVia: r.changed_via,
-        changedAt: r.changed_at,
-      }));
+      const mapped = res.data.map(mapHistoryEntry);
       set((state) => ({
         attendanceHistoryByEventId: {
           ...state.attendanceHistoryByEventId,
@@ -161,6 +169,22 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
       console.error(err);
     }
   },
+
+  receiveAttendanceHistoryEvent: (eventId, entry) =>
+    set((state) => {
+      const existing = state.attendanceHistoryByEventId[eventId] ?? [];
+      if (existing.some((e) => e.id === entry.id)) return state;
+      const next = [mapHistoryEntry(entry), ...existing].slice(
+        0,
+        MAX_HISTORY_ENTRIES
+      );
+      return {
+        attendanceHistoryByEventId: {
+          ...state.attendanceHistoryByEventId,
+          [eventId]: next,
+        },
+      };
+    }),
 
   selectedFilters: defaultFilters,
   searchQuery: "",

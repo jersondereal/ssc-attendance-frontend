@@ -22,12 +22,14 @@ import { EasterEggProfileCard } from "../components/ui/EasterEggProfileCard/East
 import { StudentProfileCard } from "../components/ui/StudentProfileCard/StudentProfileCard";
 import config from "../config";
 import { useToast } from "../contexts/ToastContext";
+import { getSocket } from "../socket";
 import type {
   AttendanceRecord,
   DBStudent,
   StudentRecord,
 } from "../stores/types";
 import { useAuthStore } from "../stores/useAuthStore";
+import type { DBAttendanceHistoryEntry } from "../stores/useAttendanceStore";
 import { useAttendanceStore } from "../stores/useAttendanceStore";
 import { useCollegesStore } from "../stores/useCollegesStore";
 import { useEventsStore } from "../stores/useEventsStore";
@@ -102,6 +104,9 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   const fetchAttendancePage = useAttendanceStore((s) => s.fetchAttendancePage);
   const attendanceHistoryByEventId = useAttendanceStore((s) => s.attendanceHistoryByEventId);
   const fetchAttendanceHistory = useAttendanceStore((s) => s.fetchAttendanceHistory);
+  const receiveAttendanceHistoryEvent = useAttendanceStore(
+    (s) => s.receiveAttendanceHistoryEvent
+  );
   const setSelectedEvent = useAttendanceStore((s) => s.setSelectedEvent);
   const setAttendanceForEvent = useAttendanceStore((s) => s.setAttendanceForEvent);
   const updateAttendanceRecord = useAttendanceStore(
@@ -259,10 +264,28 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEvent?.id, tableType]);
 
-  // Fetch attendance history when a new event is selected
+  // Fetch attendance history when a new event is selected, then keep it
+  // live via socket updates for as long as this event stays selected.
   useEffect(() => {
     if (!selectedEvent || tableType !== "attendance") return;
-    fetchAttendanceHistory(selectedEvent.id);
+    const eventId = selectedEvent.id;
+    fetchAttendanceHistory(eventId);
+
+    const socket = getSocket();
+    const joinRoom = () => socket.emit("join-event", eventId);
+    joinRoom();
+    socket.on("connect", joinRoom);
+
+    const handleHistoryCreated = (entry: DBAttendanceHistoryEntry) => {
+      receiveAttendanceHistoryEvent(eventId, entry);
+    };
+    socket.on("attendance-history:created", handleHistoryCreated);
+
+    return () => {
+      socket.emit("leave-event", eventId);
+      socket.off("connect", joinRoom);
+      socket.off("attendance-history:created", handleHistoryCreated);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEvent?.id, tableType]);
 
@@ -293,7 +316,6 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
               `${config.API_BASE_URL}/attendance/${row.studentId}/${selectedEvent.id}`,
               { status: row.status }
             )
-            .then(() => fetchAttendanceHistory(selectedEvent.id))
             .catch((err) => {
               console.error(err);
               showToast(
@@ -492,7 +514,6 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
           profileImageUrl: student?.profileImageUrl ?? null,
           updatedAt: Date.now(),
         });
-        fetchAttendanceHistory(selectedEvent.id);
       } catch (error) {
         console.error("Error updating attendance:", error);
         if (axios.isAxiosError(error)) {
@@ -512,7 +533,6 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
       attendanceByEventId,
       setAttendanceForEvent,
       setLastStatusChange,
-      fetchAttendanceHistory,
     ]
   );
 
@@ -834,7 +854,6 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
             : item
         );
         setAttendanceForEvent(selectedEvent.id, next);
-        fetchAttendanceHistory(selectedEvent.id);
       }
 
       setSelectedRows([]);
