@@ -163,7 +163,7 @@ export function StudentRegistrationPage() {
                       ?.alreadyRegistered
                   ) {
                     const msg =
-                      "You're already registered. Please contact the SSC office if you think this is a mistake.";
+                      "You're already registered. Go to the Students page and search your name or Student ID to verify.";
                     setSubmitError(msg);
                     showToast(msg, "warning");
                     return;
