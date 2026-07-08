@@ -168,6 +168,16 @@ export function StudentRegistrationPage() {
               className="w-full"
               showCancelButton={false}
             />
+            <p className="px-6 pb-6 text-center text-sm text-gray-500">
+              Already registered?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="font-semibold text-green-600 underline hover:text-green-500 transition-colors"
+              >
+                Proceed to Homepage
+              </button>
+            </p>
           </>
         )}
       </div>
