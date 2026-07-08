@@ -186,6 +186,7 @@ export const DashboardPage = () => {
           value={formatNumber(totalStudents)}
           icon={<Users className="size-5" />}
           className="min-h-[150px]"
+          onViewAll={() => navigate("/students")}
         />
         <MetricCard
           label="Total events"
