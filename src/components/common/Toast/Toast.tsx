@@ -41,7 +41,7 @@ const variantStyles = {
 export const Toast = ({
   message,
   variant = "info",
-  duration = 3000,
+  duration = 6000,
   onClose,
 }: ToastProps) => {
   useEffect(() => {
