@@ -182,7 +182,7 @@ export const DashboardPage = () => {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <MetricCard
-          label="Total students"
+          label="Registered students"
           value={formatNumber(totalStudents)}
           icon={<Users className="size-5" />}
           className="min-h-[150px]"
