@@ -130,6 +130,7 @@ export const DashboardPage = () => {
         const d = new Date(e.event_date);
         return d >= startOfToday && d < startOfTomorrow;
       })
+      .sort((a, b) => (a.event_time ?? "").localeCompare(b.event_time ?? ""))
       .slice(0, 5);
   }, [eventsRaw]);
 
