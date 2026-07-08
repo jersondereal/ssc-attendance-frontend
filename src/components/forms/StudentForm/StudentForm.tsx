@@ -272,7 +272,7 @@ export const StudentForm = ({
           </label>
           <Textbox
             name="studentId"
-            placeholder="Enter student ID (e.g. 23-0001)"
+            placeholder="Enter student ID (e.g. 00-0000 or 00-000000)"
             required
             className="w-full py-2"
             value={formData.studentId}
