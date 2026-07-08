@@ -285,7 +285,7 @@ export const StudentForm = ({
           </label>
           <Textbox
             name="studentId"
-            placeholder="Enter student ID (e.g. 00-0000)"
+            placeholder="XX-XXXXXX"
             required
             className="w-full py-2"
             value={formData.studentId}
@@ -306,7 +306,7 @@ export const StudentForm = ({
               </label>
               <Textbox
                 name="firstName"
-                placeholder="Enter first name (e.g. Juan)"
+                placeholder="Juan"
                 required
                 className="w-full py-2"
                 value={nameParts.firstName}
@@ -320,7 +320,7 @@ export const StudentForm = ({
               </label>
               <Textbox
                 name="middleInitial"
-                placeholder="Enter middle initial (e.g. D.)"
+                placeholder="D"
                 className="w-full py-2"
                 value={nameParts.middleInitial}
                 onChange={handleNamePartChange}
@@ -334,7 +334,7 @@ export const StudentForm = ({
               </label>
               <Textbox
                 name="lastName"
-                placeholder="Enter last name (e.g. Dela Cruz)"
+                placeholder="Cruz"
                 required
                 className="w-full py-2"
                 value={nameParts.lastName}
