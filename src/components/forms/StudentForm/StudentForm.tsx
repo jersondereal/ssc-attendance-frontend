@@ -166,6 +166,19 @@ export const StudentForm = ({
     }
   };
 
+  // Students often type their ID without the dash (e.g. "26001274"). On blur,
+  // if it's all digits, insert the dash after the first 2 (year) digits so it
+  // matches the NN-XXXX format. Mirrors the backend normalizer.
+  const handleStudentIdBlur = () => {
+    setFormData((prev) => {
+      const id = (prev.studentId ?? "").trim();
+      if (/^\d+$/.test(id) && id.length > 2) {
+        return { ...prev, studentId: `${id.slice(0, 2)}-${id.slice(2)}` };
+      }
+      return prev;
+    });
+  };
+
   const handleProfileImageChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -277,6 +290,7 @@ export const StudentForm = ({
             className="w-full py-2"
             value={formData.studentId}
             onChange={handleChange}
+            onBlur={handleStudentIdBlur}
             onKeyDown={handleStudentIdKeyDown}
             onPaste={handleStudentIdPaste}
             inputMode="text"
