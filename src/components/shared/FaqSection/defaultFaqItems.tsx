@@ -37,7 +37,7 @@ export const defaultFaqItems: FaqItem[] = [
       <>
         For any registration issues, please contact{" "}
         <a
-          href="https://m.me/jerson.dereal.caibog"
+          href="https://www.facebook.com/jerson.dereal.caibog/"
           target="_blank"
           rel="noopener noreferrer"
           className="font-semibold text-green-600 underline hover:text-green-500 transition-colors"
