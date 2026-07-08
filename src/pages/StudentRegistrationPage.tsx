@@ -149,6 +149,19 @@ export function StudentRegistrationPage() {
                   showToast("Registration submitted successfully", "success");
                   setFormKey((prev) => prev + 1);
                 } catch (error: unknown) {
+                  // Same person re-registering (same ID + same name): not an
+                  // error — let them know they're already in the system.
+                  if (
+                    axios.isAxiosError(error) &&
+                    (error.response?.data as { alreadyRegistered?: boolean })
+                      ?.alreadyRegistered
+                  ) {
+                    const msg =
+                      "You're already registered. Please contact the SSC office if you think this is a mistake.";
+                    setSubmitError(msg);
+                    showToast(msg, "warning");
+                    return;
+                  }
                   let message = "Registration failed";
                   if (axios.isAxiosError(error)) {
                     const data = error.response?.data as

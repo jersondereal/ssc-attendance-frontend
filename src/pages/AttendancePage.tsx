@@ -386,6 +386,17 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
       showToast(`Student ${newStudent.name} added successfully`, "success");
     } catch (error: unknown) {
       console.error("Error adding student:", error);
+      if (
+        axios.isAxiosError(error) &&
+        (error.response?.data as { alreadyRegistered?: boolean })
+          ?.alreadyRegistered
+      ) {
+        showToast(
+          "This student is already registered. You can find them on the Students page.",
+          "warning"
+        );
+        return;
+      }
       if (axios.isAxiosError(error)) {
         showToast(
           error.response?.data?.message || "Failed to add student",
