@@ -299,11 +299,11 @@ export function StudentProfileCard({
         <div className="sticky top-0 z-10 flex flex-row items-start justify-between bg-white rounded-t-xl p-8 pb-5">
           {/* Profile header – no profile pic */}
           <div className="flex-1 min-w-0 flex flex-col items-start gap-2">
-            {(studentData.profileImageUrl && currentUserRole !== "Viewer") && (
+            {/* {(studentData.profileImageUrl && currentUserRole !== "Viewer") && (
               <div className="size-32 bg-gray-100 rounded-[10px] border border-gray-300 grid place-items-center overflow-hidden">
                 <img src={studentData.profileImageUrl} alt="" className="h-full w-full object-cover" />
               </div>
-            )}
+            )} */}
             <h2 className="text-2xl font-semibold text-gray-900 tracking-tight break-words font-serif">
               {studentData.name}
             </h2>
