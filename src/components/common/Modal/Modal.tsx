@@ -78,7 +78,7 @@ export const Modal = ({
       <div
         ref={modalRef}
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-        className={`relative z-10 w-full max-w-sm rounded-lg bg-white shadow-xl transition-all duration-200 ${
+        className={`relative z-10 w-full max-w-sm rounded-lg bg-white shadow-xl overflow-x-hidden transition-all duration-200 ${
           show ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
         } ${modalClassName ?? ""}`}
         tabIndex={-1}

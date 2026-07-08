@@ -102,6 +102,7 @@ export function StudentProfileCard({
   const [metricsError, setMetricsError] = useState<string | null>(null);
   const [finesError, setFinesError] = useState<string | null>(null);
 
+  const [showQrModal, setShowQrModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [finesConfirmChecked, setFinesConfirmChecked] = useState(false);
   const [showIndividualConfirmModal, setShowIndividualConfirmModal] =
@@ -263,6 +264,37 @@ export function StudentProfileCard({
   return (
     <>
       <div id="student-profile-card" className="w-[90vw] md:w-[28rem] max-h-[85vh] overflow-y-auto rounded-[20px] border border-gray-200 bg-white shadow-lg relative">
+        {showQrModal ? (
+          <div className="flex flex-col items-center overflow-x-hidden">
+            <div className="mb-2 flex w-full items-center justify-between px-8 pt-3 pb-0">
+              <button
+                type="button"
+                onClick={() => setShowQrModal(false)}
+                className="rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              >
+                ← Back
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg p-1.5 text-gray-700 hover:bg-gray-100"
+                aria-label="Close"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            <StudentQRCard
+              studentId={studentData.studentId}
+              name={studentData.name}
+              college={studentData.college}
+              year={studentData.year}
+              section={studentData.section}
+              size={220}
+              className="pt-1"
+            />
+          </div>
+        ) : (
+        <>
         {/* Header row: close and profile */}
         <div className="sticky top-0 z-10 flex flex-row items-start justify-between bg-white rounded-t-xl p-8 pb-5">
           {/* Profile header – no profile pic */}
@@ -514,12 +546,16 @@ export function StudentProfileCard({
           ) : (
             <p className="text-sm text-gray-700 font-medium">No metrics available</p>
           )}
-          <p className="text-xs mb-8 mt-8 font-medium text-gray-600">
-            The data presented here encompasses all records from the start of the school year on July 1, {schoolYearStart}, through the end of April 30, {schoolYearEnd}.
-          </p>
         </div>
-        {/* Hidden QR card for download only; button visible */}
-        <div className="relative px-8 pb-8 pt-4">
+        {/* Hidden QR card for download only; buttons visible */}
+        <div className="relative flex flex-col gap-2 px-8 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => setShowQrModal(true)}
+            className="w-full rounded-[10px] border border-gray-300 bg-white py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            View QR Code
+          </button>
           <button
             type="button"
             onClick={async () => {
@@ -548,6 +584,11 @@ export function StudentProfileCard({
             Download QR Code
           </button>
         </div>
+        <p className="px-8 pb-8 pt-6 text-xs font-medium text-gray-600">
+          The data presented here encompasses all records from the start of the school year on July 1, {schoolYearStart}, through the end of April 30, {schoolYearEnd}.
+        </p>
+        </>
+        )}
 
         <div className="pointer-events-none w-max fixed bottom-0 -left-full">
           <div className="rounded-[10px] border border-gray-200 bg-gray-50/50 p-5 w-fit">

@@ -42,7 +42,7 @@ const EASTER_EGG_STUDENT_ID = "22-0224";
 const EASTER_EGG_ROW: StudentRecord = {
   studentId: EASTER_EGG_STUDENT_ID,
   name: "Jerson De Real Caibog",
-  college: "CICT",
+  college: "CCS",
   year: "4",
   section: "A",
   profileImageUrl: "https://i.ibb.co/Y4ct3NRY/jersondereal.jpg",
