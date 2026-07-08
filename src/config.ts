@@ -2,6 +2,7 @@ interface Config {
   API_BASE_URL: string;
   ENV: 'development' | 'production';
   ENABLE_EASTER_EGG: boolean;
+  ENABLE_IMAGE_UPLOAD: boolean;
 }
 
 const frontendURL = 'essu-ssc.vercel.app';
@@ -35,6 +36,8 @@ const config: Config = {
   ENV: window.location.hostname === frontendURL ? 'production' : 'development',
   // Set VITE_ENABLE_EASTER_EGG=false in frontend/.env.local to hide the Students table easter egg row.
   ENABLE_EASTER_EGG: import.meta.env.VITE_ENABLE_EASTER_EGG !== 'false',
+  // Disabled by default (ImgBB rate limits). Set VITE_ENABLE_IMAGE_UPLOAD=true in frontend/.env.local to re-enable.
+  ENABLE_IMAGE_UPLOAD: import.meta.env.VITE_ENABLE_IMAGE_UPLOAD === 'true',
 };
 
 export default config; 

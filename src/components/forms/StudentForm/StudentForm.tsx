@@ -3,6 +3,7 @@ import { Button } from "../../common/Button/Button";
 import { SubmitButton } from "../../shared/SubmitButton/SubmitButton";
 import { DropdownSelector } from "../../common/DropdownSelector/DropdownSelector";
 import { Textbox } from "../../common/Textbox/Textbox";
+import config from "../../../config";
 import { useCollegesStore } from "../../../stores/useCollegesStore";
 
 export interface StudentFormData {
@@ -206,25 +207,31 @@ export const StudentForm = ({
       {headerContent}
 
       <div className="flex flex-col gap-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Profile Picture
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            required
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white"
-            onChange={handleProfileImageChange}
-            disabled={isSubmitting}
-          />
-          <p className="text-xs text-gray-500 mt-2">
-            Upload a clear photo of yourself (1:1 aspect ratio) <br />
-            This photo is private and can only be seen by school administrators. <br />
-            Allowed file types: JPEG, PNG, WEBP <br />
-            Maximum file size: 10MB <br />
+        {config.ENABLE_IMAGE_UPLOAD ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Profile Picture
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              required
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white"
+              onChange={handleProfileImageChange}
+              disabled={isSubmitting}
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Upload a clear photo of yourself (1:1 aspect ratio) <br />
+              This photo is private and can only be seen by school administrators. <br />
+              Allowed file types: JPEG, PNG, WEBP <br />
+              Maximum file size: 10MB <br />
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-500">
+            Profile picture upload is temporarily unavailable.
           </p>
-        </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Student ID
