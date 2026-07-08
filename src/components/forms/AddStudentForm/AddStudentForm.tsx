@@ -118,6 +118,7 @@ export const AddStudentForm = ({
       submitLabel="Register"
       className={`p-6 ${className}`}
       showCancelButton={showCancelButton}
+      splitNameFields
     />
   );
 };

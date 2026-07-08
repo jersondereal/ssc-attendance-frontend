@@ -25,6 +25,7 @@ interface StudentFormProps {
   submitLabel: string;
   className?: string;
   showCancelButton?: boolean;
+  splitNameFields?: boolean;
 }
 
 export const StudentForm = ({
@@ -35,6 +36,7 @@ export const StudentForm = ({
   submitLabel,
   className = "p-6",
   showCancelButton = true,
+  splitNameFields = false,
 }: StudentFormProps) => {
   const collegeOptionsFromStore = useCollegesStore((s) => s.collegeOptions);
   const fetchColleges = useCollegesStore((s) => s.fetchColleges);
@@ -48,6 +50,11 @@ export const StudentForm = ({
     rfid: initialData.rfid ?? "",
     profileImageFile: null,
   });
+  const [nameParts, setNameParts] = useState({
+    firstName: "",
+    middleInitial: "",
+    lastName: "",
+  });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -57,7 +64,28 @@ export const StudentForm = ({
       rfid: initialData.rfid ?? "",
       profileImageFile: null,
     });
+    setNameParts({ firstName: "", middleInitial: "", lastName: "" });
   }, [initialData]);
+
+  const handleNamePartChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setNameParts((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const formatMiddleInitial = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.endsWith(".")) return trimmed;
+    return `${trimmed}.`;
+  };
+
+  const handleMiddleInitialBlur = () => {
+    setNameParts((prev) => ({
+      ...prev,
+      middleInitial: formatMiddleInitial(prev.middleInitial),
+    }));
+  };
 
   useEffect(() => {
     if (collegeOptionsFromStore.length <= 1) fetchColleges();
@@ -161,7 +189,12 @@ export const StudentForm = ({
     setSubmitError(null);
 
     const studentId = formData.studentId?.trim() ?? "";
-    const name = formData.name?.trim() ?? "";
+    const firstName = nameParts.firstName.trim();
+    const middleInitial = formatMiddleInitial(nameParts.middleInitial);
+    const lastName = nameParts.lastName.trim();
+    const name = splitNameFields
+      ? [firstName, middleInitial, lastName].filter(Boolean).join(" ")
+      : formData.name?.trim() ?? "";
     const college = formData.college?.trim() ?? "";
     const year = formData.year?.trim() ?? "";
     const section = formData.section?.trim() ?? "";
@@ -169,7 +202,12 @@ export const StudentForm = ({
 
     const missing: string[] = [];
     if (!studentId) missing.push("Student ID");
-    if (!name) missing.push("Full Name");
+    if (splitNameFields) {
+      if (!firstName) missing.push("First Name");
+      if (!lastName) missing.push("Last Name");
+    } else if (!name) {
+      missing.push("Full Name");
+    }
     if (!college) missing.push("College");
     if (!year) missing.push("Year Level");
     if (!section) missing.push("Section");
@@ -246,20 +284,67 @@ export const StudentForm = ({
             disabled={isSubmitting}
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Full Name
-          </label>
-          <Textbox
-            name="name"
-            placeholder="Enter full name (e.g. John Doe)"
-            required
-            className="w-full py-2"
-            value={formData.name}
-            onChange={handleChange}
-            disabled={isSubmitting}
-          />
-        </div>
+        {splitNameFields ? (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                First Name
+              </label>
+              <Textbox
+                name="firstName"
+                placeholder="Enter first name (e.g. Juan)"
+                required
+                className="w-full py-2"
+                value={nameParts.firstName}
+                onChange={handleNamePartChange}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Middle Initial
+              </label>
+              <Textbox
+                name="middleInitial"
+                placeholder="Enter middle initial (e.g. D.)"
+                className="w-full py-2"
+                value={nameParts.middleInitial}
+                onChange={handleNamePartChange}
+                onBlur={handleMiddleInitialBlur}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Last Name
+              </label>
+              <Textbox
+                name="lastName"
+                placeholder="Enter last name (e.g. Dela Cruz)"
+                required
+                className="w-full py-2"
+                value={nameParts.lastName}
+                onChange={handleNamePartChange}
+                disabled={isSubmitting}
+              />
+            </div>
+          </>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Full Name
+            </label>
+            <Textbox
+              name="name"
+              placeholder="Enter full name (e.g. John Doe)"
+              required
+              className="w-full py-2"
+              value={formData.name}
+              onChange={handleChange}
+              disabled={isSubmitting}
+            />
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             College
