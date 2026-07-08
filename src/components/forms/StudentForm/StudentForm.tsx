@@ -268,7 +268,7 @@ export const StudentForm = ({
         )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Student ID
+            Student ID <span className="text-gray-400 font-normal">(required)</span>
           </label>
           <Textbox
             name="studentId"
@@ -288,7 +288,7 @@ export const StudentForm = ({
           <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                First Name
+                First Name <span className="text-gray-400 font-normal">(required)</span>
               </label>
               <Textbox
                 name="firstName"
@@ -302,7 +302,7 @@ export const StudentForm = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Middle Initial
+                Middle Initial <span className="text-gray-400 font-normal">(leave blank if not applicable)</span>
               </label>
               <Textbox
                 name="middleInitial"
@@ -316,7 +316,7 @@ export const StudentForm = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name
+                Last Name <span className="text-gray-400 font-normal">(required)</span>
               </label>
               <Textbox
                 name="lastName"
@@ -332,7 +332,7 @@ export const StudentForm = ({
         ) : (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
+              Full Name <span className="text-gray-400 font-normal">(required)</span>
             </label>
             <Textbox
               name="name"
@@ -347,7 +347,7 @@ export const StudentForm = ({
         )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            College
+            College <span className="text-gray-400 font-normal">(required)</span>
           </label>
           <DropdownSelector
             name="college"
@@ -362,7 +362,7 @@ export const StudentForm = ({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Year Level
+            Year Level <span className="text-gray-400 font-normal">(required)</span>
           </label>
           <DropdownSelector
             name="year"
@@ -377,7 +377,7 @@ export const StudentForm = ({
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Section
+            Section <span className="text-gray-400 font-normal">(required)</span>
           </label>
           <DropdownSelector
             name="section"
