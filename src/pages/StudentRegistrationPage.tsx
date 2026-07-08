@@ -79,15 +79,15 @@ export function StudentRegistrationPage() {
         className="min-h-24"
         style={{ maxHeight: "2rem" }}
       />
-      <h1 className="font-semibold text-center mt-5 leading-tight tracking-tight flex flex-col items-center justify-center">
+      {/* <h1 className="font-semibold text-center mt-5 leading-tight tracking-tight flex flex-col items-center justify-center">
         <span className="text-xl">Supreme Student Council</span>
         <span className="text-lg">ESSU Guiuan Campus</span>
       </h1>
       <h2 className="text-sm font-medium text-center mt-2 text-zinc-500">
         Attendance Monitoring System
-      </h2>
+      </h2> */}
       <div className="w-full mt-8">
-        <h3 className="text-base font-semibold text-gray-900 mb-4">
+        <h3 className="text-base text-center font-semibold text-gray-900 mb-4">
           Frequently Asked Questions
         </h3>
         <FaqSection items={defaultFaqItems} />
