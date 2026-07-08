@@ -43,7 +43,7 @@ const EASTER_EGG_ROW: StudentRecord = {
   studentId: EASTER_EGG_STUDENT_ID,
   name: "Jerson De Real Caibog",
   college: "CICT",
-  year: "2026",
+  year: "4",
   section: "A",
   profileImageUrl: "https://i.ibb.co/Y4ct3NRY/jersondereal.jpg",
 };
@@ -395,8 +395,13 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   };
 
   const handleEditStudentSubmit = async (data: StudentFormData) => {
+    // The row is located by its ORIGINAL id; data.studentId may be a new id
+    // the user is renaming to.
+    const originalStudentId = editingStudent?.studentId ?? data.studentId;
     try {
-      const existingStudent = students.find((s) => s.studentId === data.studentId);
+      const existingStudent = students.find(
+        (s) => s.studentId === originalStudentId
+      );
       let profileImageUrl =
         data.profileImageUrl ?? existingStudent?.profileImageUrl ?? null;
       if (data.profileImageFile) {
@@ -404,8 +409,9 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
         profileImageUrl = uploaded.imageUrl;
       }
       const response = await axios.put(
-        `${config.API_BASE_URL}/students/${data.studentId}`,
+        `${config.API_BASE_URL}/students/${originalStudentId}`,
         {
+          student_id: data.studentId.trim(),
           name: data.name,
           college: data.college.toLowerCase(),
           year: data.year,
@@ -417,13 +423,14 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
 
       const updatedStudent = response.data;
 
-      // Update local state with the updated student data
-      updateStudentInStore(data.studentId, updatedStudent);
+      // Update local state with the updated student data (keyed on the
+      // original id, since the id itself may have changed).
+      updateStudentInStore(originalStudentId, updatedStudent);
 
       if (tableType === "attendance" && selectedEvent) {
         const list = attendanceByEventId[selectedEvent.id] ?? [];
         const mapped = list.map((item) =>
-          item.studentId === data.studentId
+          item.studentId === originalStudentId
             ? {
                 ...item,
                 studentId: updatedStudent.student_id,
@@ -715,15 +722,17 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
   }, [tableType, attendanceData, students, selectedFilters, searchQuery]);
 
   const filteredData = getFilteredData();
-  const sortedData = tableType === "students"
-    ? filteredData
-    : [...filteredData].sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof TableRecord];
-        const bValue = b[sortConfig.key as keyof TableRecord];
-        if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
+  // Students are fetched pre-sorted by the backend, but an in-place edit
+  // (updateStudentInStore) can leave a row's sort-key field stale relative to
+  // its position in the array — re-sorting here keeps it self-correcting
+  // instead of relying on the array already being in order.
+  const sortedData = [...filteredData].sort((a, b) => {
+    const aValue = a[sortConfig.key as keyof TableRecord];
+    const bValue = b[sortConfig.key as keyof TableRecord];
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
 
   const currentData = sortedData;
 
