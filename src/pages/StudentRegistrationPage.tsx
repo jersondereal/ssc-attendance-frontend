@@ -76,14 +76,14 @@ export function StudentRegistrationPage() {
       <img
         src="/logo.png"
         alt="SSC Logo"
-        className="min-h-32"
+        className="min-h-24"
         style={{ maxHeight: "2rem" }}
       />
       <h1 className="font-semibold text-center mt-5 leading-tight tracking-tight flex flex-col items-center justify-center">
-        <span className="text-2xl">Supreme Student Council</span>
-        <span className="text-xl">ESSU Guiuan Campus</span>
+        <span className="text-xl">Supreme Student Council</span>
+        <span className="text-lg">ESSU Guiuan Campus</span>
       </h1>
-      <h2 className="text-lg font-medium text-center mt-2 text-zinc-500">
+      <h2 className="text-sm font-medium text-center mt-2 text-zinc-500">
         Attendance Monitoring System
       </h2>
       <div className="w-full mt-8">
