@@ -85,13 +85,6 @@ export const StudentForm = ({
   // ones like "Jr"/"Sr" would — since we can't tell which, leave it as typed.
   const formatSuffix = (value: string) => value.trim();
 
-  const handleMiddleInitialBlur = () => {
-    setNameParts((prev) => ({
-      ...prev,
-      middleInitial: formatMiddleInitial(prev.middleInitial),
-    }));
-  };
-
   const handleSuffixBlur = () => {
     setNameParts((prev) => ({
       ...prev,
@@ -337,7 +330,6 @@ export const StudentForm = ({
                 className="w-full py-2"
                 value={nameParts.middleInitial}
                 onChange={handleNamePartChange}
-                onBlur={handleMiddleInitialBlur}
                 disabled={isSubmitting}
               />
             </div>
