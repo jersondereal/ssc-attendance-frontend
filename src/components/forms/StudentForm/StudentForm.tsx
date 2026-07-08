@@ -207,7 +207,7 @@ export const StudentForm = ({
       {headerContent}
 
       <div className="flex flex-col gap-6">
-        {config.ENABLE_IMAGE_UPLOAD ? (
+        {config.ENABLE_IMAGE_UPLOAD && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Profile Picture
@@ -227,10 +227,6 @@ export const StudentForm = ({
               Maximum file size: 10MB <br />
             </p>
           </div>
-        ) : (
-          <p className="text-xs text-gray-500">
-            Profile picture upload is temporarily unavailable.
-          </p>
         )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
