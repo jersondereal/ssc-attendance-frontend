@@ -7,6 +7,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { AttendanceHistoryEntry, AttendanceRecord } from "../../stores/types";
+import { formatStudentIdForDisplay } from "../../utils/studentId";
 
 interface AttendanceUpdatePanelProps {
   record: AttendanceRecord | null;
@@ -75,7 +76,7 @@ export function AttendanceHistoryCard({
                 <div className="truncate text-xs font-medium text-gray-900">
                   {entry.studentName}
                 </div>
-                <div className="text-[11px] text-gray-400">{entry.studentId}</div>
+                <div className="text-[11px] text-gray-400">{formatStudentIdForDisplay(entry.studentId)}</div>
                 <div className="flex items-center gap-1 text-[11px] text-gray-500">
                   <span>{entry.previousStatus ?? "New"}</span>
                   <span>→</span>
@@ -228,7 +229,7 @@ export function LastUpdatedCard({
               <div className="truncate text-sm font-semibold text-gray-900">
                 {record.name}
               </div>
-              <div className="text-xs text-gray-500">{record.studentId}</div>
+              <div className="text-xs text-gray-500">{formatStudentIdForDisplay(record.studentId)}</div>
             </div>
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusClass(
@@ -384,7 +385,7 @@ function AttendanceUpdateSheet({
             <div className="truncate text-sm font-semibold text-gray-900">
               {record.name}
             </div>
-            <div className="text-xs text-gray-500">{record.studentId}</div>
+            <div className="text-xs text-gray-500">{formatStudentIdForDisplay(record.studentId)}</div>
           </div>
           {updatedAt && (
             <span className="text-xs text-gray-400">

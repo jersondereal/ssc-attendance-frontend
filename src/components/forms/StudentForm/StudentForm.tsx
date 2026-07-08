@@ -270,9 +270,6 @@ export const StudentForm = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Student ID <span className="text-gray-400 font-normal">(required)</span>
           </label>
-          <p className="text-xs text-gray-500 mb-1">
-            Double-check this ID is correct before submitting. If you enter someone else's ID by mistake, it gets registered to you and the real owner won't be able to register with it.
-          </p>
           <Textbox
             name="studentId"
             placeholder="Enter student ID (e.g. 00-0000 or 00-000000)"

@@ -138,6 +138,10 @@ export function StudentRegistrationPage() {
                       section: data.section.toLowerCase(),
                       rfid: (data.rfid ?? "").trim(),
                       profile_image_url: profileImageUrl,
+                      // Self-service: if this ID is already taken, register with
+                      // a " (n)"-suffixed ID instead of failing. Admins reconcile
+                      // these later. Not sent from admin-side adds.
+                      allow_duplicate_fallback: true,
                     })
                   ).data as DBStudent;
                   setRegisteredStudent(createdStudent);

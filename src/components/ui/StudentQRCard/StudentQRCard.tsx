@@ -1,5 +1,6 @@
 import { QRCodeCanvas } from "qrcode.react";
 import { forwardRef } from "react";
+import { formatStudentIdForDisplay } from "../../../utils/studentId";
 
 export interface StudentQRCardProps {
   studentId: string;
@@ -23,12 +24,13 @@ export const StudentQRCard = forwardRef<HTMLDivElement, StudentQRCardProps>(
         className={`flex flex-col items-center gap-2 w-fit mx-auto p-8 ${className}`}
       >
         <div className="border border-gray-300 rounded-[10px] p-5">
+          {/* QR encodes the RAW id (with any " (n)" suffix) so scans resolve. */}
           <QRCodeCanvas value={studentId} size={size} />
         </div>
         <div className="w-full">
           <p className="font-semibold text-xl font-serif">{name}</p>
           <div className="flex flex-row items-center gap-3 text-xs w-fit mx-auto font-bold mt-1">
-            <span>{studentId}</span>
+            <span>{formatStudentIdForDisplay(studentId)}</span>
             <span>{college.toUpperCase()}</span>
             <span>
               {year}-{section.toUpperCase()}

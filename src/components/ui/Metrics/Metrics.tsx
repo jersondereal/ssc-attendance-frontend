@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import config from "../../../config";
 import { Button } from "../../common/Button/Button";
 import { MetricCard } from "../../shared/MetricCard/MetricCard";
+import { formatStudentIdForDisplay } from "../../../utils/studentId";
 
 interface MetricsProps {
   studentData: {
@@ -125,7 +126,7 @@ export const Metrics = ({ studentData, onClose }: MetricsProps) => {
         {metrics.student.name}
       </h2>
       <div className="flex flex-row gap-4 w-full md:w-fit mx-auto text-sm items-center h-fit text-gray-500 mb-6 justify-center">
-        <span>{metrics.student.student_id}</span>
+        <span>{formatStudentIdForDisplay(metrics.student.student_id)}</span>
         <span>
           {(
             metrics.student.college ??

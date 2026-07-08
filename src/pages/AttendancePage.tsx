@@ -375,6 +375,9 @@ export function AttendancePage({ tableType }: AttendancePageProps) {
         section: data.section.toLowerCase(),
         rfid: (data.rfid ?? "").trim(),
         profile_image_url: profileImageUrl,
+        // If this ID is already taken, register with a " (n)"-suffixed ID
+        // instead of failing. Admins reconcile these later.
+        allow_duplicate_fallback: true,
       });
 
       const newStudent = response.data as DBStudent;

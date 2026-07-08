@@ -4,6 +4,7 @@ import SouthIcon from "@mui/icons-material/South";
 import { Ellipsis } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Checkbox from "../Checkbox/Checkbox";
+import { formatStudentIdForDisplay } from "../../../utils/studentId";
 
 // Table column and row interfaces
 interface Column {
@@ -324,6 +325,8 @@ export const Table = ({
                         >
                           {row.status}
                         </span>
+                      ) : column.key === "studentId" ? (
+                        formatStudentIdForDisplay(row.studentId)
                       ) : (
                         row[column.key as keyof TableRecord]
                       )}

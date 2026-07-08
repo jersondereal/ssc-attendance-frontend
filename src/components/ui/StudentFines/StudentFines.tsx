@@ -8,6 +8,7 @@ import Checkbox from "../../common/Checkbox/Checkbox";
 import { Modal } from "../../common/Modal/Modal";
 import type { StudentRecord } from "../../common/Table/Table";
 import { MetricCard } from "../../shared/MetricCard/MetricCard";
+import { formatStudentIdForDisplay } from "../../../utils/studentId";
 
 interface StudentFine {
   id: number;
@@ -252,7 +253,7 @@ export const StudentFines = ({
           {studentData.name}
         </h2>
         <div className="flex flex-row gap-4 w-fit mx-auto text-sm items-center h-fit text-gray-500 mb-6">
-          <span>{studentData.studentId}</span>
+          <span>{formatStudentIdForDisplay(studentData.studentId)}</span>
           <span>{studentData.college.toUpperCase()}</span>
           <div>
             <span>{studentData.year}</span>-

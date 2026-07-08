@@ -11,6 +11,7 @@ import type { StudentRecord } from "../../common/Table/Table";
 import { StudentQRCard } from "../StudentQRCard/StudentQRCard";
 import { MetricCard } from "../../shared/MetricCard/MetricCard";
 import { useToast } from "../../../contexts/ToastContext";
+import { formatStudentIdForDisplay } from "../../../utils/studentId";
 
 interface AttendanceRecord {
   event_id: number;
@@ -275,7 +276,7 @@ export function StudentProfileCard({
               {studentData.name}
             </h2>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs font-bold">
-              <span>{studentData.studentId}</span>
+              <span>{formatStudentIdForDisplay(studentData.studentId)}</span>
               <span>{studentData.college}</span>
               <span>
                 {studentData.year}-{studentData.section}
@@ -534,7 +535,7 @@ export function StudentProfileCard({
                 const url = canvas.toDataURL("image/png");
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = `${studentData.studentId}_qr.png`;
+                a.download = `${formatStudentIdForDisplay(studentData.studentId)}_qr.png`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
