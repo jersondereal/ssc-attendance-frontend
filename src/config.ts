@@ -34,8 +34,8 @@ const getBaseUrl = () => {
 const config: Config = {
   API_BASE_URL: getBaseUrl(),
   ENV: window.location.hostname === frontendURL ? 'production' : 'development',
-  // Set VITE_ENABLE_EASTER_EGG=false in frontend/.env.local to hide the Students table easter egg row.
-  ENABLE_EASTER_EGG: import.meta.env.VITE_ENABLE_EASTER_EGG !== 'false',
+  // Disabled for now. Set VITE_ENABLE_EASTER_EGG=true in frontend/.env.local to re-enable.
+  ENABLE_EASTER_EGG: import.meta.env.VITE_ENABLE_EASTER_EGG === 'true',
   // Disabled by default (ImgBB rate limits). Set VITE_ENABLE_IMAGE_UPLOAD=true in frontend/.env.local to re-enable.
   ENABLE_IMAGE_UPLOAD: import.meta.env.VITE_ENABLE_IMAGE_UPLOAD === 'true',
 };
