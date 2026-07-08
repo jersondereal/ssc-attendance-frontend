@@ -86,7 +86,13 @@ export function StudentRegistrationPage() {
       <h2 className="text-lg font-medium text-center mt-2 text-zinc-500">
         Attendance Monitoring System
       </h2>
-      <div className="border border-gray-300 w-full md:p-6 rounded-[20px] mt-6 border-t-4 border-t-green-700 shadow-lg bg-white">
+      <div className="w-full mt-8">
+        <h3 className="text-base font-semibold text-gray-900 mb-4">
+          Frequently Asked Questions
+        </h3>
+        <FaqSection items={defaultFaqItems} />
+      </div>
+      <div className="border border-gray-300 w-full md:p-6 rounded-[20px] mt-8 border-t-4 border-t-green-700 shadow-lg bg-white">
         {submitMessage && registeredStudent ? (
           <RegistrationSuccessView
             student={registeredStudent}
@@ -197,12 +203,6 @@ export function StudentRegistrationPage() {
             </p>
           </>
         )}
-      </div>
-      <div className="w-full mt-14">
-        <h3 className="text-base font-semibold text-gray-900 mb-4">
-          Frequently Asked Questions
-        </h3>
-        <FaqSection items={defaultFaqItems} />
       </div>
     </div>
   );

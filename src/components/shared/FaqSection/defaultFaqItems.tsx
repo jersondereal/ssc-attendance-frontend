@@ -1,63 +1,44 @@
-import { Phone } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { FaqItem } from "./types";
 
-const contactItems = [
-  {
-    id: "email",
-    label: "essuguiuansc@gmail.com",
-    icon: "/gmail.svg",
-  },
-  {
-    id: "facebook",
-    label: "Supreme Student Council- ESSU Guiuan",
-    icon: "/facebook.svg",
-  },
-  {
-    id: "phone",
-    label: "+63 909 919 9236",
-    icon: "phone" as const,
-  },
-];
+const studentsPageLink = (
+  <Link
+    to="/students"
+    className="font-semibold text-green-600 underline hover:text-green-500 transition-colors"
+  >
+    Students page
+  </Link>
+);
 
 /** Default FAQ list for registration/login. Pass to FaqSection as items prop. */
 export const defaultFaqItems: FaqItem[] = [
   {
-    question: "I made a mistake in my details. What should I do?",
-    answer:
-    "Please contact the SSC office so they can update your information in the system.",
-  },
-  {
-    question:
-    "It says my Student ID is already registered. What does that mean?",
-    answer:
-    "This Student ID already exists in the system. You may have registered before. If you believe this is a mistake, please contact the SSC office for assistance.",
-  },
-  {
-    question:
-    "I'm getting an error saying some details are already registered.",
-    answer:
-    "Some of the information you entered already exists in the system. Please review your details carefully or reach out to the SSC office for help.",
-  },
-  {
-    question: "Who should I contact if I can't fix the error?",
+    question: "I couldn't download my QR code. What should I do?",
     answer: (
       <>
-        For any registration issues, please visit or contact the SSC office via
-        Email, Contact Number, or Facebook Messenger for assistance.
-        <div className="flex flex-col gap-1 mt-2">
-          {contactItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-row items-center gap-3 text-nowrap"
-            >
-              {item.icon === "phone" ? (
-                <Phone className="size-4 shrink-0" />
-              ) : (
-                <img src={item.icon} alt={item.label} className="size-4" />
-              )}
-              <span>{item.label}</span>
-            </div>
-          ))}
+        No problem — you can download it anytime from the {studentsPageLink}.
+        Just search your name, open your record, and download the QR code from
+        there.
+      </>
+    ),
+  },
+  {
+    question: "It says my Student ID is already registered. What does that mean?",
+    answer: (
+      <>
+        You may have already registered before. Please verify by going to the{" "}
+        {studentsPageLink} and searching your Student ID to check your record.
+      </>
+    ),
+  },
+  {
+    question: "I still need help. Who can I contact?",
+    answer: (
+      <>
+        For any registration issues, please contact IT Support:
+        <div className="flex flex-row items-center gap-3 text-nowrap mt-2">
+          <img src="/facebook.svg" alt="Facebook" className="size-4" />
+          <span>Jerson De Real Caibog</span>
         </div>
       </>
     ),
