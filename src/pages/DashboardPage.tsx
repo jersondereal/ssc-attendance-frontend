@@ -24,7 +24,19 @@ interface EventListCardProps {
   emptyMessage: string;
   onEventClick: (id: number) => void;
   onViewAll: () => void;
+  showTime?: boolean;
 }
+
+const formatEventTime = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
 function EventListCard({
   title,
@@ -32,6 +44,7 @@ function EventListCard({
   emptyMessage,
   onEventClick,
   onViewAll,
+  showTime = false,
 }: EventListCardProps) {
   return (
     <div className="rounded-[10px] border border-gray-200 bg-white p-4">
@@ -67,11 +80,13 @@ function EventListCard({
                 </div>
               </div>
               <div className="shrink-0 text-xs font-medium text-gray-500">
-                {new Date(event.event_date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {showTime
+                  ? formatEventTime(event.event_time)
+                  : new Date(event.event_date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
               </div>
             </button>
           ))}
@@ -225,6 +240,7 @@ export const DashboardPage = () => {
         emptyMessage="No events today."
         onEventClick={(id) => navigate(`/events/${id}`)}
         onViewAll={() => navigate("/events")}
+        showTime
       />
 
       <EventListCard
