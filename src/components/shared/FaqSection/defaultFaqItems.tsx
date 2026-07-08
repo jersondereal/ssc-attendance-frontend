@@ -35,11 +35,16 @@ export const defaultFaqItems: FaqItem[] = [
     question: "I still need help. Who can I contact?",
     answer: (
       <>
-        For any registration issues, please contact IT Support:
-        <div className="flex flex-row items-center gap-3 text-nowrap mt-2">
-          <img src="/facebook.svg" alt="Facebook" className="size-4" />
-          <span>Jerson De Real Caibog</span>
-        </div>
+        For any registration issues, please contact{" "}
+        <a
+          href="https://www.facebook.com/jerson.dereal.caibog/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-green-600 underline hover:text-green-500 transition-colors"
+        >
+          IT Support
+        </a>
+        .
       </>
     ),
   },
