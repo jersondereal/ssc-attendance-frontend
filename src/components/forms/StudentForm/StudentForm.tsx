@@ -54,6 +54,7 @@ export const StudentForm = ({
     firstName: "",
     middleInitial: "",
     lastName: "",
+    suffix: "",
   });
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,7 +65,7 @@ export const StudentForm = ({
       rfid: initialData.rfid ?? "",
       profileImageFile: null,
     });
-    setNameParts({ firstName: "", middleInitial: "", lastName: "" });
+    setNameParts({ firstName: "", middleInitial: "", lastName: "", suffix: "" });
   }, [initialData]);
 
   const handleNamePartChange = (
@@ -74,16 +75,27 @@ export const StudentForm = ({
     setNameParts((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Appends a trailing period if missing (e.g. "D" -> "D.").
   const formatMiddleInitial = (value: string) => {
     const trimmed = value.trim();
     if (!trimmed || trimmed.endsWith(".")) return trimmed;
     return `${trimmed}.`;
   };
+  // No auto-dot here: suffixes like "II"/"III" shouldn't get a period, only
+  // ones like "Jr"/"Sr" would — since we can't tell which, leave it as typed.
+  const formatSuffix = (value: string) => value.trim();
 
   const handleMiddleInitialBlur = () => {
     setNameParts((prev) => ({
       ...prev,
       middleInitial: formatMiddleInitial(prev.middleInitial),
+    }));
+  };
+
+  const handleSuffixBlur = () => {
+    setNameParts((prev) => ({
+      ...prev,
+      suffix: formatSuffix(prev.suffix),
     }));
   };
 
@@ -205,8 +217,9 @@ export const StudentForm = ({
     const firstName = nameParts.firstName.trim();
     const middleInitial = formatMiddleInitial(nameParts.middleInitial);
     const lastName = nameParts.lastName.trim();
+    const suffix = formatSuffix(nameParts.suffix);
     const name = splitNameFields
-      ? [firstName, middleInitial, lastName].filter(Boolean).join(" ")
+      ? [firstName, middleInitial, lastName, suffix].filter(Boolean).join(" ")
       : formData.name?.trim() ?? "";
     const college = formData.college?.trim() ?? "";
     const year = formData.year?.trim() ?? "";
@@ -339,6 +352,20 @@ export const StudentForm = ({
                 className="w-full py-2"
                 value={nameParts.lastName}
                 onChange={handleNamePartChange}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Suffix <span className="text-gray-400 font-normal">(leave blank if not applicable)</span>
+              </label>
+              <Textbox
+                name="suffix"
+                placeholder="Jr"
+                className="w-full py-2"
+                value={nameParts.suffix}
+                onChange={handleNamePartChange}
+                onBlur={handleSuffixBlur}
                 disabled={isSubmitting}
               />
             </div>
