@@ -64,7 +64,7 @@ export function RegistrationSuccessView({
 
   return (
     <div
-      className={`flex flex-col items-center text-center gap-4 ${className}`}
+      className={`flex flex-col items-center text-center gap-4 px-6 py-10 ${className}`}
     >
       <div className="space-y-2">
         <h2 className="text-lg font-bold">{title}</h2>

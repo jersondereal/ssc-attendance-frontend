@@ -548,7 +548,7 @@ export function StudentProfileCard({
           )}
         </div>
         {/* Hidden QR card for download only; buttons visible */}
-        <div className="relative flex flex-col gap-2 px-8 sm:flex-row">
+        <div className="relative flex flex-col gap-2 px-8 sm:flex-row mt-6">
           <button
             type="button"
             onClick={() => setShowQrModal(true)}

@@ -106,7 +106,6 @@ export function StudentRegistrationPage() {
               </>
             }
             doneLabel="Continue to Attendance Portal"
-            className="py-14"
           />
         ) : (
           <>
