@@ -118,12 +118,6 @@ export function QrCheckInModal({
       }
     >
       <div className="p-6 text-center">
-        <h2 className="font-bold text-gray-900">QR Code Scanner</h2>
-
-        <p className="text-xs mt-1 text-gray-500">
-          Align the QR code within the frame to record attendance.
-        </p>
-
         <div className="qr-reader mt-5 mx-auto max-w-sm overflow-hidden rounded-2xl border border-gray-200">
           {isLoading && (
             <div className="items-center justify-center w-full h-32 grid place-items-center bg-gray-950 text-white">

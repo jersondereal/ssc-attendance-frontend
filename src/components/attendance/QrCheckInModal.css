@@ -2,6 +2,14 @@
    the app's design system. Many of these properties are set inline by the
    library at render time, so `!important` is required to override them. */
 
+/* Contain the library's internal elements (video/canvas can carry their own
+   stacking context) so they can never render above the modal's side content. */
+.qr-reader {
+  position: relative;
+  isolation: isolate;
+  z-index: 0;
+}
+
 .qr-reader #reader {
   border: none !important;
   padding: 0 !important;

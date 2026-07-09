@@ -92,7 +92,7 @@ export const Modal = ({
         <div
           onClick={(e) => e.stopPropagation()}
           style={modalHeight != null ? { height: modalHeight } : undefined}
-          className={`relative z-10 ml-4 hidden shrink-0 transition-all duration-200 lg:block ${
+          className={`relative z-20 ml-4 hidden shrink-0 transition-all duration-200 lg:block ${
             show ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
           }`}
         >
