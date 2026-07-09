@@ -5,6 +5,7 @@ import { Modal } from "../common/Modal/Modal";
 import { Loader } from "lucide-react";
 import type { AttendanceHistoryEntry, AttendanceRecord } from "../../stores/types";
 import { AttendanceHistoryCard, LastUpdatedCard } from "./AttendanceUpdatePanel";
+import { formatStudentIdForDisplay } from "../../utils/studentId";
 import "./QrCheckInModal.css";
 
 interface QrCheckInModalProps {
@@ -132,6 +133,16 @@ export function QrCheckInModal({
             }}
             className="w-full h-full"
           />
+          {lastStatusChange?.record && (
+            <div className="flex items-center gap-1 border-t border-gray-200 bg-white px-4 py-3 text-left">
+              <span className="truncate text-sm font-medium text-gray-900">
+                {lastStatusChange.record.name}
+              </span>
+              <span className="shrink-0 text-sm text-gray-400">
+                ({formatStudentIdForDisplay(lastStatusChange.record.studentId)})
+              </span>
+            </div>
+          )}
         </div>
 
         <Button
